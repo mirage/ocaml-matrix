@@ -421,7 +421,7 @@ struct
         | Guest_access _ -> "m.room.guest_access"
         | Server_acl _ -> "m.room.server_acl"
         | Tombstone _ -> "m.room.tombstone"
-        | Encryption _ -> "m.room.encription"
+        | Encryption _ -> "m.room.encryption"
         | Name _ -> "m.room.name"
         | Topic _ -> "m.room.topic"
         | Avatar _ -> "m.room.avatar"
@@ -446,7 +446,7 @@ struct
       ; "m.room.guest_access", case Guest_access.encoding (function Guest_access t -> Some t | _ -> None) (fun t -> Guest_access  t)
       ; "m.room.server_acl", case Server_acl.encoding (function Server_acl t -> Some t | _ -> None) (fun t -> Server_acl  t)
       ; "m.room.tombstone", case Tombstone.encoding (function Tombstone t -> Some t | _ -> None) (fun t -> Tombstone  t)
-      ; "m.room.encription", case Encryption.encoding (function Encryption t -> Some t | _ -> None) (fun t -> Encryption t)
+      ; "m.room.encryption", case Encryption.encoding (function Encryption t -> Some t | _ -> None) (fun t -> Encryption t)
       ; "m.room.name", case Name.encoding (function Name t -> Some t | _ -> None) (fun t -> Name t)
       ; "m.room.topic", case Topic.encoding (function Topic t -> Some t | _ -> None) (fun t -> Topic t)
       ; "m.room.avatar", case Avatar.encoding (function Avatar t -> Some t | _ -> None) (fun t -> Avatar t)

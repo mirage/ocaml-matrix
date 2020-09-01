@@ -271,7 +271,7 @@ let sync =
                   ?rooms:
                   (Some
                     (Rooms.make
-                      ~join: joined_rooms
+                      ~join:joined_rooms
                       ~invite:invited_rooms
                       ~leave:leaved_rooms
                       ()))

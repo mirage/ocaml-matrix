@@ -642,7 +642,7 @@ struct
         | Guest_access _ -> "m.room.guest_access"
         | Server_acl _ -> "m.room.server_acl"
         | Tombstone _ -> "m.room.tombstone"
-        | Encryption _ -> "m.room.encription"
+        | Encryption _ -> "m.room.encryption"
         | Encrypted _ -> "m.room.encrypted"
       in
       get_type t, t
@@ -664,7 +664,7 @@ struct
       ; "m.room.guest_access", case (Content.content Guest_access.encoding) (function Guest_access t -> Some t | _ -> None) (fun t -> Guest_access t)
       ; "m.room.server_acl", case (Content.content Server_acl.encoding) (function Server_acl t -> Some t | _ -> None) (fun t -> Server_acl t)
       ; "m.room.tombstone", case (Content.content Tombstone.encoding) (function Tombstone t -> Some t | _ -> None) (fun t -> Tombstone t)
-      ; "m.room.encription", case (Content.content Encryption.encoding) (function Encryption t -> Some t | _ -> None) (fun t -> Encryption t)
+      ; "m.room.encryption", case (Content.content Encryption.encoding) (function Encryption t -> Some t | _ -> None) (fun t -> Encryption t)
       ; "m.room.encrypted", case (Content.content Encrypted.encoding) (function Encrypted t -> Some t | _ -> None) (fun t -> Encrypted t) ]
     in
       conv to_tuple of_tuple with_tuple
