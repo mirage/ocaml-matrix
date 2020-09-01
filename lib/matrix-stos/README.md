@@ -1,0 +1,95 @@
+# Ocaml matrix
+
+This is the encoding of all the server-to-server endpoints
+See https://matrix.org/docs/spec/server_server/latest
+
+ ## To-do list
+
+- [ ] 1   Changelog
+    - [ ] 1.1   Other versions of this specification
+- [ ] 2   API standards
+- [ ] 3   Server discovery
+    - [ ] 3.1   Resolving server names
+        - [ ] 3.1.1   GET /.well-known/matrix/server
+    - [ ] 3.2   Server implementation
+        - [ ] 3.2.1   GET /_matrix/federation/v1/version
+    - [ ] 3.3   Retrieving server keys
+        - [ ] 3.3.1   Publishing Keys
+            - [ ] 3.3.1.1   GET /_matrix/key/v2/server/{keyId}
+        - [ ] 3.3.2   Querying Keys Through Another Server
+            - [ ] 3.3.2.1   GET /_matrix/key/v2/query/{serverName}/{keyId}
+            - [ ] 3.3.2.2   POST /_matrix/key/v2/query
+- [ ] 4   Authentication
+    - [ ] 4.1   Request Authentication
+    - [ ] 4.2   Response Authentication
+    - [ ] 4.3   Client TLS Certificates
+- [ ] 5   Transactions
+    - [ ] 5.1   PUT /_matrix/federation/v1/send/{txnId}
+- [ ] 6   PDUs
+    - [ ] 6.1   Checks performed on receipt of a PDU
+        - [ ] 6.1.1   Definitions
+        - [ ] 6.1.2   Authorization rules
+            - [ ] 6.1.2.1   Auth events selection
+        - [ ] 6.1.3   Rejection
+        - [ ] 6.1.4   Soft failure
+        - [ ] 6.1.5   Retrieving event authorization information
+            - [ ] 6.1.5.1   GET /_matrix/federation/v1/event_auth/{roomId}/{eventId}
+- [ ] 7   EDUs
+    - [ ] 7.1   Ephemeral Data Unit schema
+- [ ] 8   Room State Resolution
+- [ ] 9   Backfilling and retrieving missing events
+    - [ ] 9.1   GET /_matrix/federation/v1/backfill/{roomId}
+    - [ ] 9.2   POST /_matrix/federation/v1/get_missing_events/{roomId}
+- [ ] 10   Retrieving events
+    - [ ] 10.1   GET /_matrix/federation/v1/state/{roomId}
+    - [ ] 10.2   GET /_matrix/federation/v1/state_ids/{roomId}
+    - [ ] 10.3   GET /_matrix/federation/v1/event/{eventId}
+- [ ] 11   Joining Rooms
+    - [ ] 11.1   GET /_matrix/federation/v1/make_join/{roomId}/{userId}
+    - [ ] 11.2   PUT /_matrix/federation/v1/send_join/{roomId}/{eventId}
+    - [ ] 11.3   PUT /_matrix/federation/v2/send_join/{roomId}/{eventId}
+- [ ] 12   Inviting to a room
+    - [ ] 12.1   PUT /_matrix/federation/v1/invite/{roomId}/{eventId}
+    - [ ] 12.2   PUT /_matrix/federation/v2/invite/{roomId}/{eventId}
+- [ ] 13   Leaving Rooms (Rejecting Invites)
+    - [ ] 13.1   GET /_matrix/federation/v1/make_leave/{roomId}/{userId}
+    - [ ] 13.2   PUT /_matrix/federation/v1/send_leave/{roomId}/{eventId}
+    - [ ] 13.3   PUT /_matrix/federation/v2/send_leave/{roomId}/{eventId}
+- [ ] 14   Third-party invites
+    - [ ] 14.1   Cases where an association exists for a third-party identifier
+    - [ ] 14.2   Cases where an association doesn't exist for a third-party identifier
+        - [ ] 14.2.1   PUT /_matrix/federation/v1/exchange_third_party_invite/{roomId}
+        - [ ] 14.2.2   PUT /_matrix/federation/v1/3pid/onbind
+        - [ ] 14.2.3   Verifying the invite
+- [ ] 15   Public Room Directory
+    - [ ] 15.1   GET /_matrix/federation/v1/publicRooms
+    - [ ] 15.2   POST /_matrix/federation/v1/publicRooms
+- [ ] 16   Typing Notifications
+    - [ ] 16.1   m.typing schema
+- [ ] 17   Presence
+    - [ ] 17.1   m.presence schema
+- [ ] 18   Receipts
+    - [ ] 18.1   m.receipt schema
+- [ ] 19   Querying for information
+    - [ ] 19.1   GET /_matrix/federation/v1/query/{queryType}
+    - [ ] 19.2   GET /_matrix/federation/v1/query/directory
+    - [ ] 19.3   GET /_matrix/federation/v1/query/profile
+- [ ] 20   OpenID
+    - [ ] 20.1   GET /_matrix/federation/v1/openid/userinfo
+- [ ] 21   Device Management
+    - [ ] 21.1   GET /_matrix/federation/v1/user/devices/{userId}
+    - [ ] 21.2   m.device_list_update schema
+- [ ] 22   End-to-End Encryption
+    - [ ] 22.1   POST /_matrix/federation/v1/user/keys/claim
+    - [ ] 22.2   POST /_matrix/federation/v1/user/keys/query
+- [ ] 23   Send-to-device messaging
+    - [ ] 23.1   m.direct_to_device schema
+- [ ] 24   Content Repository
+- [ ] 25   Server Access Control Lists (ACLs)
+- [ ] 26   Signing Events
+    - [ ] 26.1   Adding hashes and signatures to outgoing events
+    - [ ] 26.2   Validating hashes and signatures on received events
+    - [ ] 26.3   Calculating the reference hash for an event
+    - [ ] 26.4   Calculating the content hash for an event
+    - [ ] 26.5   Example code
+- [ ] 27   Security considerations
