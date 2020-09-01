@@ -1,0 +1,5 @@
+(executable
+ (name        matrix_server)
+ (public_name matrix-server)
+ (package     matrix-server)
+ (libraries matrix_ctos irmin-unix irmin-fs mirage-kv fmt.tty cmdliner logs logs.cli logs.fmt astring uuidm))
