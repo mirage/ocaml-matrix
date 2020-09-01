@@ -1,0 +1,4 @@
+(library
+ (name        json_encoding)
+ (public_name matrix-ctos.json_encoding)
+ (libraries   ezjsonm fmt logs logs.cli))
