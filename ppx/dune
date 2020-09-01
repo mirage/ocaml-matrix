@@ -1,0 +1,11 @@
+(library
+ (name ppx_deriver_accessor)
+ (modules ppx_deriver_accessor)
+ (kind ppx_deriver)
+ (libraries ppxlib fmt))
+
+(library
+ (name ppx_rewriter_accessor)
+ (modules ppx_rewriter_accessor)
+ (kind ppx_rewriter)
+ (libraries ppxlib))
