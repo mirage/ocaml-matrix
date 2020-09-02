@@ -356,18 +356,29 @@ let read_markers =
       | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
       | Ok (Some username) ->
         let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
-        Store.set store Key.(v "rooms" / room_id / "ephemeral" / "fully_read" / username) (Request.get_fully_read request) >>=
-        (function
-          | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
-          | Ok () ->
-            let response =
-              Response.make ()
-            in
-            let response =
-              construct Response.encoding response |>
-              Ezjsonm.value_to_string
-            in
-            Lwt.return (`OK, response)))
+        match Request.get_fully_read request with
+        | Some fully_read ->
+          Store.set store Key.(v "rooms" / room_id / "ephemeral" / "fully_read" / username) fully_read >>=
+          (function
+            | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+            | Ok () ->
+              let response =
+                Response.make ()
+              in
+              let response =
+                construct Response.encoding response |>
+                Ezjsonm.value_to_string
+              in
+              Lwt.return (`OK, response))
+        | None ->
+          let response =
+            Response.make ()
+          in
+          let response =
+            construct Response.encoding response |>
+            Ezjsonm.value_to_string
+          in
+          Lwt.return (`OK, response))
   in
   needs_auth, f
 
@@ -985,7 +996,7 @@ let get_room_timeline room_id =
       | Error err -> Lwt.return_error err
       | Ok next_id ->
         match next_id with
-        | "" -> Lwt.return_ok acc
+        | "" -> Lwt.return_ok (id::acc)
         | next_id -> f (id::acc) next_id)
   in
   f [] "head" >>=

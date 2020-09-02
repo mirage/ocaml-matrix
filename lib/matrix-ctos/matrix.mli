@@ -1712,7 +1712,7 @@ sig
   module Request:
   sig
     type%accessor t =
-      { fully_read: string
+      { fully_read: string option (* see fully_read.ml *)
       ; read: string option
       ; hidden: bool option (* not in the documentation *)
       }
