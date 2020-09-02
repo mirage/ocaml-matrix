@@ -1294,6 +1294,18 @@ sig
           }
         val encoding: t encoding
       end
+      type t =
+        | Text of Text.t
+        | Emote of Emote.t
+        | Notice of Notice.t
+        | Image of Image.t
+        | File of File.t
+        | Audio of Audio.t
+        | Location of Location.t
+        | Video of Video.t
+        | Sticker of Sticker.t
+        | Server_notice of Server_notice.t
+      val encoding: t encoding
     end
     module Feedback:
     sig
@@ -1406,14 +1418,7 @@ sig
       end
     end
     type t =
-        Text of Message.Text.t
-      | Emote of Message.Emote.t
-      | Notice of Message.Notice.t
-      | Image of Message.Image.t
-      | File of Message.File.t
-      | Audio of Message.Audio.t
-      | Location of Message.Location.t
-      | Video of Message.Video.t
+      | Message of Message.t
       | Feedback of Feedback.t
       | Name of Name.t
       | Topic of Topic.t
@@ -1423,8 +1428,6 @@ sig
       | Candidates of Call.Candidates.t
       | Answer of Call.Answer.t
       | Hangup of Call.Hangup.t
-      | Sticker of Message.Sticker.t
-      | Server_notice of Message.Server_notice.t
     val encoding: t encoding
   end
   type%accessor t =
@@ -1696,16 +1699,9 @@ sig
   module Get:
   sig
     module Query: Empty.QUERY
-    val path: string -> string
-    module Request:
-    sig
-      type%accessor t =
-        { user_id: string
-        ; filter_id: string
-        }
-      val encoding: t encoding
-    end
+    val path: string -> string -> string
     module Response = Filter
+    val needs_auth: bool
   end
 end
 
@@ -2929,7 +2925,7 @@ sig
       module Request:
       sig
         type%accessor t =
-          { event: Message_event.Message_event.t
+          { event: Message_event.Message_event.Message.t
           }
         val encoding: t encoding
       end

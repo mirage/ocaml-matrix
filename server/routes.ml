@@ -94,6 +94,12 @@ let user =
         ~paths:
           [ ("filter"
             , node
+                ~variable:
+                  (node
+                    ~meths:
+                      [ `GET, Endpoint.filter_get
+                      ]
+                    ())
                 ~meths:
                   [ `POST, Endpoint.filter_post
                   ]
@@ -104,6 +110,7 @@ let user =
                   (node
                     ~meths:
                       [ `GET, Endpoint.account_data
+                      ; `PUT, Endpoint.placeholder
                       ]
                     ())
                 ())

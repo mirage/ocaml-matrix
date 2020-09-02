@@ -180,30 +180,9 @@ module Get =
 struct
   module Query = Empty.Query
 
-  let path user_id = "/_matrix/client/r0/user/" ^ user_id ^ "/filter"
-
-  module Request =
-  struct
-    type t =
-      { user_id: string
-      ; filter_id: string
-      } [@@deriving accessor]
-
-    let encoding =
-      let to_tuple t =
-        t.user_id, t.filter_id
-      in
-      let of_tuple v =
-        let user_id, filter_id = v in
-        { user_id; filter_id }
-      in
-      let with_tuple =
-        obj2
-          (req "user_id" string)
-          (req "filter_id" string)
-      in
-      conv to_tuple of_tuple with_tuple
-  end
+  let path user_id filter_id = "/_matrix/client/r0/user/" ^ user_id ^ "/filter/" ^ filter_id
 
   module Response = Filter
+
+  let needs_auth = true
 end

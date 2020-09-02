@@ -236,6 +236,21 @@ let filter_post =
   in
   needs_auth, f
 
+let filter_get =
+  let open Filter.Get in
+  let f (((), _user_id), _filter_id) _ _ _ =
+    let response =
+      Response.make
+        ()
+    in
+    let response =
+      construct Response.encoding response|>
+      Ezjsonm.value_to_string
+    in
+    (`OK, response) |> Lwt.return
+  in
+  needs_auth, f
+
 let sync =
   let open Sync in
   let f () _ query token =

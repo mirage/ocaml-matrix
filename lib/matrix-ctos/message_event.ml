@@ -14,15 +14,14 @@ struct
 
       let encoding =
         let to_tuple t =
-          (), t.body, t.format, t.formatted_body
+          t.body, t.format, t.formatted_body
         in
         let of_tuple v =
-          let (), body, format, formatted_body = v in
+          let body, format, formatted_body = v in
           { body; format; formatted_body }
         in
         let with_tuple =
-          obj4
-            (req "msgtype" (constant "m.text"))
+          obj3
             (req "body" string)
             (opt "format" string)
             (opt "formatted_body" string)
@@ -40,15 +39,14 @@ struct
 
       let encoding =
         let to_tuple t =
-          (), t.body, t.format, t.formatted_body
+          t.body, t.format, t.formatted_body
         in
         let of_tuple v =
-          let (), body, format, formatted_body = v in
+          let body, format, formatted_body = v in
           { body; format; formatted_body }
         in
         let with_tuple =
-          obj4
-            (req "msgtype" (constant "m.emote"))
+          obj3
             (req "body" string)
             (opt "format" string)
             (opt "formatted_body" string)
@@ -64,15 +62,14 @@ struct
 
       let encoding =
         let to_tuple t =
-          (), t.body
+          t.body
         in
         let of_tuple v =
-          let (), body = v in
+          let body = v in
           { body }
         in
         let with_tuple =
-          obj2
-            (req "msgtype" (constant "m.notice"))
+          obj1
             (req "body" string)
         in
         conv to_tuple of_tuple with_tuple
@@ -89,15 +86,14 @@ struct
 
       let encoding =
         let to_tuple t =
-          (), t.body, t.info, t.url, t.file
+          t.body, t.info, t.url, t.file
         in
         let of_tuple v =
-          let (), body, info, url, file = v in
+          let body, info, url, file = v in
           { body; info; url; file }
         in
         let with_tuple =
-          obj5
-            (req "msgtype" (constant "m.image"))
+          obj4
             (req "body" string)
             (opt "info" Image_info.encoding)
             (req "url" string)
@@ -118,15 +114,14 @@ struct
 
       let encoding =
         let to_tuple t =
-          (), t.body, t.filename, t.info, t.url, t.file
+          t.body, t.filename, t.info, t.url, t.file
         in
         let of_tuple v =
-          let (), body, filename, info, url, file = v in
+          let body, filename, info, url, file = v in
           { body; filename; info; url; file }
         in
         let with_tuple =
-          obj6
-            (req "msgtype" (constant "m.file"))
+          obj5
             (req "body" string)
             (opt "filename" string)
             (opt "info" File_info.encoding)
@@ -147,15 +142,14 @@ struct
 
       let encoding =
         let to_tuple t =
-          (), t.body, t.info, t.url, t.file
+          t.body, t.info, t.url, t.file
         in
         let of_tuple v =
-          let (), body, info, url, file = v in
+          let body, info, url, file = v in
           { body; info; url; file }
         in
         let with_tuple =
-          obj5
-            (req "msgtype" (constant "m.audio"))
+          obj4
             (req "body" string)
             (opt "info" Audio_info.encoding)
             (req "url" string)
@@ -174,15 +168,14 @@ struct
 
       let encoding =
         let to_tuple t =
-          (), t.body, t.info, t.geo_uri
+          t.body, t.info, t.geo_uri
         in
         let of_tuple v =
-          let (), body, info, geo_uri = v in
+          let body, info, geo_uri = v in
           { body; info; geo_uri }
         in
         let with_tuple =
-          obj4
-            (req "msgtype" (constant "m.location"))
+          obj3
             (req "body" string)
             (opt "info" Location_info.encoding)
             (req "geo_uri" string)
@@ -201,15 +194,14 @@ struct
 
       let encoding =
         let to_tuple t =
-          (), t.body, t.info, t.url, t.file
+          t.body, t.info, t.url, t.file
         in
         let of_tuple v =
-          let (), body, info, url, file = v in
+          let body, info, url, file = v in
           { body; info; url; file }
         in
         let with_tuple =
-          obj5
-            (req "msgtype" (constant "m.video"))
+          obj4
             (req "body" string)
             (opt "info" Video_info.encoding)
             (req "url" string)
@@ -218,7 +210,7 @@ struct
         conv to_tuple of_tuple with_tuple
     end
 
-    module Sticker =
+    module Sticker = (* Might not be at the good place: Should be taken out of message *)
     struct
       type t =
         { body: string
@@ -254,15 +246,14 @@ struct
 
       let encoding =
         let to_tuple t =
-          (), t.body, t.server_notice_type, t.admin_contact, t.limit_type
+          t.body, t.server_notice_type, t.admin_contact, t.limit_type
         in
         let of_tuple v =
-          let (), body, server_notice_type, admin_contact, limit_type = v in
+          let body, server_notice_type, admin_contact, limit_type = v in
           { body; server_notice_type; admin_contact; limit_type }
         in
         let with_tuple =
-          obj5
-            (req "msgtype" (constant "m.server_notice"))
+          obj4
             (req "body" string)
             (req "server_notice_type" string)
             (opt "admin_contact" string)
@@ -270,6 +261,53 @@ struct
         in
         conv to_tuple of_tuple with_tuple
     end
+
+    type t =
+      | Text of Text.t
+      | Emote of Emote.t
+      | Notice of Notice.t
+      | Image of Image.t
+      | File of File.t
+      | Audio of Audio.t
+      | Location of Location.t
+      | Video of Video.t
+      | Sticker of Sticker.t
+      | Server_notice of Server_notice.t
+
+    let encoding =
+      let to_tuple t =
+        let get_type = function
+          | Text _ -> "m.text"
+          | Emote _ -> "m.emote"
+          | Notice _ -> "m.notice"
+          | Image _ -> "m.image"
+          | File _ -> "m.file"
+          | Audio _ -> "m.audio"
+          | Location _ -> "m.location"
+          | Video _ -> "m.video"
+          | Sticker _ -> "m.sticker"
+          | Server_notice _ -> "m.server_notice"
+        in
+        get_type t, t
+      in
+      let of_tuple v =
+        let _, t = v in t
+      in
+      let with_tuple =
+      cond
+        (obj1 (req "msgtype" string))
+        [ "m.text", case Text.encoding (function Text t -> Some t | _ -> None) (fun t -> Text t)
+        ; "m.emote", case Emote.encoding (function Emote t -> Some t | _ -> None) (fun t -> Emote t)
+        ; "m.notice", case Notice.encoding (function Notice t -> Some t | _ -> None) (fun t -> Notice t)
+        ; "m.image", case Image.encoding (function Image t -> Some t | _ -> None) (fun t -> Image t)
+        ; "m.file", case File.encoding (function File t -> Some t | _ -> None) (fun t -> File t)
+        ; "m.audio", case Audio.encoding (function Audio t -> Some t | _ -> None) (fun t -> Audio t)
+        ; "m.location", case Location.encoding (function Location t -> Some t | _ -> None) (fun t -> Location t)
+        ; "m.video", case Video.encoding (function Video t -> Some t | _ -> None) (fun t -> Video t)
+        ; "m.sticker", case Sticker.encoding (function Sticker t -> Some t | _ -> None) (fun t -> Sticker t)
+        ; "m.server_notice", case Server_notice.encoding (function Server_notice t -> Some t | _ -> None) (fun t -> Server_notice t) ]
+      in
+        conv to_tuple of_tuple with_tuple
   end
 
   module Feedback =
@@ -580,14 +618,7 @@ struct
   end
 
   type t =
-    | Text of Message.Text.t
-    | Emote of Message.Emote.t
-    | Notice of Message.Notice.t
-    | Image of Message.Image.t
-    | File of Message.File.t
-    | Audio of Message.Audio.t
-    | Location of Message.Location.t
-    | Video of Message.Video.t
+    | Message of Message.t
     | Feedback of Feedback.t
     | Name of Name.t
     | Topic of Topic.t
@@ -597,85 +628,42 @@ struct
     | Candidates of Call.Candidates.t
     | Answer of Call.Answer.t
     | Hangup of Call.Hangup.t
-    | Sticker of Message.Sticker.t
-    | Server_notice of Message.Server_notice.t
 
   let encoding =
-    union
-      [ case Message.Text.encoding (function Text t -> Some t | _ -> None) (fun t -> Text t)
-      ; case Message.Emote.encoding (function Emote t -> Some t | _ -> None) (fun t -> Emote t)
-      ; case Message.Notice.encoding (function Notice t -> Some t | _ -> None) (fun t -> Notice t)
-      ; case Message.Image.encoding (function Image t -> Some t | _ -> None) (fun t -> Image t)
-      ; case Message.File.encoding (function File t -> Some t | _ -> None) (fun t -> File t)
-      ; case Message.Audio.encoding (function Audio t -> Some t | _ -> None) (fun t -> Audio t)
-      ; case Message.Location.encoding (function Location t -> Some t | _ -> None) (fun t -> Location t)
-      ; case Message.Video.encoding (function Video t -> Some t | _ -> None) (fun t -> Video t)
-      ; case Feedback.encoding (function Feedback t -> Some t | _ -> None) (fun t -> Feedback t)
-      ; case Name.encoding (function Name t -> Some t | _ -> None) (fun t -> Name t)
-      ; case Topic.encoding (function Topic t -> Some t | _ -> None) (fun t -> Topic t)
-      ; case Avatar.encoding (function Avatar t -> Some t | _ -> None) (fun t -> Avatar t)
-      ; case Pinned_events.encoding (function Pinned t -> Some t | _ -> None) (fun t -> Pinned t)
-      ; case Call.Invite.encoding (function Invite t -> Some t | _ -> None) (fun t -> Invite t)
-      ; case Call.Candidates.encoding (function Candidates t -> Some t | _ -> None) (fun t -> Candidates t)
-      ; case Call.Answer.encoding (function Answer t -> Some t | _ -> None) (fun t -> Answer t)
-      ; case Call.Hangup.encoding (function Hangup t -> Some t | _ -> None) (fun t -> Hangup t)
-      ; case Message.Sticker.encoding (function Sticker t -> Some t | _ -> None) (fun t -> Sticker t)
-      ; case Message.Server_notice.encoding (function Server_notice t -> Some t | _ -> None) (fun t -> Server_notice t) ]
-end
-
-let encoding =
-  let open Message_event in
-  let to_tuple t =
-    let get_type = function
-      | Text _ -> "m.text"
-      | Emote _ -> "m.emote"
-      | Notice _ -> "m.notice"
-      | Image _ -> "m.image"
-      | File _ -> "m.file"
-      | Audio _ -> "m.audio"
-      | Location _ -> "m.location"
-      | Video _ -> "m.video"
-      | Feedback _ -> "m.room.message.feedback"
-      | Name _ -> "m.room.name"
-      | Topic _ -> "m.room.topic"
-      | Avatar _ -> "m.room.avatar"
-      | Pinned _ -> "m.room.pinned_events"
-      | Invite _ -> "m.call.invite"
-      | Candidates _ -> "m.call.candidates"
-      | Answer _ -> "m.call.answer"
-      | Hangup _ -> "m.call.hangup"
-      | Sticker _ -> "m.sticker"
-      | Server_notice _ -> "m.room.message"
+    let to_tuple t =
+      let get_type = function
+        | Message _ -> "m.room.message"
+        | Feedback _ -> "m.room.message.feedback"
+        | Name _ -> "m.room.name"
+        | Topic _ -> "m.room.topic"
+        | Avatar _ -> "m.room.avatar"
+        | Pinned _ -> "m.room.pinned_events"
+        | Invite _ -> "m.call.invite"
+        | Candidates _ -> "m.call.candidates"
+        | Answer _ -> "m.call.answer"
+        | Hangup _ -> "m.call.hangup"
+      in
+      get_type t, t
     in
-    get_type t, t
-  in
-  let of_tuple v =
-    let _, t = v in t
-  in
-  let with_tuple =
-  cond
-    (obj1 (req "type" string))
-    [ "m.text", case (Content.content Message.Text.encoding) (function Text t -> Some t | _ -> None) (fun t -> Text t)
-    ; "m.emote", case (Content.content Message.Emote.encoding) (function Emote t -> Some t | _ -> None) (fun t -> Emote t)
-    ; "m.notice", case (Content.content Message.Notice.encoding) (function Notice t -> Some t | _ -> None) (fun t -> Notice t)
-    ; "m.image", case (Content.content Message.Image.encoding) (function Image t -> Some t | _ -> None) (fun t -> Image t)
-    ; "m.file", case (Content.content Message.File.encoding) (function File t -> Some t | _ -> None) (fun t -> File t)
-    ; "m.audio", case (Content.content Message.Audio.encoding) (function Audio t -> Some t | _ -> None) (fun t -> Audio t)
-    ; "m.location", case (Content.content Message.Location.encoding) (function Location t -> Some t | _ -> None) (fun t -> Location t)
-    ; "m.video", case (Content.content Message.Video.encoding) (function Video t -> Some t | _ -> None) (fun t -> Video t)
-    ; "m.room.message.feedback", case (Content.content Feedback.encoding) (function Feedback t -> Some t | _ -> None) (fun t -> Feedback t)
-    ; "m.room.name", case (Content.content Name.encoding) (function Name t -> Some t | _ -> None) (fun t -> Name t)
-    ; "m.room.topic", case (Content.content Topic.encoding) (function Topic t -> Some t | _ -> None) (fun t -> Topic t)
-    ; "m.room.avatar", case (Content.content Avatar.encoding) (function Avatar t -> Some t | _ -> None) (fun t -> Avatar t)
-    ; "m.room.pinned_events", case (Content.content Pinned_events.encoding) (function Pinned t -> Some t | _ -> None) (fun t -> Pinned t)
-    ; "m.call.invite", case (Content.content Call.Invite.encoding) (function Invite t -> Some t | _ -> None) (fun t -> Invite t)
-    ; "m.call.candidates", case (Content.content Call.Candidates.encoding) (function Candidates t -> Some t | _ -> None) (fun t -> Candidates t)
-    ; "m.call.answer", case (Content.content Call.Answer.encoding) (function Answer t -> Some t | _ -> None) (fun t -> Answer t)
-    ; "m.call.hangup", case (Content.content Call.Hangup.encoding) (function Hangup t -> Some t | _ -> None) (fun t -> Hangup t)
-    ; "m.sticker", case (Content.content Message.Sticker.encoding) (function Sticker t -> Some t | _ -> None) (fun t -> Sticker t)
-    ; "m.room.message", case (Content.content Message.Server_notice.encoding) (function Server_notice t -> Some t | _ -> None) (fun t -> Server_notice t) ]
-  in
-  conv to_tuple of_tuple with_tuple
+    let of_tuple v =
+      let _, t = v in t
+    in
+    let with_tuple =
+    cond
+      (obj1 (req "type" string))
+      [ "m.room.message", case (Content.content Message.encoding) (function Message t -> Some t | _ -> None) (fun t -> Message t)
+      ; "m.room.message.feedback", case (Content.content Feedback.encoding) (function Feedback t -> Some t | _ -> None) (fun t -> Feedback t)
+      ; "m.room.name", case (Content.content Name.encoding) (function Name t -> Some t | _ -> None) (fun t -> Name t)
+      ; "m.room.topic", case (Content.content Topic.encoding) (function Topic t -> Some t | _ -> None) (fun t -> Topic t)
+      ; "m.room.avatar", case (Content.content Avatar.encoding) (function Avatar t -> Some t | _ -> None) (fun t -> Avatar t)
+      ; "m.room.pinned_events", case (Content.content Pinned_events.encoding) (function Pinned t -> Some t | _ -> None) (fun t -> Pinned t)
+      ; "m.call.invite", case (Content.content Call.Invite.encoding) (function Invite t -> Some t | _ -> None) (fun t -> Invite t)
+      ; "m.call.candidates", case (Content.content Call.Candidates.encoding) (function Candidates t -> Some t | _ -> None) (fun t -> Candidates t)
+      ; "m.call.answer", case (Content.content Call.Answer.encoding) (function Answer t -> Some t | _ -> None) (fun t -> Answer t)
+      ; "m.call.hangup", case (Content.content Call.Hangup.encoding) (function Hangup t -> Some t | _ -> None) (fun t -> Hangup t) ]
+    in
+    conv to_tuple of_tuple with_tuple
+end
 
 type t =
   { event: Message_event.t
@@ -698,7 +686,7 @@ let encoding =
   in
   let with_tuple =
     merge_objs
-      encoding
+      Message_event.encoding
       (obj7
         (req "event_id" string)
         (req "sender" string)

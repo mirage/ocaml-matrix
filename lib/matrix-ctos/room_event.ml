@@ -234,7 +234,7 @@ struct
     module Request =
     struct
       type t =
-        { event: Message_event.Message_event.t
+        { event: Message_event.Message_event.Message.t
         } [@@deriving accessor]
 
       let encoding =
@@ -246,7 +246,7 @@ struct
           { event }
         in
         let with_tuple =
-          Message_event.Message_event.encoding
+          Message_event.Message_event.Message.encoding
         in
         conv to_tuple of_tuple with_tuple
     end

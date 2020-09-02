@@ -927,7 +927,8 @@ let send_message =
         let message = Request.get_event request in
         let event =
           Message_event.make
-            ~event:message
+            ~event:
+              (Message_event.Message_event.Message message)
             ~event_id:id
             ~sender:user_id
             ~origin_server_ts:(time ())

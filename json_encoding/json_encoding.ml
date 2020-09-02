@@ -590,3 +590,12 @@ let rec print_error ppf = function
       print_error exn
   | exn ->
     Fmt.pf ppf "%a" Fmt.exn exn
+
+(* simply added to log directly the errors, should be done in the code *)
+let destruct e v =
+  try
+    destruct e v
+  with
+    | e ->
+      Logs.err (fun m -> m "Json exception: %a" print_error e);
+      raise e
