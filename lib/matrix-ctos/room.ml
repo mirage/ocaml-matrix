@@ -200,5 +200,7 @@ struct
 
   module Request = Empty.Json
 
+  module Response = Empty.Json
+
   let needs_auth = true
 end

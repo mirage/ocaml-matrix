@@ -631,7 +631,7 @@ struct
   let encoding =
     let to_tuple t =
       let get_type = function
-        | Aliases _ -> "m.room.aliases"
+        | Aliases _ -> "m.room.aliases" (* Historical event, should be ignored *)
         | Canonical_alias _ -> "m.room.canonical_alias"
         | Create _ -> "m.room.create"
         | Join_rules _ -> "m.room.join_rules"

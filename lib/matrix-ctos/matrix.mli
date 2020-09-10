@@ -3031,6 +3031,7 @@ sig
     module Query: Empty.QUERY
     val path: string -> string
     module Request: Empty.JSON
+    module Response: Empty.JSON
     val needs_auth: bool
   end
 end

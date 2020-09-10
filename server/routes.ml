@@ -349,7 +349,9 @@ let directory =
             ~variable:
               (node
                 ~meths:
-                  [ `GET, Room_endpoint.get_room_alias
+                  [ `PUT, Room_endpoint.Room_alias.put
+                  ; `GET, Room_endpoint.Room_alias.get
+                  ; `DELETE, Room_endpoint.Room_alias.delete
                   ]
                 ())
             ())

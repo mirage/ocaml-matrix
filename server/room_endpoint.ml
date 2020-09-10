@@ -489,22 +489,81 @@ let public_rooms =
   in
   needs_auth, f
 
-let get_room_alias =
-  let open Room.Resolve_alias in
-  let f ((), alias) _ _ _ =
-    let response =
-      Response.make
-        ?room_id:None
-        ?servers:None
-        ()
+module Room_alias =
+struct
+  let put =
+    let open Room.Create_alias in
+    let f ((), alias) request _ _ =
+      let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
+      let room_id = Request.get_room_id request in
+      Store.exists store Key.(v "room_aliases" / alias) >>=
+      (function
+        | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+        | Ok (Some _) -> Lwt.return (`Bad_request, error "M_UNKNOWN" (Fmt.str "Room alias %s already exists." alias))
+        | Ok (None) ->
+          Store.set store Key.(v "room_aliases" / alias) room_id >>=
+          (function
+            | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+            | Ok () ->
+              let response =
+                Response.make
+                  ()
+              in
+              let response =
+                construct Response.encoding response |>
+                Ezjsonm.value_to_string
+              in
+              Lwt.return (`OK, response)))
     in
-    let _response =
-      construct Response.encoding response |>
-      Ezjsonm.value_to_string
+    needs_auth, f
+
+  let get =
+    let open Room.Resolve_alias in
+    let f ((), alias) _ _ _ =
+      Store.get store Key.(v "room_aliases" / alias) >>=
+      (function
+        | Error (`Not_found _) -> Lwt.return (`Not_found, error "M_NOT_FOUND" (Fmt.str "Room alias %s not found." alias))
+        | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+        | Ok room_id ->
+          let response =
+            Response.make
+              ~room_id:room_id
+              ~servers:[Const.homeserver] (* Need to add other servers *)
+              ()
+          in
+          let response =
+            construct Response.encoding response |>
+            Ezjsonm.value_to_string
+          in
+          Lwt.return (`OK, response))
     in
-    Lwt.return (`Not_found, error "M_NOT_FOUND" (Fmt.str "Room alias %s not found." alias))
-  in
-  needs_auth, f
+    needs_auth, f
+
+  let delete =
+    let open Room.Delete_alias in
+    let f ((), alias) _ _ _ =
+      (* Check that the user has the rights to remove this alias *)
+      Store.exists store Key.(v "room_aliases" / alias) >>=
+      (function
+        | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+        | Ok None -> Lwt.return (`Not_found, error "M_NOT_FOUND" (Fmt.str "Room alias %s not found." alias))
+        | Ok (Some _) ->
+          Store.remove store Key.(v "room_aliases" / alias) >>=
+          (function
+            | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+            | Ok () ->
+              let response =
+                Response.make
+                  ()
+              in
+              let response =
+                construct Response.encoding response |>
+                Ezjsonm.value_to_string
+              in
+              Lwt.return (`OK, response)))
+    in
+    needs_auth, f
+end
 
 let invite_to_room =
   let open Joining.Invite in
