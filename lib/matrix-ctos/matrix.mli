@@ -550,7 +550,8 @@ sig
     module Canonical_alias:
     sig
       type%accessor t =
-        { alias: string
+        { alias: string option option
+        ; alt_aliases: string list option
         }
       val encoding: t encoding
     end
@@ -1580,6 +1581,7 @@ sig
       | Avatar of Avatar.t
       | Pinned_events of Pinned_events.t
     val encoding: t encoding
+    val of_room_event: Room_events.Room_event.t -> string -> t
   end
   type%accessor t =
     { event: State_event.t
@@ -2836,6 +2838,7 @@ sig
         type t = Repr.value
         val encoding: t encoding
       end
+      val needs_auth: bool
     end
     module State:
     sig

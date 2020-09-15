@@ -25,6 +25,12 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key e = e.homeserver
+
+    let of_room_event event state_key =
+      make
+        ~event
+        ~homeserver:state_key
+        ()
   end
 
   module Canonical_alias =
@@ -49,6 +55,11 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key _ = ""
+
+    let of_room_event event _state_key =
+      make
+        ~event
+        ()
   end
 
   module Create =
@@ -73,6 +84,11 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key _ = ""
+
+    let of_room_event event _state_key =
+      make
+        ~event
+        ()
   end
 
   module Join_rules =
@@ -97,6 +113,11 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key _ = ""
+
+    let of_room_event event _state_key =
+      make
+        ~event
+        ()
   end
 
   module Member =
@@ -122,6 +143,12 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key e = e.user_id
+
+    let of_room_event event state_key =
+      make
+        ~event
+        ~user_id:state_key
+        ()
   end
 
   module Power_levels =
@@ -146,6 +173,11 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key _ = ""
+
+    let of_room_event event _state_key =
+      make
+        ~event
+        ()
   end
 
   module History_visibility =
@@ -170,6 +202,11 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key _ = ""
+
+    let of_room_event event _state_key =
+      make
+        ~event
+        ()
   end
 
   module Third_party_invite =
@@ -195,6 +232,12 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key e = e.to_sign
+
+    let of_room_event event state_key =
+      make
+        ~event
+        ~to_sign:state_key
+        ()
   end
 
   module Guest_access =
@@ -219,6 +262,11 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key _ = ""
+
+    let of_room_event event _state_key =
+      make
+        ~event
+        ()
   end
 
   module Server_acl =
@@ -243,6 +291,11 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key _ = ""
+
+    let of_room_event event _state_key =
+      make
+        ~event
+        ()
   end
 
   module Tombstone =
@@ -267,6 +320,11 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key _ = ""
+
+    let of_room_event event _state_key =
+      make
+        ~event
+        ()
   end
 
   module Encryption =
@@ -291,6 +349,11 @@ struct
       conv to_tuple of_tuple with_tuple
 
     let get_state_key _ = ""
+
+    let of_room_event event _state_key =
+      make
+        ~event
+        ()
   end
 
   module Name =
@@ -471,6 +534,22 @@ struct
     | Topic e -> Topic.get_state_key e
     | Avatar e -> Avatar.get_state_key e
     | Pinned_events e -> Pinned_events.get_state_key e
+
+  let of_room_event (event: Room_events.Room_event.t) state_key =
+    match event with
+    | Aliases e -> Aliases (Aliases.of_room_event e state_key)
+    | Canonical_alias e -> Canonical_alias (Canonical_alias.of_room_event e state_key)
+    | Create e -> Create (Create.of_room_event e state_key)
+    | Join_rules e -> Join_rules (Join_rules.of_room_event e state_key)
+    | Member e -> Member (Member.of_room_event e state_key)
+    | Power_levels e -> Power_levels (Power_levels.of_room_event e state_key)
+    | History_visibility e -> History_visibility (History_visibility.of_room_event e state_key)
+    | Third_party_invite e -> Third_party_invite (Third_party_invite.of_room_event e state_key)
+    | Guest_access e -> Guest_access (Guest_access.of_room_event e state_key)
+    | Server_acl e -> Server_acl (Server_acl.of_room_event e state_key)
+    | Tombstone e -> Tombstone (Tombstone.of_room_event e state_key)
+    | Encryption e -> Encryption (Encryption.of_room_event e state_key)
+    | Encrypted _ -> assert false
 end
 
 type t =

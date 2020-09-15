@@ -29,6 +29,8 @@ struct
 
       let encoding = any
     end
+
+    let needs_auth = true
   end
 
   module State =

@@ -230,7 +230,7 @@ let rooms =
           [ ("members"
             , node
                 ~meths:
-                  [ `GET, Room_endpoint.room_members
+                  [ `GET, Room_endpoint.Events.Get.members
                   ]
                 ())
           ; ("typing"
@@ -251,43 +251,43 @@ let rooms =
           ; ("invite"
             , node
                 ~meths:
-                  [ `POST, Room_endpoint.invite_to_room
+                  [ `POST, Room_endpoint.Membership.invite
                   ]
                 ())
           ; ("join"
             , node
                 ~meths:
-                  [ `POST, Room_endpoint.join_room
+                  [ `POST, Room_endpoint.Membership.join
                   ]
                 ())
           ; ("leave"
             , node
                 ~meths:
-                  [ `POST, Room_endpoint.leave_room
+                  [ `POST, Room_endpoint.Membership.leave
                   ]
                 ())
           ; ("forget"
             , node
                 ~meths:
-                  [ `POST, Room_endpoint.forget_room
+                  [ `POST, Room_endpoint.Membership.forget
                   ]
                 ())
           ; ("kick"
             , node
                 ~meths:
-                  [ `POST, Room_endpoint.kick_room
+                  [ `POST, Room_endpoint.Membership.kick
                   ]
                 ())
           ; ("ban"
             , node
                 ~meths:
-                  [ `POST, Room_endpoint.ban_room
+                  [ `POST, Room_endpoint.Membership.ban
                   ]
                 ())
           ; ("unban"
             , node
                 ~meths:
-                  [ `POST, Room_endpoint.unban_room
+                  [ `POST, Room_endpoint.Membership.unban
                   ]
                 ())
           ; ("initialSync"
@@ -303,7 +303,20 @@ let rooms =
                     ~variable:
                       (node
                         ~meths:
-                          [ `PUT, Room_endpoint.send_message
+                          [ `PUT, Room_endpoint.Events.Put.send_message
+                          ]
+                        ())
+                    ())
+                ())
+          ; ("state"
+            , node
+                ~variable:
+                  (node
+                    ~variable:
+                      (node
+                        ~meths:
+                          [ `GET, Room_endpoint.Events.Get.state
+                          ; `PUT, Room_endpoint.Events.Put.state
                           ]
                         ())
                     ())
@@ -317,7 +330,7 @@ let join =
     ~variable:
       (node
         ~meths:
-          [ `POST, Room_endpoint.join_room
+          [ `POST, Room_endpoint.Membership.join
           ]
         ())
     ()
@@ -325,7 +338,7 @@ let join =
 let public_rooms =
   node
     ~meths:
-      [ `POST, Room_endpoint.public_rooms
+      [ `POST, Room_endpoint.Listing.public_rooms
       ]
     ()
 
@@ -354,6 +367,21 @@ let directory =
                   ; `DELETE, Room_endpoint.Room_alias.delete
                   ]
                 ())
+            ())
+      ; ("list"
+        , node
+            ~paths:
+              [ ("room"
+                , node
+                    ~variable:
+                      (node
+                        ~meths:
+                          [ `GET, Room_endpoint.Listing.get_visibility
+                          ; `PUT, Room_endpoint.Listing.set_visibility
+                          ]
+                        ())
+                    ())
+              ]
             ())
       ]
     ()

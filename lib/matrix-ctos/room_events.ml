@@ -72,21 +72,22 @@ struct
   module Canonical_alias =
   struct
     type t =
-      { alias: string
+      { alias: string option option
+      ; alt_aliases: string list option
       } [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        t.alias
+        t.alias, t.alt_aliases
       in
       let of_tuple v =
-        let alias = v in
-        {alias}
+        let alias, alt_aliases = v in
+        {alias; alt_aliases}
       in
       let with_tuple =
-        (obj1
-          (req "alias"
-            string))
+        (obj2
+          (opt "alias" Null.string)
+          (opt "alt_aliases" (list string)))
       in
       conv to_tuple of_tuple with_tuple
   end

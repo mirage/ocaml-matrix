@@ -2,7 +2,7 @@ open Matrix_ctos
 open Json_encoding
 open Store
 open Lwt.Infix
-open Helper
+open Helpers
 
 let placeholder = placeholder
 
@@ -266,7 +266,7 @@ let sync =
         in
         Lwt_unix.sleep (timeout /. 1000. /. 5.) >>=
         (fun () ->
-          Room_endpoint.get_rooms user_id >>=
+          Room_helpers.get_rooms user_id >>=
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
             | Ok (joined_rooms, invited_rooms, leaved_rooms) ->
