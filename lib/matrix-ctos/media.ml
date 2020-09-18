@@ -148,7 +148,7 @@ struct
     let of_string thumbnail = { thumbnail }
   end
 
-  let needs_auth = true
+  let needs_auth = false
 end
 
 module Preview =

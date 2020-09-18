@@ -54,13 +54,13 @@ let login_post =
       let password = Authentication.Password.V2.get_password auth in
       (match id with
        | User user ->
-         let username = Identifier.User.get_user user in
-         Store.exists store Key.(v "users" / username) >>=
+         let user_id = username_to_user_id (Identifier.User.get_user user) in
+         Store.exists store Key.(v "users" / user_id) >>=
          (function
            | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
            | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "")
            | Ok (Some _) ->
-             Store.get store Key.(v "users" / username / "password") >>=
+             Store.get store Key.(v "users" / user_id / "password") >>=
              (function
                | Ok pass ->
                  create_token
@@ -68,7 +68,7 @@ let login_post =
                       if pass = password then
                         let response =
                           Response.make
-                            ?user_id:(Some (username_to_user_id username))
+                            ?user_id:(Some user_id)
                             ?access_token:token
                             ?home_server:(Some Const.homeserver)
                             ?device_id:(Some "device_id")
@@ -82,7 +82,7 @@ let login_post =
                         Lwt.return (`OK, response)
                       else
                         Lwt.return (`Forbidden, error "M_FORBIDDEN" ""))
-                   username
+                   user_id
                | _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")))
        | _ ->
          (`Bad_request, error "M_UNKNOWN" "Bad identifier type") |> Lwt.return)
@@ -119,11 +119,11 @@ let register =
     let kind = List.assoc_opt "kind" query |> (Option.map List.hd) in
     match kind with
     | Some "guest" ->
-      let username = (Option.value (Request.get_username request) ~default:"default") in
+      let user_id = username_to_user_id (Option.value (Request.get_username request) ~default:"default") in
       let f token =
         let response =
           Response.make
-            ~user_id:(username_to_user_id username)
+            ~user_id
             ?access_token:token
             ~home_server:Const.homeserver
             ?device_id:(Some "device_id")
@@ -137,40 +137,45 @@ let register =
       in
       (match Request.get_inhibit_login request with
        | Some true -> f None
-       | _ -> create_token f username)
+       | _ -> create_token f user_id)
     | _ ->
       match Request.get_password request with
       | None ->
         (`Unauthorized, {|{"session": "MSoDYilSIFilglrBUmISKWQe", "flows": [{"stages": ["m.login.dummy"]}], "params": {}}|}) |> Lwt.return
       | Some password ->
         let username = Option.value (Request.get_username request) ~default:"default_user" in
-        Store.exists store Key.(v "users" / username) >>=
+        let user_id = username_to_user_id username in
+        Store.exists store Key.(v "users" / user_id) >>=
         (function
           | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
           | Ok (Some _) -> Lwt.return (`Bad_request, error "M_USER_IN_USE" "Desired user ID is already taken.")
           | Ok None ->
-            Store.set store Key.(v "users" / username / "password") password >>=
+            Store.set store Key.(v "users" / user_id / "password") password >>=
             (function
               | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
               | Ok () ->
-                let f token =
-                  let response =
-                    Response.make
-                      ~user_id:(username_to_user_id username)
-                      ?access_token:token
-                      ~home_server:Const.homeserver
-                      ?device_id:(Some "device_id")
-                      ()
-                  in
-                  let response =
-                    construct Response.encoding response|>
-                    Ezjsonm.value_to_string
-                  in
-                  Lwt.return (`OK, response)
-                in
-                (match Request.get_inhibit_login request with
-                 | Some true -> f None
-                 | _ -> create_token f username)))
+                Store.set store Key.(v "users" / user_id / "display_name") username >>=
+                (function
+                  | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+                  | Ok () ->
+                      let f token =
+                        let response =
+                          Response.make
+                            ~user_id:user_id
+                            ?access_token:token
+                            ~home_server:Const.homeserver
+                            ?device_id:(Some "device_id")
+                            ()
+                        in
+                        let response =
+                          construct Response.encoding response|>
+                          Ezjsonm.value_to_string
+                        in
+                        Lwt.return (`OK, response)
+                      in
+                      (match Request.get_inhibit_login request with
+                      | Some true -> f None
+                      | _ -> create_token f user_id))))
   in
   needs_auth, f
 
@@ -258,8 +263,7 @@ let sync =
     (function
       | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
       | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-      | Ok (Some username) ->
-        let user_id = username_to_user_id username in
+      | Ok (Some user_id) ->
         let timeout =
           let timeout = List.assoc_opt "timeout" query |> (Option.map List.hd) in
           Option.value ~default:"0" timeout |> float_of_string
@@ -331,21 +335,174 @@ let account_data =
   in
   needs_auth, f
 
-let profile_get =
-  let open Profile.Get in
-  let f ((), user_id) _ _ _ =
-    let response =
-      Response.make
-        ?displayname:(Some user_id)
-        ()
+module Profile =
+struct
+  module Displayname =
+  struct
+    let put =
+      let open Profile.Display_name.Set in
+      let f ((), user_id) request _ token =
+        get_logged_username token >>=
+        (function
+          | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+          | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
+          | Ok (Some token_user_id) ->
+            if user_id <> token_user_id
+            then
+              (`Forbidden, error "M_FORBIDDEN" "") |> Lwt.return
+            else
+              let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
+              let display_name = Request.get_displayname request in
+              (match display_name with
+              | None -> Lwt.return_ok ()
+              | Some display_name -> Store.set store Key.(v "users" / user_id / "display_name") display_name) >>=
+                (function
+                  | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+                  | Ok () ->
+                    let response =
+                      Response.make
+                        ()
+                    in
+                    let response =
+                      construct Response.encoding response |>
+                      Ezjsonm.value_to_string
+                    in
+                    (`OK, response) |> Lwt.return))
+      in
+      needs_auth, f
+
+    let get =
+      let open Profile.Display_name.Get in
+      let f ((), user_id) _ _ _ =
+        Store.exists store Key.(v "users" / user_id) >>=
+          (function
+            | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+            | Ok None -> Lwt.return (`Not_found, error "M_NOT_FOUND" (Fmt.str "User %s not found." user_id))
+            | Ok (Some _) ->
+              Store.get store Key.(v "users" / user_id / "display_name") >>=
+                (function
+                  | Error (`Not_found _) -> Lwt.return_ok None
+                  | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+                  | Ok display_name -> Lwt.return_ok (Some display_name)) >>=
+                  (function
+                    | Error e -> Lwt.return e
+                    | Ok displayname ->
+                      let response =
+                        Response.make
+                          ?displayname
+                          ()
+                      in
+                      let response =
+                        construct Response.encoding response |>
+                        Ezjsonm.value_to_string
+                      in
+                      (`OK, response) |> Lwt.return))
+      in
+      needs_auth, f
+  end
+
+  module Avatar_url =
+  struct
+    let put =
+      let open Profile.Avatar_url.Set in
+      let f ((), user_id) request _ token =
+        get_logged_username token >>=
+        (function
+          | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+          | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
+          | Ok (Some token_user_id) ->
+            if user_id <> token_user_id
+            then
+              (`Forbidden, error "M_FORBIDDEN" "") |> Lwt.return
+            else
+              let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
+              let avatar_url = Request.get_avatar_url request in
+              (match avatar_url with
+              | None -> Lwt.return_ok ()
+              | Some avatar_url -> Store.set store Key.(v "users" / user_id / "avatar_url") avatar_url) >>=
+                (function
+                  | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+                  | Ok () ->
+                    let response =
+                      Response.make
+                        ()
+                    in
+                    let response =
+                      construct Response.encoding response |>
+                      Ezjsonm.value_to_string
+                    in
+                    (`OK, response) |> Lwt.return))
+      in
+      needs_auth, f
+
+    let get =
+      let open Profile.Avatar_url.Get in
+      let f ((), user_id) _ _ _ =
+        Store.exists store Key.(v "users" / user_id) >>=
+          (function
+            | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+            | Ok None -> Lwt.return (`Not_found, error "M_NOT_FOUND" (Fmt.str "User %s not found." user_id))
+            | Ok (Some _) ->
+              Store.get store Key.(v "users" / user_id / "avatar_url") >>=
+                (function
+                  | Error (`Not_found _) -> Lwt.return_ok None
+                  | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+                  | Ok avatar_url -> Lwt.return_ok (Some avatar_url)) >>=
+                  (function
+                    | Error e -> Lwt.return e
+                    | Ok avatar_url ->
+                      let response =
+                        Response.make
+                          ?avatar_url
+                          ()
+                      in
+                      let response =
+                        construct Response.encoding response |>
+                        Ezjsonm.value_to_string
+                      in
+                      (`OK, response) |> Lwt.return))
+      in
+      needs_auth, f
+  end
+
+  let get =
+    let open Profile.Get in
+    let f ((), user_id) _ _ _ =
+      Store.exists store Key.(v "users" / user_id) >>=
+        (function
+          | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+          | Ok None -> Lwt.return (`Not_found, error "M_NOT_FOUND" (Fmt.str "User %s not found." user_id))
+          | Ok (Some _) ->
+            Store.get store Key.(v "users" / user_id / "display_name") >>=
+              (function
+                | Error (`Not_found _) -> Lwt.return_ok None
+                | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+                | Ok display_name -> Lwt.return_ok (Some display_name)) >>=
+                (function
+                  | Error e -> Lwt.return e
+                  | Ok displayname ->
+                  Store.get store Key.(v "users" / user_id / "avatar_url") >>=
+                    (function
+                      | Error (`Not_found _) -> Lwt.return_ok None
+                      | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+                      | Ok avatar_url -> Lwt.return_ok (Some avatar_url)) >>=
+                      (function
+                        | Error e -> Lwt.return e
+                        | Ok avatar_url ->
+                          let response =
+                            Response.make
+                              ?displayname
+                              ?avatar_url
+                              ()
+                          in
+                          let response =
+                            construct Response.encoding response |>
+                            Ezjsonm.value_to_string
+                          in
+                          (`OK, response) |> Lwt.return)))
     in
-    let response =
-      construct Response.encoding response |>
-      Ezjsonm.value_to_string
-    in
-    (`OK, response) |> Lwt.return
-  in
-  needs_auth, f
+    needs_auth, f
+end
 
 let joined_groups =
   let f () _ _ _ =
@@ -383,17 +540,17 @@ let keys_upload =
     (function
       | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
       | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-      | Ok (Some username) ->
+      | Ok (Some user_id) ->
         let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
         let f (algorithm, key) =
           let key = construct Request.Keys_format.encoding key |> Ezjsonm.value_to_string in
-          Store.set store Key.(v "users" / username / "one_time_keys" / "device_id" / algorithm) key >>=
+          Store.set store Key.(v "users" / user_id / "one_time_keys" / "device_id" / algorithm) key >>=
           (function
             | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
             | Ok () -> Lwt.return_ok ())
         in
         ignore (Option.map (List.map f) (Request.get_one_time_keys request));
-        Store.list store Key.(v "users" / username / "one_time_keys" / "device_id") >>=
+        Store.list store Key.(v "users" / user_id / "one_time_keys" / "device_id") >>=
         (function
           | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
           | Ok _l -> (* temporary solution, riot is going crazy with this endpoint *)
@@ -492,12 +649,12 @@ let user_search =
       | Ok user_ids ->
         let users =
           List.filter_map
-            (fun (username, _) ->
-              if Astring.String.is_prefix ~affix:search username
+            (fun (user_id, _) ->
+              if Astring.String.is_prefix ~affix:search user_id
               then
                 Some
                   (Response.User.make
-                    ~user_id:(username_to_user_id username)
+                    ~user_id
                     ())
               else
                 None) user_ids
@@ -515,3 +672,25 @@ let user_search =
         Lwt.return (`OK, response))
   in
   needs_auth, f
+
+module Account =
+struct
+  module Thirdparty_pid =
+  struct
+    let get =
+      let open Account.Third_party_id.Get in
+      let f () _ _ _ =
+        let response =
+          Response.make
+            ~threepids:[]
+            ()
+        in
+        let response =
+          construct Response.encoding response |>
+          Ezjsonm.value_to_string
+        in
+        Lwt.return (`OK, response)
+      in
+      needs_auth, f
+  end
+end

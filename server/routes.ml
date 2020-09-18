@@ -142,21 +142,21 @@ let profile =
     ~variable:
       (node
         ~meths:
-          [ `GET, Endpoint.profile_get
+          [ `GET, Endpoint.Profile.get
           ]
         ~paths:
           [ ("displayname"
             , node
                 ~meths:
-                  [ `GET, Endpoint.placeholder
-                  ; `PUT, Endpoint.placeholder
+                  [ `GET, Endpoint.Profile.Displayname.get
+                  ; `PUT, Endpoint.Profile.Displayname.put
                   ]
                 ())
           ; ("avatar_url"
             , node
                 ~meths:
-                  [ `GET, Endpoint.placeholder
-                  ; `PUT, Endpoint.placeholder
+                  [ `GET, Endpoint.Profile.Avatar_url.get
+                  ; `PUT, Endpoint.Profile.Avatar_url.put
                   ]
                 ())
           ]
@@ -405,6 +405,18 @@ let publicised_groups =
       ]
     ()
 
+let account =
+  node
+    ~paths:
+      [ ("3pid"
+        , node
+            ~meths:
+            [ `GET, Endpoint.Account.Thirdparty_pid.get
+            ]
+            ())
+      ]
+    ()
+
 let r0 =
   node
     ~paths:
@@ -450,6 +462,8 @@ let r0 =
         , user_directory)
       ; ("publicised_groups"
         , publicised_groups)
+      ; ("account"
+        , account)
       ]
     ()
 
@@ -484,6 +498,8 @@ let matrix =
                 , unstable)
               ]
             ())
+      ; ("media"
+        , Media_routes.routes)
       ]
     ()
 
@@ -518,8 +534,3 @@ let routes =
             ())
       ]
     ()
-
-(*
-server: [ERROR] Uri '//localhost:8000/_matrix/client/r0/directory/room/%23e:ocaml-matrix' with method 'OPTIONS': Not found
-server: [ERROR] Uri '//localhost:8000/_matrix/client/r0/directory/room/%23essaysibs:ocaml-matrix' with method 'OPTIONS': Not found
-*)
