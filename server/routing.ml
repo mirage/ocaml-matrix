@@ -37,3 +37,12 @@ let option uri routes =
 
 let node ?(paths=[]) ?(meths=[]) ?variable () =
   Node (meths, paths, variable)
+
+let paths paths =
+  Node ([], paths, None)
+
+let meths meths =
+  Node (meths, [], None)
+
+let variable variable =
+  Node ([], [], Some variable)
