@@ -38,7 +38,7 @@ let deprecated =
 let username_to_user_id username =
   "@" ^ username ^ ":" ^ Const.homeserver
 
-let get_logged_username = function
+let get_logged_user = function
   | None -> Lwt.return_ok None
   | Some token ->
     Store.exists store Key.(v "tokens" / token) >>=
@@ -50,6 +50,9 @@ let get_logged_username = function
         (function
           | Ok user -> Lwt.return_ok (Some user)
           | _ -> Lwt.return_error ()))
+
+let get_username user_id =
+  Store.get store Key.(v "users" / user_id / "displayname")
 
 let create_token f username =
   let token = "auth_token_for_" ^ username in

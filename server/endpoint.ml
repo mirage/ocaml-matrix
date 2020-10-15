@@ -259,7 +259,7 @@ let filter_get =
 let sync =
   let open Sync in
   let f () _ query token =
-    get_logged_username token >>=
+    get_logged_user token >>=
     (function
       | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
       | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
@@ -268,9 +268,13 @@ let sync =
           let timeout = List.assoc_opt "timeout" query |> (Option.map List.hd) in
           Option.value ~default:"0" timeout |> float_of_string
         in
+        let since =
+          let since = List.assoc_opt "since" query |> (Option.map List.hd) in
+          Option.value ~default:"0" since |> int_of_string
+        in
         Lwt_unix.sleep (timeout /. 1000. /. 5.) >>=
         (fun () ->
-          Room_helpers.get_rooms user_id >>=
+          Room_helpers.get_rooms user_id since >>=
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
             | Ok (joined_rooms, invited_rooms, leaved_rooms) ->
@@ -286,7 +290,7 @@ let sync =
               in
               let response =
                 Response.make
-                  ~next_batch:"now"
+                  ~next_batch:(string_of_int (time ()))
                   ?rooms:
                   (Some
                     (Rooms.make
@@ -342,7 +346,7 @@ struct
     let put =
       let open Profile.Display_name.Set in
       let f ((), user_id) request _ token =
-        get_logged_username token >>=
+        get_logged_user token >>=
         (function
           | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
           | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
@@ -406,7 +410,7 @@ struct
     let put =
       let open Profile.Avatar_url.Set in
       let f ((), user_id) request _ token =
-        get_logged_username token >>=
+        get_logged_user token >>=
         (function
           | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
           | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
@@ -536,7 +540,7 @@ let well_known =
 let keys_upload =
   let open Keys.Upload in
   let f () request _ token =
-    get_logged_username token >>=
+    get_logged_user token >>=
     (function
       | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
       | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
@@ -570,7 +574,7 @@ let keys_upload =
 let keys_query =
   let open Keys.Query in
   let f () request _ token =
-    get_logged_username token >>=
+    get_logged_user token >>=
     (function
       | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
       | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)

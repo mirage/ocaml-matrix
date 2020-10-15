@@ -4,18 +4,24 @@ open Store
 open Matrix_ctos
 
 let set_state_event room_id event_type state_key event_id =
-  if state_key = ""
-  then
-    Store.set store Key.(v "rooms" / room_id / "state" / event_type / "_") event_id
-  else
-    Store.set store Key.(v "rooms" / room_id / "state" / event_type / state_key) event_id
+  let state_key = if state_key = "" then "_" else state_key in
+  Store.set store Key.(v "rooms" / room_id / "state" / event_type / state_key) event_id
 
 let get_state_event room_id event_type state_key =
-  if state_key = ""
-  then
-    Store.get store Key.(v "rooms" / room_id / "state" / event_type / "_")
-  else
-    Store.get store Key.(v "rooms" / room_id / "state" / event_type / state_key)
+  let state_key = if state_key = "" then "_" else state_key in
+  Store.get store Key.(v "rooms" / room_id / "state" / event_type / state_key)
+
+let get_state_event_since room_id event_type state_key since =
+  let state_key = if state_key = "" then "_" else state_key in
+  Store.last_modified store Key.(v "rooms" / room_id / "state" / event_type / state_key) >>=
+  (function
+    | Error err -> Lwt.return_error err
+    | Ok (_, last_modified) ->
+      if Int64.of_int since < last_modified
+      then
+        Store.get store Key.(v "rooms" / room_id / "state" / event_type / state_key)
+      else
+        Lwt.return_error (`Not_found Key.(v "rooms" / room_id / "state" / event_type / state_key)))
 
 let get_room_timeline room_id =
   let rec f acc id =
@@ -58,7 +64,7 @@ let get_room_ephemeral room_id =
       (fun users ->
          Lwt.return_ok (Event.Typing.make ~users_id:users ())))
 
-let get_room_state room_id =
+let get_room_state room_id since =
   Store.list store Key.(v "rooms" / room_id / "state") >>=
   (function
     | Error err -> Lwt.return_error err
@@ -71,7 +77,7 @@ let get_room_state room_id =
              | Ok state_keys ->
                Lwt_list.filter_map_p
                  (fun (state_key, _) ->
-                    get_state_event room_id event_type state_key >>=
+                    get_state_event_since room_id event_type state_key since >>=
                     (function
                       | Error _ -> Lwt.return_none
                       | Ok event_id ->
@@ -83,14 +89,14 @@ let get_room_state room_id =
       (fun events ->
          List.flatten events |> List.map (destruct State_events.encoding) |> Lwt.return_ok))
 
-let get_rooms_membership user_id =
+let get_rooms_membership user_id since =
   Store.list store Key.(v "rooms") >>=
   (function
     | Error err -> Lwt.return_error err
     | Ok rooms ->
       Lwt_list.filter_map_p
         (fun (room_id, _) ->
-           get_state_event room_id "m.room.member" user_id >>=
+           get_state_event_since room_id "m.room.member" user_id since >>=
            (function
              | Error _ -> Lwt.return_none
              | Ok event_id ->
@@ -115,14 +121,14 @@ let get_rooms_membership user_id =
          let rooms = List.fold_left f ([], [], []) rooms in
          Lwt.return_ok rooms))
 
-let get_rooms user_id =
-  get_rooms_membership user_id >>=
+let get_rooms user_id since =
+  get_rooms_membership user_id since >>=
   (function
     | Error err -> Lwt.return_error err
     | Ok (j, i, l) ->
       Lwt_list.filter_map_p
         (fun room_id ->
-           get_room_state room_id >>=
+           get_room_state room_id since >>=
            (function
              | Error _ -> Lwt.return_none
              | Ok state_events ->
@@ -150,7 +156,7 @@ let get_rooms user_id =
       (fun joined ->
          Lwt_list.filter_map_p
            (fun room_id ->
-              get_room_state room_id >>=
+              get_room_state room_id since >>=
               (function
                 | Error _ -> Lwt.return_none
                 | Ok events ->
@@ -163,7 +169,7 @@ let get_rooms user_id =
          (fun invited ->
             Lwt_list.filter_map_p
               (fun room_id ->
-                 get_room_state room_id >>=
+                 get_room_state room_id since >>=
                  (function
                    | Error _ -> Lwt.return_none
                    | Ok events ->

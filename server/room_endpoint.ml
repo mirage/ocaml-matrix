@@ -8,12 +8,11 @@ open Room_helpers
 let create_room =
   let open Room.Create in
   let f () request _ token =
-    get_logged_username token >>=
+    get_logged_user token >>=
     (function
       | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
       | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-      | Ok (Some username) ->
-        let user_id = username_to_user_id username in
+      | Ok (Some user_id) ->
         let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
         let room_id = room_id () in
         Store.set store Key.(v "rooms" / room_id / "messages" / "head") "" >>=
@@ -47,7 +46,11 @@ let create_room =
                         ()))
                 ?event_id:(Some id)
                 ?sender:(Some user_id)
-                ?origin_server_ts:(Some (time ()))
+                ~origin_server_ts:(time ())
+                ~unsigned:
+                  (Room_events.Unsigned.make
+                    ~whatever:(`O ["age", `Float 0.])
+                    ())
                 ()
             in
             let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -72,7 +75,11 @@ let create_room =
                                 ()))
                         ?event_id:(Some id)
                         ?sender:(Some user_id)
-                        ?origin_server_ts:(Some (time ()))
+                        ~origin_server_ts:(time ())
+                        ~unsigned:
+                          (Room_events.Unsigned.make
+                            ~whatever:(`O ["age", `Float 0.])
+                            ())
                         ()
                     in
                     let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -92,13 +99,17 @@ let create_room =
                                      (State_events.State_event.Create.make
                                         ~event:
                                           (Room_events.Room_event.Create.make
-                                             ~creator:username
+                                             ~creator:user_id
                                              ?room_version:(Some Const.room_version)
                                              ())
                                         ()))
                                 ?event_id:(Some id)
                                 ?sender:(Some user_id)
-                                ?origin_server_ts:(Some (time ()))
+                                ~origin_server_ts:(time ())
+                                ~unsigned:
+                                  (Room_events.Unsigned.make
+                                    ~whatever:(`O ["age", `Float 0.])
+                                    ())
                                 ()
                             in
                             let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -126,7 +137,11 @@ let create_room =
                                                 ()))
                                         ?event_id:(Some id)
                                         ?sender:(Some user_id)
-                                        ?origin_server_ts:(Some (time ()))
+                                        ~origin_server_ts:(time ())
+                                        ~unsigned:
+                                          (Room_events.Unsigned.make
+                                            ~whatever:(`O ["age", `Float 0.])
+                                            ())
                                         ()
                                     in
                                     let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -162,7 +177,11 @@ let create_room =
                                                         ()))
                                                 ?event_id:(Some id)
                                                 ?sender:(Some user_id)
-                                                ?origin_server_ts:(Some (time ()))
+                                                ~origin_server_ts:(time ())
+                                                ~unsigned:
+                                                  (Room_events.Unsigned.make
+                                                    ~whatever:(`O ["age", `Float 0.])
+                                                    ())
                                                 ()
                                             in
                                             let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -189,7 +208,11 @@ let create_room =
                                                                    ()))
                                                            ?event_id:(Some id)
                                                            ?sender:(Some user_id)
-                                                           ?origin_server_ts:(Some (time ()))
+                                                           ~origin_server_ts:(time ())
+                                                           ~unsigned:
+                                                             (Room_events.Unsigned.make
+                                                               ~whatever:(`O ["age", `Float 0.])
+                                                               ())
                                                            ()
                                                        in
                                                        let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -220,7 +243,11 @@ let create_room =
                                                                        ()))
                                                                ?event_id:(Some id)
                                                                ?sender:(Some user_id)
-                                                               ?origin_server_ts:(Some (time ()))
+                                                               ~origin_server_ts:(time ())
+                                                               ~unsigned:
+                                                                 (Room_events.Unsigned.make
+                                                                   ~whatever:(`O ["age", `Float 0.])
+                                                                   ())
                                                                ()
                                                            in
                                                            let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -330,11 +357,11 @@ struct
   let invite =
     let open Joining.Invite in
     let f ((), room_id) request _ token =
-      get_logged_username token >>=
+      get_logged_user token >>=
       (function
         | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
         | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-        | Ok (Some username) ->
+        | Ok (Some request_user_id) ->
           let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
           let user_id = Request.get_user_id request in
           get_state_event room_id "m.room.member" user_id >>=
@@ -372,8 +399,12 @@ struct
                               ())
                           ()))
                   ?event_id:(Some id)
-                  ?sender:(Some (username_to_user_id username))
-                  ?origin_server_ts:(Some (time ()))
+                  ?sender:(Some request_user_id)
+                  ~origin_server_ts:(time ())
+                  ~unsigned:
+                    (Room_events.Unsigned.make
+                      ~whatever:(`O ["age", `Float 0.])
+                      ())
                   ()
               in
               let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -400,12 +431,11 @@ struct
   let join =
     let open Joining.Join in
     let f ((), room_id) _ _ token =
-      get_logged_username token >>=
+      get_logged_user token >>=
       (function
         | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
         | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-        | Ok (Some username) ->
-          let user_id = username_to_user_id username in
+        | Ok (Some user_id) ->
           get_state_event room_id "m.room.member" user_id >>=
           (function
             | Error _ -> Lwt.return_ok ()
@@ -442,7 +472,11 @@ struct
                           ()))
                   ?event_id:(Some id)
                   ?sender:(Some user_id)
-                  ?origin_server_ts:(Some (time ()))
+                  ~origin_server_ts:(time ())
+                  ~unsigned:
+                    (Room_events.Unsigned.make
+                      ~whatever:(`O ["age", `Float 0.])
+                      ())
                   ()
               in
               let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -469,12 +503,11 @@ struct
   let leave =
     let open Leaving.Leave in
     let f ((), room_id) _ _ token =
-      get_logged_username token >>=
+      get_logged_user token >>=
       (function
         | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
         | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-        | Ok (Some username) ->
-          let user_id = username_to_user_id username in
+        | Ok (Some user_id) ->
           get_state_event room_id "m.room.member" user_id >>=
           (function
             | Error _ -> Lwt.return_ok ()
@@ -510,7 +543,11 @@ struct
                           ()))
                   ?event_id:(Some id)
                   ?sender:(Some user_id)
-                  ?origin_server_ts:(Some (time ()))
+                  ~origin_server_ts:(time ())
+                  ~unsigned:
+                    (Room_events.Unsigned.make
+                      ~whatever:(`O ["age", `Float 0.])
+                      ())
                   ()
               in
               let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -537,12 +574,11 @@ struct
   let forget =
     let open Leaving.Leave in
     let f ((), room_id) _ _ token =
-      get_logged_username token >>=
+      get_logged_user token >>=
       (function
         | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
         | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-        | Ok (Some username) ->
-          let user_id = username_to_user_id username in
+        | Ok (Some user_id) ->
           get_state_event room_id "m.room.member" user_id >>=
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
@@ -582,11 +618,11 @@ struct
   let kick =
     let open Leaving.Kick in
     let f ((), room_id) request _ token =
-      get_logged_username token >>=
+      get_logged_user token >>=
       (function
         | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
         | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-        | Ok (Some _username) ->
+        | Ok (Some request_user_id) ->
           let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
           let user_id = Request.get_user_id request in
           get_state_event room_id "m.room.member" user_id >>=
@@ -623,8 +659,12 @@ struct
                               ())
                           ()))
                   ?event_id:(Some id)
-                  ?sender:(Some user_id)
-                  ?origin_server_ts:(Some (time ()))
+                  ?sender:(Some request_user_id)
+                  ~origin_server_ts:(time ())
+                  ~unsigned:
+                    (Room_events.Unsigned.make
+                      ~whatever:(`O ["age", `Float 0.])
+                      ())
                   ()
               in
               let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -650,11 +690,11 @@ struct
   let ban =
     let open Banning.Ban in
     let f ((), room_id) request _ token =
-      get_logged_username token >>=
+      get_logged_user token >>=
       (function
         | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
         | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-        | Ok (Some _username) ->
+        | Ok (Some request_user_id) ->
           let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
           let user_id = Request.get_user_id request in
           let id = event_id () in
@@ -672,8 +712,12 @@ struct
                           ())
                       ()))
               ?event_id:(Some id)
-              ?sender:(Some user_id)
-              ?origin_server_ts:(Some (time ()))
+              ?sender:(Some request_user_id)
+              ~origin_server_ts:(time ())
+              ~unsigned:
+                (Room_events.Unsigned.make
+                  ~whatever:(`O ["age", `Float 0.])
+                  ())
               ()
           in
           let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -700,11 +744,11 @@ struct
   let unban =
     let open Leaving.Kick in
     let f ((), room_id) request _ token =
-      get_logged_username token >>=
+      get_logged_user token >>=
       (function
         | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
         | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-        | Ok (Some _username) ->
+        | Ok (Some _request_user_id) ->
           let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
           let user_id = Request.get_user_id request in
           get_state_event room_id "m.room.member" user_id >>=
@@ -783,12 +827,11 @@ struct
   let set_visibility =
     let open Room_listing.Set_visibility in
     let f ((), room_id) request _ token =
-      get_logged_username token >>=
+      get_logged_user token >>=
       (function
         | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
         | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-        | Ok (Some username) ->
-          let user_id = username_to_user_id username in
+        | Ok (Some user_id) ->
           let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
           let join_rule =
             match Request.get_visibility request with
@@ -807,9 +850,13 @@ struct
                             ~join_rule
                             ())
                       ()))
-              ?event_id:(Some id)
-              ?sender:(Some user_id)
-              ?origin_server_ts:(Some (time ()))
+              ~event_id:id
+              ~sender:user_id
+              ~origin_server_ts:(time ())
+              ~unsigned:
+                (Room_events.Unsigned.make
+                  ~whatever:(`O ["age", `Float 0.])
+                  ())
               ()
           in
           let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -1003,14 +1050,13 @@ struct
     let state =
       let open Room_event.Put.State_event in
       let f ((((), room_id), _), state_key) request _ token = (* should use event_type *)
-        get_logged_username token >>=
-        (function
-          | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
-          | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-          | Ok (Some username) ->
+      get_logged_user token >>=
+      (function
+        | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+        | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
+        | Ok (Some user_id) ->
             let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
             let id = event_id () in
-            let user_id = username_to_user_id username in
             let event = Request.get_event request in
             let state_event = State_events.State_event.of_room_event event state_key in
             let event =
@@ -1019,6 +1065,10 @@ struct
                 ~event_id:id
                 ~sender:user_id
                 ~origin_server_ts:(time ())
+                ~unsigned:
+                  (Room_events.Unsigned.make
+                    ~whatever:(`O ["age", `Float 0.])
+                    ())
                 ()
             in
             let encoded_event = Json_encoding.construct State_events.encoding event in
@@ -1046,14 +1096,13 @@ struct
     let send_message =
       let open Room_event.Put.Message_event in
       let f ((((), room_id), _), _txn_id) request _ token =
-        get_logged_username token >>=
-        (function
-          | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
-          | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-          | Ok (Some username) ->
+      get_logged_user token >>=
+      (function
+        | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+        | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
+        | Ok (Some user_id) ->
             let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
             let id = event_id () in
-            let user_id = username_to_user_id username in
             let message = Request.get_event request in
             let event =
               Message_event.make
@@ -1099,16 +1148,16 @@ end
 let room_typing =
   let open Typing in
   let f (((), room_id), _user_id) request _ token = (* maybe do something about _user_id *)
-    get_logged_username token >>=
+    get_logged_user token >>=
     (function
       | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
       | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-      | Ok (Some username) ->
+      | Ok (Some user_id) ->
         let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
         match Request.get_typing request, Request.get_timeout request with
         | true, Some timeout ->
           let until = Unix.time () +. (float_of_int timeout /. 1000.) in
-          Store.set store Key.(v "rooms" / room_id / "ephemeral" / "typing" / username) (string_of_float until) >>=
+          Store.set store Key.(v "rooms" / room_id / "ephemeral" / "typing" / user_id) (string_of_float until) >>=
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
             | Ok () ->
@@ -1121,11 +1170,11 @@ let room_typing =
               in
               Lwt.return (`OK, response))
         | _ ->
-          Store.exists store Key.(v "rooms" / room_id / "ephemeral" / "typing" / username) >>=
+          Store.exists store Key.(v "rooms" / room_id / "ephemeral" / "typing" / user_id) >>=
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
             | Ok (Some _) ->
-              Store.remove store Key.(v "rooms" / room_id / "ephemeral" / "typing" / username) >>=
+              Store.remove store Key.(v "rooms" / room_id / "ephemeral" / "typing" / user_id) >>=
               (function
                 | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
                 | Ok () ->
@@ -1152,15 +1201,15 @@ let room_typing =
 let read_markers =
   let open Fully_read in
   let f ((), room_id) request _ token =
-    get_logged_username token >>=
+    get_logged_user token >>=
     (function
       | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
       | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
-      | Ok (Some username) ->
+      | Ok (Some user_id) ->
         let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
         match Request.get_fully_read request with
         | Some fully_read ->
-          Store.set store Key.(v "rooms" / room_id / "ephemeral" / "fully_read" / username) fully_read >>=
+          Store.set store Key.(v "rooms" / room_id / "ephemeral" / "fully_read" / user_id) fully_read >>=
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
             | Ok () ->
