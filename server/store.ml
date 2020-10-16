@@ -135,45 +135,45 @@ struct
          (Irmin.Info.date (Fs_store.Commit.info (fst c2)))
   end)
 
-  let last_modified t key =
+  let last_modified ?depth ?(n = 1) t key =
     let repo = Fs_store.repo t in
     Fs_store.Head.get t >>= fun commit ->
     let heap = Heap.create ~dummy:(commit, 0) 0 in
     let () = Heap.add heap (commit, 0) in
     let rec search acc =
-      if Heap.is_empty heap
-      then
-        Lwt.return acc
+      if Heap.is_empty heap || List.length acc = n then Lwt.return acc
       else
         let current, current_depth = Heap.pop_minimum heap in
         let parents = Fs_store.Commit.parents current in
         let tree = Fs_store.Commit.tree current in
         Fs_store.Tree.find tree key >>= fun current_value ->
-        match current_value with
-        | Some _ ->
-          if List.length parents = 0 then
-            if current_value <> None
-            then
-              Lwt.return (current :: acc)
-            else
-              Lwt.return acc
-          else
-            Lwt_list.for_all_p
-              (fun hash ->
-                Fs_store.Commit.of_hash repo hash >>= function
-                | Some commit -> (
-                    let () = Heap.add heap (commit, current_depth + 1) in
-                    let tree = Fs_store.Commit.tree commit in
-                    Fs_store.Tree.find tree key >|= fun e ->
-                    match (e, current_value) with
-                    | Some x, Some y -> not (Irmin.Type.equal Fs_store.Contents.t x y)
-                    | Some _, None -> true
-                    | None, Some _ -> true
-                    | _, _ -> false)
-                | None -> Lwt.return_false)
-              parents
-            >>= fun found -> if found then search (current :: acc) else search acc
-        | None -> Lwt.return acc
+        if List.length parents = 0 then
+          if current_value <> None then Lwt.return (current :: acc)
+          else Lwt.return acc
+        else
+          let max_depth =
+            match depth with
+            | Some depth -> current_depth >= depth
+            | None -> false
+          in
+          Lwt_list.for_all_p
+            (fun hash ->
+              Fs_store.Commit.of_hash repo hash >>= function
+              | Some commit -> (
+                  let () =
+                    if not max_depth then
+                      Heap.add heap (commit, current_depth + 1)
+                  in
+                  let tree = Fs_store.Commit.tree commit in
+                  Fs_store.Tree.find tree key >|= fun e ->
+                  match (e, current_value) with
+                  | Some x, Some y -> not (Irmin.Type.equal Fs_store.Contents.t x y)
+                  | Some _, None -> true
+                  | None, Some _ -> true
+                  | _, _ -> false)
+              | None -> Lwt.return_false)
+            parents
+          >>= fun found -> if found then search (current :: acc) else search acc
     in
     search []
 

@@ -49,7 +49,7 @@ let create_room =
                 ~origin_server_ts:(time ())
                 ~unsigned:
                   (Room_events.Unsigned.make
-                    ~whatever:(`O ["age", `Float 0.])
+                    ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                     ())
                 ()
             in
@@ -78,7 +78,7 @@ let create_room =
                         ~origin_server_ts:(time ())
                         ~unsigned:
                           (Room_events.Unsigned.make
-                            ~whatever:(`O ["age", `Float 0.])
+                            ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                             ())
                         ()
                     in
@@ -108,7 +108,7 @@ let create_room =
                                 ~origin_server_ts:(time ())
                                 ~unsigned:
                                   (Room_events.Unsigned.make
-                                    ~whatever:(`O ["age", `Float 0.])
+                                    ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                                     ())
                                 ()
                             in
@@ -140,7 +140,7 @@ let create_room =
                                         ~origin_server_ts:(time ())
                                         ~unsigned:
                                           (Room_events.Unsigned.make
-                                            ~whatever:(`O ["age", `Float 0.])
+                                            ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                                             ())
                                         ()
                                     in
@@ -180,7 +180,7 @@ let create_room =
                                                 ~origin_server_ts:(time ())
                                                 ~unsigned:
                                                   (Room_events.Unsigned.make
-                                                    ~whatever:(`O ["age", `Float 0.])
+                                                    ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                                                     ())
                                                 ()
                                             in
@@ -211,7 +211,7 @@ let create_room =
                                                            ~origin_server_ts:(time ())
                                                            ~unsigned:
                                                              (Room_events.Unsigned.make
-                                                               ~whatever:(`O ["age", `Float 0.])
+                                                               ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                                                                ())
                                                            ()
                                                        in
@@ -246,7 +246,7 @@ let create_room =
                                                                ~origin_server_ts:(time ())
                                                                ~unsigned:
                                                                  (Room_events.Unsigned.make
-                                                                   ~whatever:(`O ["age", `Float 0.])
+                                                                   ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                                                                    ())
                                                                ()
                                                            in
@@ -403,7 +403,7 @@ struct
                   ~origin_server_ts:(time ())
                   ~unsigned:
                     (Room_events.Unsigned.make
-                      ~whatever:(`O ["age", `Float 0.])
+                      ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                       ())
                   ()
               in
@@ -475,7 +475,7 @@ struct
                   ~origin_server_ts:(time ())
                   ~unsigned:
                     (Room_events.Unsigned.make
-                      ~whatever:(`O ["age", `Float 0.])
+                      ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                       ())
                   ()
               in
@@ -500,6 +500,7 @@ struct
                       Lwt.return (`OK, response)))))
     in
     needs_auth, f
+
   let leave =
     let open Leaving.Leave in
     let f ((), room_id) _ _ token =
@@ -522,6 +523,7 @@ struct
                     let event = State_events.State_event.Member.get_event event in
                     (match Room_events.Room_event.Member.get_membership event with
                       | Join -> Lwt.return_ok ()
+                      | Leave -> Lwt.return_error (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s is not in the room" user_id))
                       | _ -> Lwt.return_error (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s is banned from the room" user_id)))
                   | _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")))) >>=
           (function
@@ -546,7 +548,7 @@ struct
                   ~origin_server_ts:(time ())
                   ~unsigned:
                     (Room_events.Unsigned.make
-                      ~whatever:(`O ["age", `Float 0.])
+                      ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                       ())
                   ()
               in
@@ -663,7 +665,7 @@ struct
                   ~origin_server_ts:(time ())
                   ~unsigned:
                     (Room_events.Unsigned.make
-                      ~whatever:(`O ["age", `Float 0.])
+                      ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                       ())
                   ()
               in
@@ -716,7 +718,7 @@ struct
               ~origin_server_ts:(time ())
               ~unsigned:
                 (Room_events.Unsigned.make
-                  ~whatever:(`O ["age", `Float 0.])
+                  ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                   ())
               ()
           in
@@ -855,7 +857,7 @@ struct
               ~origin_server_ts:(time ())
               ~unsigned:
                 (Room_events.Unsigned.make
-                  ~whatever:(`O ["age", `Float 0.])
+                  ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                   ())
               ()
           in
@@ -1067,7 +1069,7 @@ struct
                 ~origin_server_ts:(time ())
                 ~unsigned:
                   (Room_events.Unsigned.make
-                    ~whatever:(`O ["age", `Float 0.])
+                    ~whatever:(`O ["age", `Float (time () |> float_of_int)])
                     ())
                 ()
             in
@@ -1111,6 +1113,10 @@ struct
                 ~event_id:id
                 ~sender:user_id
                 ~origin_server_ts:(time ())
+                ~unsigned:
+                  (Room_events.Unsigned.make
+                    ~whatever:(`O ["age", `Float (time () |> float_of_int)])
+                    ())
                 ()
             in
             let encoded_event = Json_encoding.construct Message_event.encoding event in

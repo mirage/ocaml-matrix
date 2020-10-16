@@ -272,40 +272,59 @@ let sync =
           let since = List.assoc_opt "since" query |> (Option.map List.hd) in
           Option.value ~default:"0" since |> int_of_string
         in
-        Lwt_unix.sleep (timeout /. 1000. /. 5.) >>=
-        (fun () ->
+        let rec loop wait () =
           Room_helpers.get_rooms user_id since >>=
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
-            | Ok (joined_rooms, invited_rooms, leaved_rooms) ->
-              let push_rules =
-                Event.Push_rules
-                  (Event.Push_rules.make
-                    ~content:[]
-                    ~override:[]
-                    ~room:[]
-                    ~sender:[]
-                    ~underride:[]
-                    ())
-              in
-              let response =
-                Response.make
-                  ~next_batch:(string_of_int (time ()))
-                  ?rooms:
-                  (Some
-                    (Rooms.make
-                      ~join:joined_rooms
-                      ~invite:invited_rooms
-                      ~leave:leaved_rooms
-                      ()))
-                  ?account_data:(Some [push_rules])
-                  ()
-              in
-              let response =
-                construct Response.encoding response |>
-                Ezjsonm.value_to_string
-              in
-              Lwt.return (`OK, response))))
+            | Ok (joined_rooms, invited_rooms, leaved_rooms, update) ->
+              if update
+              then
+                 let push_rules =
+                  Event.Push_rules
+                    (Event.Push_rules.make
+                      ~content:[]
+                      ~override:[]
+                      ~room:[]
+                      ~sender:[]
+                      ~underride:[]
+                      ())
+                in
+                let response =
+                  Response.make
+                    ~next_batch:(string_of_int (time ()))
+                    ?rooms:
+                    (Some
+                      (Rooms.make
+                        ~join:joined_rooms
+                        ~invite:invited_rooms
+                        ~leave:leaved_rooms
+                        ()))
+                    ?account_data:(Some [push_rules])
+                    ()
+                in
+                let response =
+                  construct Response.encoding response |>
+                  Ezjsonm.value_to_string
+                in
+                Lwt.return (`OK, response)
+              else
+                if wait *. 1000. < timeout
+                then
+                  Lwt_unix.sleep 1. >>=
+                  loop (wait +. 1.)
+                else
+                  let response =
+                    Response.make
+                      ~next_batch:(string_of_int (time ()))
+                      ()
+                  in
+                  let response =
+                    construct Response.encoding response |>
+                    Ezjsonm.value_to_string
+                  in
+                  Lwt.return (`OK, response))
+          in
+          loop 0. ())
   in
   needs_auth, f
 
@@ -323,21 +342,39 @@ let turn_server =
   in
   needs_auth, f
 
-let account_data =
-  let open Account_data.Get in
-  let f (((), _user_id), _type) _ _ _ =
-    let response =
-      Response.make
-        ~data:[]
-        ()
+module Account_data =
+struct
+  let put =
+    let open Account_data.Put in
+    let f (((), _user_id), _type) _ _ _ =
+      let response =
+        Response.make
+          ()
+      in
+      let response =
+        construct Response.encoding response |>
+        Ezjsonm.value_to_string
+      in
+      (`OK, response) |> Lwt.return
     in
-    let response =
-      construct Response.encoding response |>
-      Ezjsonm.value_to_string
+    needs_auth, f
+
+  let get =
+    let open Account_data.Get in
+    let f (((), _user_id), _type) _ _ _ =
+      let response =
+        Response.make
+          ~data:[]
+          ()
+      in
+      let response =
+        construct Response.encoding response |>
+        Ezjsonm.value_to_string
+      in
+      (`OK, response) |> Lwt.return
     in
-    (`OK, response) |> Lwt.return
-  in
-  needs_auth, f
+    needs_auth, f
+end
 
 module Profile =
 struct

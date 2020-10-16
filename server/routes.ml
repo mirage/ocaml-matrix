@@ -79,8 +79,8 @@ let user =
       ; "account_data"
         , variable
             (meths
-              [ `GET, Endpoint.account_data
-              ; `PUT, Endpoint.placeholder
+              [ `GET, Endpoint.Account_data.get
+              ; `PUT, Endpoint.Account_data.put
               ])
       ])
 
