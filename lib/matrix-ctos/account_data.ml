@@ -40,7 +40,7 @@ struct
   module Response =
   struct
     type t =
-      { data: (string * string) list
+      { data: Repr.value
       } [@@deriving accessor]
 
     let encoding =
@@ -52,7 +52,7 @@ struct
         { data }
       in
       let with_tuple =
-        assoc string
+        any
       in
       conv to_tuple of_tuple with_tuple
   end

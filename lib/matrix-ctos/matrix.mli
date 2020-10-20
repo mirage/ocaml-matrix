@@ -44,7 +44,7 @@ sig
     module Response:
     sig
       type%accessor t =
-        { data: (string * string) list
+        { data: Repr.value
         }
       val encoding: t encoding
     end
@@ -964,172 +964,179 @@ end
 
 module Event:
 sig
-  module Presence:
+  module Event:
   sig
     module Presence:
     sig
-      type t = Online | Offline | Unavailable
+      module Presence:
+      sig
+        type t = Online | Offline | Unavailable
+        val encoding: t encoding
+      end
+      type%accessor t =
+        { sender: string
+        ; avatar_url: string option
+        ; displayname: string option
+        ; last_active_ago: int option
+        ; presence: Presence.t
+        ; currently_active: bool option
+        ; status_msg: string option
+        }
       val encoding: t encoding
     end
-    type%accessor t =
-      { sender: string
-      ; avatar_url: string option
-      ; displayname: string option
-      ; last_active_ago: int option
-      ; presence: Presence.t
-      ; currently_active: bool option
-      ; status_msg: string option
-      }
-    val encoding: t encoding
-  end
-  module Push_rules:
-  sig
-    type%accessor t =
-      { content: Push_rule.t list option
-      ; override: Push_rule.t list option
-      ; room: Push_rule.t list option
-      ; sender: Push_rule.t list option
-      ; underride: Push_rule.t list option
-      }
-    val encoding: t encoding
-  end
-  module Typing:
-  sig
-    type%accessor t =
-      { users_id: string list
-      }
-    val encoding: t encoding
-  end
-  module Receipt:
-  sig
-    module Receipts:
+    module Push_rules:
     sig
-      module Timestamp:
+      type%accessor t =
+        { content: Push_rule.t list option
+        ; override: Push_rule.t list option
+        ; room: Push_rule.t list option
+        ; sender: Push_rule.t list option
+        ; underride: Push_rule.t list option
+        }
+      val encoding: t encoding
+    end
+    module Typing:
+    sig
+      type%accessor t =
+        { users_id: string list
+        }
+      val encoding: t encoding
+    end
+    module Receipt:
+    sig
+      module Receipts:
       sig
+        module Timestamp:
+        sig
+          type%accessor t =
+            { ts: int
+            }
+          val encoding: t encoding
+        end
         type%accessor t =
-          { ts: int
+          { users: (string * Timestamp.t) list
           }
         val encoding: t encoding
       end
       type%accessor t =
-        { users: (string * Timestamp.t) list
+        { receipts: (string * Receipts.t) list
         }
       val encoding: t encoding
     end
-    type%accessor t =
-      { receipts: (string * Receipts.t) list
-      }
-    val encoding: t encoding
-  end
-  module Fully_read:
-  sig
-    type%accessor t =
-      { event_id: string
-      ; room_id: string
-      }
-    val encoding: t encoding
-  end
-  module Tag:
-  sig
-    module Tag:
+    module Fully_read:
     sig
       type%accessor t =
-        { order: float option
+        { event_id: string
+        ; room_id: string
         }
       val encoding: t encoding
     end
-    type%accessor t =
-      { tags: (string * Tag.t) list
-      }
-    val encoding: t encoding
-  end
-  module Direct:
-  sig
-    type%accessor t =
-      { directs: (string * (string list)) list
-      }
-    val encoding: t encoding
-  end
-  module Ignored_users_list:
-  sig
-    type%accessor t =
-      { users: string list
-      }
-    val encoding: t encoding
-  end
-  (* module Any:
-     sig
+    module Tag:
+    sig
+      module Tag:
+      sig
+        type%accessor t =
+          { order: float option
+          }
+        val encoding: t encoding
+      end
       type%accessor t =
-        { content: Repr.value
+        { tags: (string * Tag.t) list
         }
-     val encoding: t encoding
-     end *)
-  module Room_key:
-  sig
-    type%accessor t =
-      { algorithm: string
-      ; room_id: string
-      ; session_id: string
-      ; session_key: string
-      }
-    val encoding: t encoding
-  end
-  module Room_key_request:
-  sig
-    module Request_key_info:
+      val encoding: t encoding
+    end
+    module Direct:
+    sig
+      type%accessor t =
+        { directs: (string * (string list)) list
+        }
+      val encoding: t encoding
+    end
+    module Ignored_users_list:
+    sig
+      type%accessor t =
+        { users: string list
+        }
+      val encoding: t encoding
+    end
+    module Room_key:
+    sig
+      type%accessor t =
+        { algorithm: string
+        ; room_id: string
+        ; session_id: string
+        ; session_key: string
+        }
+      val encoding: t encoding
+    end
+    module Room_key_request:
+    sig
+      module Request_key_info:
+      sig
+        type%accessor t =
+          { algorithm: string
+          ; room_id: string
+          ; sender_key: string
+          ; session_key: string
+          }
+        val encoding: t encoding
+      end
+      module Action:
+      sig
+        type t = Request | Cancel_request
+        val encoding: t encoding
+      end
+      type%accessor t =
+        { body: Request_key_info.t
+        ; action: Action.t
+        ; requesting_device_id: string
+        ; request_id: string
+        }
+      val encoding: t encoding
+    end
+    module Forwarded_room_key:
     sig
       type%accessor t =
         { algorithm: string
         ; room_id: string
         ; sender_key: string
+        ; session_id: string
         ; session_key: string
+        ; sender_claimed_ed25519_key: string
+        ; forwarding_curve25519_key_chain: string list
         }
       val encoding: t encoding
     end
-    module Action:
+    module Dummy:
     sig
-      type t = Request | Cancel_request
+      type t = unit
       val encoding: t encoding
     end
-    type%accessor t =
-      { body: Request_key_info.t
-      ; action: Action.t
-      ; requesting_device_id: string
-      ; request_id: string
-      }
+    type t =
+        Presence of Presence.t
+      | Push_rules of Push_rules.t
+      | Typing of Typing.t
+      | Receipt of Receipt.t
+      | Fully_read of Fully_read.t
+      | Tag of Tag.t
+      | Direct of Direct.t
+      | Room_key of Room_key.t
+      | Room_key_request of Room_key_request.t
+      | Forwarded_room_key of Forwarded_room_key.t
+      | Dummy of unit
     val encoding: t encoding
   end
-  module Forwarded_room_key:
+  module Custom:
   sig
     type%accessor t =
-      { algorithm: string
-      ; room_id: string
-      ; sender_key: string
-      ; session_id: string
-      ; session_key: string
-      ; sender_claimed_ed25519_key: string
-      ; forwarding_curve25519_key_chain: string list
+      { type_id: string
+      ; content: Repr.value
       }
-    val encoding: t encoding
-  end
-  module Dummy:
-  sig
-    type t = unit
     val encoding: t encoding
   end
   type t =
-      Presence of Presence.t
-    | Push_rules of Push_rules.t
-    | Typing of Typing.t
-    | Receipt of Receipt.t
-    | Fully_read of Fully_read.t
-    | Tag of Tag.t
-    | Direct of Direct.t
-    | Room_key of Room_key.t
-    | Room_key_request of Room_key_request.t
-    | Forwarded_room_key of Forwarded_room_key.t
-    | Dummy of unit
-    (* | Any of Any.t *)
+      Event of Event.t
+    | Custom of Custom.t
   val encoding: t encoding
 end
 
@@ -2349,7 +2356,7 @@ sig
     module Request:
     sig
       type%accessor t =
-        { presence: Event.Presence.Presence.t
+        { presence: Event.Event.Presence.Presence.t
         ; status_msg: string option
         }
       val encoding: t encoding
@@ -2364,7 +2371,7 @@ sig
     module Response:
     sig
       type%accessor t =
-        { presence: Event.Presence.Presence.t
+        { presence: Event.Event.Presence.Presence.t
         ; last_active_ago: int option
         ; status_msg: string option
         ; currently_active: bool option

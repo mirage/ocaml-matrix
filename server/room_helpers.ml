@@ -54,21 +54,21 @@ let get_room_timeline room_id since =
            (fun event ->
               Events.Message_event (destruct Message_event.encoding event)) events |> Lwt.return_ok))
 
-let get_room_ephemeral room_id =
+let get_room_ephemeral room_id _since =
   Store.list store Key.(v "rooms" / room_id / "ephemeral" / "typing") >>=
   (function
     | Error err -> Lwt.return_error err
     | Ok users ->
       Lwt_list.filter_map_p
         (fun (username, _) ->
-           Store.get store Key.(v "rooms" / room_id / "ehpemeral" / "typing" / username ) >>=
+           Store.get store Key.(v "rooms" / room_id / "ephemeral" / "typing" / username ) >>=
            (function
              | Error _ -> Lwt.return_none
              | Ok until ->
                let _until = float_of_string until in
                Lwt.return_some username)) users >>=
       (fun users ->
-         Lwt.return_ok (Event.Typing.make ~users_id:users ())))
+         Lwt.return_ok [Event.Event (Event.Event.Typing (Event.Event.Typing.make ~users_id:users ()))]))
 
 let get_room_state room_id since =
   Store.list store Key.(v "rooms" / room_id / "state") >>=
@@ -149,10 +149,10 @@ let get_rooms user_id since =
               (function
                 | Error _ -> Lwt.return_none
                 | Ok message_events ->
-                  get_room_ephemeral room_id >>=
+                  get_room_ephemeral room_id since >>=
                   (function
                     | Error _ -> Lwt.return_none
-                    | Ok _ephemeral_events ->
+                    | Ok ephemeral_events ->
                       let timeline =
                         Rooms.Timeline.make
                           ?events:(Some message_events)
@@ -162,10 +162,10 @@ let get_rooms user_id since =
                         Rooms.Joined_room.make
                           ?state:(Some state_events)
                           ?timeline:(Some timeline)
-                          (* ?ephemeral:(Some [ephemeral_events]) *)
+                          ?ephemeral:(Some ephemeral_events)
                           ()
                       in
-                      update := !update || (List.length state_events + (List.length message_events) <> 0);
+                      update := !update || (List.length state_events + (List.length message_events) + (List.length ephemeral_events) <> 0);
                       Lwt.return_some (room_id, room))))) j >>=
       (fun joined ->
          Lwt_list.filter_map_p

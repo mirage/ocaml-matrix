@@ -199,7 +199,7 @@ let presence_get =
   let f ((), _user_id) _ _ _ =
     let response =
       Response.make
-        ~presence:Event.Presence.Presence.Online
+        ~presence:Event.Event.Presence.Presence.Online
         ()
     in
     let response =
@@ -276,53 +276,47 @@ let sync =
           Room_helpers.get_rooms user_id since >>=
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
-            | Ok (joined_rooms, invited_rooms, leaved_rooms, update) ->
-              if update
-              then
-                 let push_rules =
-                  Event.Push_rules
-                    (Event.Push_rules.make
-                      ~content:[]
-                      ~override:[]
-                      ~room:[]
-                      ~sender:[]
-                      ~underride:[]
-                      ())
-                in
-                let response =
-                  Response.make
-                    ~next_batch:(string_of_int (time ()))
-                    ?rooms:
-                    (Some
-                      (Rooms.make
-                        ~join:joined_rooms
-                        ~invite:invited_rooms
-                        ~leave:leaved_rooms
-                        ()))
-                    ?account_data:(Some [push_rules])
-                    ()
-                in
-                let response =
-                  construct Response.encoding response |>
-                  Ezjsonm.value_to_string
-                in
-                Lwt.return (`OK, response)
-              else
-                if wait *. 1000. < timeout
-                then
-                  Lwt_unix.sleep 1. >>=
-                  loop (wait +. 1.)
-                else
-                  let response =
-                    Response.make
-                      ~next_batch:(string_of_int (time ()))
-                      ()
-                  in
-                  let response =
-                    construct Response.encoding response |>
-                    Ezjsonm.value_to_string
-                  in
-                  Lwt.return (`OK, response))
+            | Ok (joined_rooms, invited_rooms, leaved_rooms, room_update) ->
+              Helpers.get_account_data user_id since >>=
+              (function
+                | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+                | Ok (account_data, accoundt_data_update) ->
+                  if room_update || accoundt_data_update
+                  then
+                    let response =
+                      Response.make
+                        ~next_batch:(string_of_int (time ()))
+                        ?rooms:
+                        (Some
+                          (Rooms.make
+                            ~join:joined_rooms
+                            ~invite:invited_rooms
+                            ~leave:leaved_rooms
+                            ()))
+                        ~account_data
+                        ()
+                    in
+                    let response =
+                      construct Response.encoding response |>
+                      Ezjsonm.value_to_string
+                    in
+                    Lwt.return (`OK, response)
+                  else
+                    if wait *. 1000. < timeout
+                    then
+                      Lwt_unix.sleep 1. >>=
+                      loop (wait +. 1.)
+                    else
+                      let response =
+                        Response.make
+                          ~next_batch:(string_of_int (time ()))
+                          ()
+                      in
+                      let response =
+                        construct Response.encoding response |>
+                        Ezjsonm.value_to_string
+                      in
+                      Lwt.return (`OK, response)))
           in
           loop 0. ())
   in
@@ -346,32 +340,69 @@ module Account_data =
 struct
   let put =
     let open Account_data.Put in
-    let f (((), _user_id), _type) _ _ _ =
-      let response =
-        Response.make
-          ()
-      in
-      let response =
-        construct Response.encoding response |>
-        Ezjsonm.value_to_string
-      in
-      (`OK, response) |> Lwt.return
+    let f (((), user_id), data_type) request _ token =
+      get_logged_user token >>=
+      (function
+        | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+        | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
+        | Ok (Some token_user_id) ->
+          if user_id <> token_user_id
+          then
+            (`Forbidden, error "M_FORBIDDEN" "") |> Lwt.return
+          else
+            let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
+            let data = Request.get_data request in
+            let id = event_id () in
+            Event_store.set event_store Key.(v id) data >>=
+            (function
+              | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+              | Ok () ->
+                Store.set store Key.(v "users" / user_id / "data" / data_type) id >>=
+                (function
+                  | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+                  | Ok () ->
+                    let response =
+                      Response.make
+                        ()
+                    in
+                    let response =
+                      construct Response.encoding response |>
+                      Ezjsonm.value_to_string
+                    in
+                    (`OK, response) |> Lwt.return)))
     in
     needs_auth, f
 
   let get =
     let open Account_data.Get in
-    let f (((), _user_id), _type) _ _ _ =
-      let response =
-        Response.make
-          ~data:[]
-          ()
-      in
-      let response =
-        construct Response.encoding response |>
-        Ezjsonm.value_to_string
-      in
-      (`OK, response) |> Lwt.return
+    let f (((), user_id), data_type) _ _ token =
+      get_logged_user token >>=
+      (function
+        | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+        | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
+        | Ok (Some token_user_id) ->
+          if user_id <> token_user_id
+          then
+            (`Forbidden, error "M_FORBIDDEN" "") |> Lwt.return
+          else
+            Store.get store Key.(v "users" / user_id / "data" / data_type) >>=
+            (function
+              | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+              | Ok data_id ->
+                Event_store.get event_store Key.(v data_id) >>=
+                (function
+                  | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+                  | Ok data ->
+                    let response =
+                      Response.make
+                        ~data
+                        ()
+                    in
+                    let response =
+                      construct Response.encoding response |>
+                      Ezjsonm.value_to_string
+                    in
+                    (`OK, response) |> Lwt.return)))
     in
     needs_auth, f
 end
@@ -649,17 +680,28 @@ let pushers_get =
 
 let capabilities =
   let open Capabilities in
-  let f () _ _ _ =
-    let response =
-      Response.make
-        ~capabilities:[]
-        ()
-    in
-    let response =
-      construct Response.encoding response |>
-      Ezjsonm.value_to_string
-    in
-    Lwt.return (`OK, response)
+  let f () _ _ token =
+    get_logged_user token >>=
+    (function
+      | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+      | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "") (* should not happend *)
+      | Ok (Some _user_id) ->
+        let change_password =
+          Capability.Change_password
+            (Capability.Change_password.make
+              ~enabled:Const.Capabilities.change_password
+              ())
+        in
+        let response =
+          Response.make
+            ~capabilities:[change_password]
+            ()
+        in
+        let response =
+          construct Response.encoding response |>
+          Ezjsonm.value_to_string
+        in
+        Lwt.return (`OK, response))
   in
   needs_auth, f
 

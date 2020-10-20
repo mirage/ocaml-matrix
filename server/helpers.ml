@@ -60,3 +60,40 @@ let create_token f username =
   (function
     | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
     | Ok () -> f (Some token))
+
+let get_account_data user_id _since =
+  let push_rules =
+  Event.Event
+    (Event.Event.Push_rules
+      (Event.Event.Push_rules.make
+        ~content:[]
+        ~override:[]
+        ~room:[]
+        ~sender:[]
+        ~underride:[]
+        ()))
+  in
+  Store.list store Key.(v "users" / user_id / "data") >>=
+  (function
+    | Error err -> Lwt.return_error err
+    | Ok data_types ->
+      Lwt_list.filter_map_p
+        (fun (data_type, _) ->
+          Store.get store Key.(v "users" / user_id / "data" / data_type) >>=
+          (function
+            | Error _ -> Lwt.return_none
+            | Ok data_id ->
+              Event_store.get event_store Key.(v data_id) >>=
+              (function
+                | Error _ -> Lwt.return_none
+                | Ok content ->
+                  let event =
+                    Event.Custom
+                      (Event.Custom.make
+                        ~type_id:data_type
+                        ~content
+                        ())
+                  in
+                  Lwt.return_some event))) data_types >>=
+      (fun account_data ->
+         Lwt.return_ok (push_rules::account_data, true)))
