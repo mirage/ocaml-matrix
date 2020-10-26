@@ -8,3 +8,5 @@ doc/*.html
 *.install
 *.tmp
 *.log
+server.crt
+server.key
