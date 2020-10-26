@@ -18,7 +18,7 @@ let upload =
   let f () request query _ = (* maybe do something with the filename *)
     if String.length request > Const.upload_size
     then
-      Lwt.return (`Request_entity_too_large, error "M_TOO_LARGE" (Fmt.str "Cannot upload files larger than %a" Fmt.byte_size Const.upload_size))
+      Lwt.return (`Request_entity_too_large, error "M_TOO_LARGE" (Fmt.str "Cannot upload files larger than %a" Fmt.byte_size Const.upload_size), None)
     else
       let id = id () in
       let filename = List.assoc_opt "filename" query |> (Option.map List.hd) in
@@ -27,14 +27,14 @@ let upload =
       | Some filename ->
         Store.set store Key.(v "media" / "filenames" / filename) id >>=
         (function
-          | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+          | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
           | Ok () -> Lwt.return_ok ())) >>=
           (function
           | Error err -> Lwt.return err
           | Ok () ->
             Store.set store Key.(v "media" / "files" / id) request >>=
             (function
-              | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+              | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
               | Ok () ->
                 let response =
                   Response.make
@@ -45,7 +45,7 @@ let upload =
                   construct Response.encoding response |>
                   Ezjsonm.value_to_string
                 in
-                Lwt.return (`OK, response)))
+                Lwt.return (`OK, response, None)))
   in
   needs_auth, f
 
@@ -54,9 +54,9 @@ let download =
   let f (((), _server_name), media_id) _ _ _ =
     Store.get store Key.(v "media" / "files" / media_id) >>=
     (function
-      | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+      | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
       | Ok media ->
-        Lwt.return (`OK, media))
+        Lwt.return (`OK, media, None))
   in
   needs_auth, f
 
@@ -65,9 +65,9 @@ let download_filename = (* It's kind of ambiguous what this endpoint should do *
   let f ((((), _server_name), media_id), _filename) _ _ _ =
     Store.get store Key.(v "media" / "files" / media_id) >>=
     (function
-      | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+      | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
       | Ok media ->
-        Lwt.return (`OK, media))
+        Lwt.return (`OK, media, None))
   in
   needs_auth, f
 
@@ -76,9 +76,9 @@ let thumbnail =
   let f (((), _server_name), media_id) _ _ _ = (* Totally a shameful placeholder *)
     Store.get store Key.(v "media" / "files" / media_id) >>=
     (function
-      | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+      | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
       | Ok media ->
-        Lwt.return (`OK, media))
+        Lwt.return (`OK, media, None))
   in
   needs_auth, f
 
@@ -94,6 +94,6 @@ let config =
       construct Response.encoding response |>
       Ezjsonm.value_to_string
     in
-    Lwt.return (`OK, response)
+    Lwt.return (`OK, response, None)
   in
   needs_auth, f

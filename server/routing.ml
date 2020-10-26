@@ -1,6 +1,6 @@
 open Cohttp
 
-type endpoint = (string -> (string * string list) list -> string option -> (Code.status_code * string) Lwt.t)
+type endpoint = (string -> (string * string list) list -> string option -> (Code.status_code * string * string option) Lwt.t)
 
 type 'a path = string * 'a t
 and 'a meth = Code.meth * (bool * ('a -> endpoint))

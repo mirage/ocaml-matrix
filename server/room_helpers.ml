@@ -165,7 +165,7 @@ let get_rooms user_id since =
                           ?ephemeral:(Some ephemeral_events)
                           ()
                       in
-                      update := !update || (List.length state_events + (List.length message_events) + (List.length ephemeral_events) <> 0);
+                      update := !update || (List.length state_events + (List.length message_events) (* + (List.length ephemeral_events) *) <> 0);
                       Lwt.return_some (room_id, room))))) j >>=
       (fun joined ->
          Lwt_list.filter_map_p

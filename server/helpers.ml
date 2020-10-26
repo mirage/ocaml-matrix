@@ -25,13 +25,13 @@ let ( >?= ) f g =
 
 let placeholder =
   let f _ _ _ _ =
-    Lwt.return (`Not_implemented, "")
+    Lwt.return (`Not_implemented, "Not implemented", Some "text/html")
   in
   false, f
 
 let deprecated =
   let f _ _ _ _ =
-    Lwt.return (`Moved_permanently, "")
+    Lwt.return (`Moved_permanently, "Not implemented", Some "text/html")
   in
   false, f
 
@@ -58,7 +58,7 @@ let create_token f username =
   let token = "auth_token_for_" ^ username in
   Store.set store Key.(v "tokens" / token) username >>=
   (function
-    | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure")
+    | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
     | Ok () -> f (Some token))
 
 let get_account_data user_id _since =
@@ -96,4 +96,4 @@ let get_account_data user_id _since =
                   in
                   Lwt.return_some event))) data_types >>=
       (fun account_data ->
-         Lwt.return_ok (push_rules::account_data, true)))
+         Lwt.return_ok (push_rules::account_data, false)))

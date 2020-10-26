@@ -35,7 +35,7 @@ let config =
     [ `GET, Media_endpoints.config
     ]
 
-let routes =
+let routes: unit t =
   paths
     [ "r0"
       , paths

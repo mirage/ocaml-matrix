@@ -366,7 +366,7 @@ let well_known =
           ]
     ]
 
-let routes =
+let routes: unit t =
   paths
     [ ""
       , paths
