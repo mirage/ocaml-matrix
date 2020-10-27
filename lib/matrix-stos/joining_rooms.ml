@@ -26,30 +26,32 @@ struct
         ; origin_server_ts: int
         ; event_type: string
         ; state_key: string
+        ; room_id: string option (* not really in documentation but w/e *)
         } [@@deriving accessor]
 
       let encoding =
         let to_tuple t =
-          t.sender, t.origin, t.origin_server_ts, t.event_type, t.state_key, ()
+          t.sender, t.origin, t.origin_server_ts, t.event_type, t.state_key, t.room_id, ()
         in
         let of_tuple v =
-          let sender, origin, origin_server_ts, event_type, state_key, () = v in
-          { sender; origin; origin_server_ts; event_type; state_key }
+          let sender, origin, origin_server_ts, event_type, state_key, room_id, () = v in
+          { sender; origin; origin_server_ts; event_type; state_key; room_id }
         in
         let with_tuple =
-          obj6
+          obj7
             (req "sender" string)
             (req "origin" string)
             (req "origin_server_ts" int)
             (req "type" string)
             (req "state_key" string)
+            (opt "room_id" string)
             (req "content" (obj1
               (req "membership" (constant "join"))))
         in
         conv to_tuple of_tuple with_tuple
     end
 
-    type t =
+    type t = (* Not specified as 'required' in the documentation but synapse seems to want them anywy *)
       { room_version: string option
       ; event_template: Event_template.t option
       } [@@deriving accessor]
@@ -65,7 +67,7 @@ struct
       let with_tuple =
         obj2
           (opt "room_version" string)
-          (opt "event_template" Event_template.encoding)
+          (opt "event" Event_template.encoding)
       in
       conv to_tuple of_tuple with_tuple
   end
@@ -89,15 +91,16 @@ struct
         ; origin_server_ts: int
         ; event_type: string
         ; state_key: string
+        ; content: Matrix_ctos.Room_events.Room_event.Member.t
         } [@@deriving accessor]
 
       let encoding =
         let to_tuple t =
-          t.sender, t.origin, t.origin_server_ts, t.event_type, t.state_key, ()
+          t.sender, t.origin, t.origin_server_ts, t.event_type, t.state_key, t.content
         in
         let of_tuple v =
-          let sender, origin, origin_server_ts, event_type, state_key, () = v in
-          { sender; origin; origin_server_ts; event_type; state_key }
+          let sender, origin, origin_server_ts, event_type, state_key, content = v in
+          { sender; origin; origin_server_ts; event_type; state_key; content }
         in
         let with_tuple =
           obj6
@@ -106,8 +109,7 @@ struct
             (req "origin_server_ts" int)
             (req "type" string)
             (req "state_key" string)
-            (req "content" (obj1
-              (req "membership" (constant "join"))))
+            (req "content" Matrix_ctos.Room_events.Room_event.Member.encoding)
         in
         conv to_tuple of_tuple with_tuple
     end
@@ -175,15 +177,16 @@ struct
         ; origin_server_ts: int
         ; event_type: string
         ; state_key: string
+        ; content: Matrix_ctos.Room_events.Room_event.Member.t
         } [@@deriving accessor]
 
       let encoding =
         let to_tuple t =
-          t.sender, t.origin, t.origin_server_ts, t.event_type, t.state_key, ()
+          t.sender, t.origin, t.origin_server_ts, t.event_type, t.state_key, t.content
         in
         let of_tuple v =
-          let sender, origin, origin_server_ts, event_type, state_key, () = v in
-          { sender; origin; origin_server_ts; event_type; state_key }
+          let sender, origin, origin_server_ts, event_type, state_key, content = v in
+          { sender; origin; origin_server_ts; event_type; state_key; content }
         in
         let with_tuple =
           obj6
@@ -192,54 +195,32 @@ struct
             (req "origin_server_ts" int)
             (req "type" string)
             (req "state_key" string)
-            (req "content" (obj1
-              (req "membership" (constant "join"))))
+            (req "content" Matrix_ctos.Room_events.Room_event.Member.encoding)
         in
         conv to_tuple of_tuple with_tuple
     end
 
     module Response =
     struct
-      module Room_state =
-      struct
-        type t =
-          { origin: string
-          ; auth_chain: Matrix_ctos.Events.t list
-          ; state: Matrix_ctos.Events.t list
-          } [@@deriving accessor]
-
-        let encoding =
-          let to_tuple t =
-            t.origin, t.auth_chain, t.state
-          in
-          let of_tuple v =
-            let origin, auth_chain, state = v in
-            { origin; auth_chain; state }
-          in
-          let with_tuple =
-            obj3
-              (req "origin" string)
-              (req "auth_chain" (list Matrix_ctos.Events.encoding))
-              (req "state" (list Matrix_ctos.Events.encoding))
-          in
-          conv to_tuple of_tuple with_tuple
-      end
-
       type t =
-        { room_state: Room_state.t option
+        { origin: string
+        ; auth_chain: Matrix_ctos.Events.t list
+        ; state: Matrix_ctos.Events.t list
         } [@@deriving accessor]
 
       let encoding =
         let to_tuple t =
-          t.room_state
+          t.origin, t.auth_chain, t.state
         in
         let of_tuple v =
-          let room_state = v in
-          { room_state }
+          let origin, auth_chain, state = v in
+          { origin; auth_chain; state }
         in
         let with_tuple =
-          obj1
-            (opt "room_state" Room_state.encoding)
+          obj3
+            (req "origin" string)
+            (req "auth_chain" (list Matrix_ctos.Events.encoding))
+            (req "state" (list Matrix_ctos.Events.encoding))
         in
         conv to_tuple of_tuple with_tuple
     end

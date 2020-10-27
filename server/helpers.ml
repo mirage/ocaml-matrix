@@ -38,6 +38,9 @@ let deprecated =
 let username_to_user_id username =
   "@" ^ username ^ ":" ^ Const.homeserver
 
+let homeserver_of_user_id user_id =
+  List.nth (String.split_on_char ':' user_id) 1
+
 let get_logged_user = function
   | None -> Lwt.return_ok None
   | Some token ->
