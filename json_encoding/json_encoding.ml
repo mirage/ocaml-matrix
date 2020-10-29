@@ -18,8 +18,8 @@
 (************************************************************************)
 
 (*
- * Heavily based on ocp-json-typed, but with slight changes to correspon to my needs
- * Should entirely reworked
+ * Heavily based on ocp-json-typed, but with slight changes to correspond to my
+ * needs. Should be entirely reworked
  *)
 
 module Path =
@@ -257,9 +257,9 @@ let rec destruct
       let d = destruct_obj t in
       (fun v -> match Repr.view v with
          | `O fields ->
-           let r, rest, ign = d fields in
+           let r, rest, _ign = d fields in
            begin match rest with
-             | (field, _) :: _ when not ign -> raise @@ Unexpected_field field
+             (* | (field, _) :: _ when not ign -> raise @@ Unexpected_field field *)
              | _ -> r
            end
          | k -> raise @@ unexpected k "object")
@@ -267,9 +267,9 @@ let rec destruct
       let d = destruct_obj t in
       (fun v -> match Repr.view v with
          | `O fields ->
-           let r, rest, ign = d fields in
+           let r, rest, _ign = d fields in
            begin match rest with
-             | (field, _) :: _ when not ign -> raise @@ Unexpected_field field
+             (* | (field, _) :: _ when not ign -> raise @@ Unexpected_field field *)
              | _ -> r
            end
          | k -> raise @@ unexpected k "object")

@@ -2,4 +2,4 @@
  (name        matrix_ctos)
  (public_name matrix-ctos)
  (preprocess  (pps ppx_deriver_accessor ppx_rewriter_accessor))
- (libraries   lwt cohttp cohttp-lwt-unix ezjsonm fmt json_encoding))
+ (libraries   json_encoding))
