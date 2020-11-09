@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module Query = Empty.Query
 
@@ -7,7 +8,7 @@ let path room_id event_id = "/_matrix/federation/v1/event_auth/" ^ room_id ^ "/"
 module Response =
 struct
   type t =
-    { auth_chain: Matrix_ctos.Events.t list
+    { auth_chain: Events.State_event.t list
     } [@@deriving accessor]
 
   let encoding =
@@ -20,7 +21,7 @@ struct
     in
     let with_tuple =
       obj1
-        (req "auth_chain" (list Matrix_ctos.Events.encoding))
+        (req "auth_chain" (list Events.State_event.encoding))
     in
     conv to_tuple of_tuple with_tuple
 end

@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module Get =
 struct

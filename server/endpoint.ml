@@ -1,7 +1,8 @@
-open Matrix_ctos
+open Lwt.Infix
 open Json_encoding
 open Store
-open Lwt.Infix
+open Matrix_common
+open Matrix_ctos
 open Helpers
 
 let placeholder = placeholder
@@ -180,7 +181,7 @@ let register =
   needs_auth, f
 
 let presence_put =
-  let open Presence.Post in
+  let open Presence.Put in
   let f ((), _user_id) request _ _ =
     let _request = destruct Request.encoding (Ezjsonm.value_from_string request) in
     let response =
@@ -199,7 +200,7 @@ let presence_get =
   let f ((), _user_id) _ _ _ =
     let response =
       Response.make
-        ~presence:Event.Event.Presence.Presence.Online
+        ~presence:Events.Event_content.Presence.Presence.Online
         ()
     in
     let response =

@@ -1,3 +1,5 @@
+open Matrix_common
+
 module Query =
 struct
   type t =

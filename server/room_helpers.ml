@@ -1,6 +1,7 @@
 open Lwt.Infix
 open Json_encoding
 open Store
+open Matrix_common
 open Matrix_ctos
 
 let set_state_event room_id event_type state_key event_id =
@@ -52,7 +53,7 @@ let get_room_timeline room_id since =
       (fun events ->
          List.map
            (fun event ->
-              Events.Message_event (destruct Message_event.encoding event)) events |> Lwt.return_ok))
+              destruct Events.Room_event.encoding event) events |> Lwt.return_ok))
 
 let get_room_ephemeral room_id _since =
   Store.list store Key.(v "rooms" / room_id / "ephemeral" / "typing") >>=
@@ -68,7 +69,7 @@ let get_room_ephemeral room_id _since =
                let _until = float_of_string until in
                Lwt.return_some username)) users >>=
       (fun users ->
-         Lwt.return_ok [Event.Event (Event.Event.Typing (Event.Event.Typing.make ~users_id:users ()))]))
+         Lwt.return_ok [Events.Event.make ~event_content:(Typing (Events.Event_content.Typing.make ~users_id:users ())) ()]))
 
 let get_room_state room_id since =
   Store.list store Key.(v "rooms" / room_id / "state") >>=
@@ -93,7 +94,7 @@ let get_room_state room_id since =
                           | Ok event -> Lwt.return_some event))) state_keys >>=
                (fun events -> Lwt.return_some events))) event_types >>=
       (fun events ->
-         List.flatten events |> List.map (destruct State_events.encoding) |> Lwt.return_ok))
+         List.flatten events |> List.map (destruct Events.State_event.encoding) |> Lwt.return_ok))
 
 let get_rooms_membership user_id since =
   Store.list store Key.(v "rooms") >>=
@@ -115,19 +116,18 @@ let get_rooms_membership user_id since =
                   (function
                     | Error _ -> Lwt.return_none
                     | Ok event ->
-                      let event = destruct State_events.encoding event in
-                      (match State_events.get_event event with
-                        | State_events.State_event.Member event ->
-                          let event = State_events.State_event.Member.get_event event in
-                          Lwt.return_some (room_id, Room_events.Room_event.Member.get_membership event, changed)
+                      let event = destruct Events.State_event.encoding event in
+                      (match Events.State_event.get_event_content event with
+                        | Events.Event_content.Member event ->
+                          Lwt.return_some (room_id, Events.Event_content.Member.get_membership event, changed)
                         | _ -> Lwt.return_none))))) rooms >>=
       (fun rooms ->
          let f (j, i, l) = function
-           | room_id, Room_events.Membership.Join, changed -> (room_id, changed)::j, i, l
-           | room_id, Room_events.Membership.Invite, changed -> j, (room_id, changed)::i, l
-           | room_id, Room_events.Membership.Ban, changed
-           | room_id, Room_events.Membership.Leave, changed -> j, i, (room_id, changed)::l
-           | _room_id, Room_events.Membership.Knock, _ -> j, i, l (* maybe do something for knocked rooms *)
+           | room_id, Events.Event_content.Membership.Join, changed -> (room_id, changed)::j, i, l
+           | room_id, Events.Event_content.Membership.Invite, changed -> j, (room_id, changed)::i, l
+           | room_id, Events.Event_content.Membership.Ban, changed
+           | room_id, Events.Event_content.Membership.Leave, changed -> j, i, (room_id, changed)::l
+           | _room_id, Events.Event_content.Membership.Knock, _ -> j, i, l (* maybe do something for knocked rooms *)
          in
          let rooms = List.fold_left f ([], [], []) rooms in
          Lwt.return_ok rooms))

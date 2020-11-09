@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module Get =
 struct
@@ -10,7 +11,7 @@ struct
 
     module Request = Empty.Json
 
-    module Response = Room_events
+    module Response = Events.Room_event
 
     let needs_auth = true
   end
@@ -44,7 +45,7 @@ struct
     module Response =
     struct
       type t =
-        { events: State_events.t list
+        { events: Events.State_event.t list
         } [@@deriving accessor]
 
       let encoding =
@@ -56,7 +57,7 @@ struct
           { events }
         in
         let with_tuple =
-          list State_events.encoding
+          list Events.State_event.encoding
         in
         conv to_tuple of_tuple with_tuple
     end
@@ -70,8 +71,8 @@ struct
     struct
       type t =
         { at: string option
-        ; membership: Room_events.Membership.t option
-        ; not_membership: Room_events.Membership.t option
+        ; membership: Events.Event_content.Membership.t option
+        ; not_membership: Events.Event_content.Membership.t option
         } [@@deriving accessor]
 
       let args t =
@@ -84,11 +85,11 @@ struct
         let l =
           match t.membership with
             | None -> l
-            | Some membership -> ("membership", [Room_events.Membership.to_string membership])::l
+            | Some membership -> ("membership", [Events.Event_content.Membership.to_string membership])::l
         in
         match t.not_membership with
           | None -> l
-          | Some not_membership -> ("not_membership", [Room_events.Membership.to_string not_membership])::l
+          | Some not_membership -> ("not_membership", [Events.Event_content.Membership.to_string not_membership])::l
     end
 
     let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/members"
@@ -98,7 +99,7 @@ struct
     module Response =
     struct
       type t =
-        { chunk: State_events.t list
+        { chunk: Events.State_event.t list
         } [@@deriving accessor]
 
       let encoding =
@@ -111,7 +112,7 @@ struct
         in
         let with_tuple =
           obj1
-            (req "chunk" (list State_events.encoding))
+            (req "chunk" (list Events.State_event.encoding))
         in
         conv to_tuple of_tuple with_tuple
     end
@@ -186,7 +187,7 @@ struct
     module Request =
     struct
       type t =
-        { event: Room_events.Room_event.t
+        { event: Events.Event_content.t
         } [@@deriving accessor]
 
       let encoding =
@@ -198,7 +199,7 @@ struct
           { event }
         in
         let with_tuple =
-          Room_events.Room_event.encoding
+          Events.Event_content.encoding
         in
         conv to_tuple of_tuple with_tuple
     end
@@ -236,7 +237,7 @@ struct
     module Request =
     struct
       type t =
-        { event: Message_event.Message_event.Message.t
+        { event: Events.Event_content.Message.t
         } [@@deriving accessor]
 
       let encoding =
@@ -248,7 +249,7 @@ struct
           { event }
         in
         let with_tuple =
-          Message_event.Message_event.Message.encoding
+          Events.Event_content.Message.encoding
         in
         conv to_tuple of_tuple with_tuple
     end

@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module State =
 struct
@@ -17,8 +18,8 @@ struct
   module Response =
   struct
     type t =
-      { auth_chain: Matrix_ctos.Events.t list
-      ; pdus: Matrix_ctos.Events.t list
+      { auth_chain: Events.State_event.t list
+      ; pdus: Events.State_event.t list
       } [@@deriving accessor]
 
     let encoding =
@@ -31,8 +32,8 @@ struct
       in
       let with_tuple =
         obj2
-          (req "auth_chain" (list Matrix_ctos.Events.encoding))
-          (req "pdus" (list Matrix_ctos.Events.encoding))
+          (req "auth_chain" (list Events.State_event.encoding))
+          (req "pdus" (list Events.State_event.encoding))
       in
       conv to_tuple of_tuple with_tuple
   end

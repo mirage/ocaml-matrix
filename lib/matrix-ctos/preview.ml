@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module Query =
 struct
@@ -38,7 +39,7 @@ struct
   type t =
     { start: string option
     ; end_: string option
-    ; chunk: Events.t list option
+    ; chunk: Events.Room_event.t list option
     } [@@deriving accessor]
 
   let encoding =
@@ -53,7 +54,7 @@ struct
       obj3
         (opt "start" string)
         (opt "end" string)
-        (opt "chunk" (list Events.encoding))
+        (opt "chunk" (list Events.Room_event.encoding))
     in
     conv to_tuple of_tuple with_tuple
 end

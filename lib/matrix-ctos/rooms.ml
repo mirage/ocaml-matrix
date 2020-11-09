@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module Room_summary =
 struct
@@ -28,7 +29,7 @@ end
 module Timeline =
 struct
   type t =
-    { events: Events.t list option
+    { events: Events.Room_event.t list option
     ; limited: bool option
     ; prev_batch: string option
     } [@@deriving accessor]
@@ -43,12 +44,9 @@ struct
     in
     let with_tuple =
       obj3
-        (opt "events"
-          (list Events.encoding))
-        (opt "limited"
-          bool)
-        (opt "prev_batch"
-          string)
+        (opt "events" (list Events.Room_event.encoding))
+        (opt "limited" bool)
+        (opt "prev_batch" string)
     in
     conv to_tuple of_tuple with_tuple
 end
@@ -80,10 +78,10 @@ struct
 
   type t =
     { summary: Room_summary.t option
-    ; state: State_events.t list option
+    ; state: Events.State_event.t list option
     ; timeline: Timeline.t option
-    ; ephemeral: Event.t list option
-    ; account_data: Event.t list option
+    ; ephemeral: Events.Event.t list option
+    ; account_data: Events.Event.t list option
     ; unread_notifications: Unread_notifications.t option
     } [@@deriving accessor]
 
@@ -100,14 +98,14 @@ struct
         (opt "summary" Room_summary.encoding)
         (opt "state"
           (obj1
-            (req "events" (list State_events.encoding))))
+            (req "events" (list Events.State_event.encoding))))
         (opt "timeline" Timeline.encoding)
         (opt "ephemeral"
           (obj1
-            (req "events" (list Event.encoding))))
+            (req "events" (list Events.Event.encoding))))
         (opt "account_data"
           (obj1
-            (req "events" (list Event.encoding))))
+            (req "events" (list Events.Event.encoding))))
         (opt "unread_notifications" Unread_notifications.encoding)
     in
     conv to_tuple of_tuple with_tuple
@@ -116,7 +114,7 @@ end
 module Invited_room =
 struct
   type t =
-    { invite_state: State_events.t list option
+    { invite_state: Events.State_event.t list option
     } [@@deriving accessor]
 
   let encoding =
@@ -132,7 +130,7 @@ struct
         (opt "invite_state"
           (obj1
             (req "events"
-              (list State_events.encoding))))
+              (list Events.State_event.encoding))))
     in
     conv to_tuple of_tuple with_tuple
 end
@@ -140,9 +138,9 @@ end
 module Left_room =
 struct
   type t =
-    { state: State_events.t list option
+    { state: Events.State_event.t list option
     ; timeline: Timeline.t option
-    ; account_data: Room_events.t list option
+    ; account_data: Events.Room_event.t list option
     } [@@deriving accessor]
 
   let encoding =
@@ -158,13 +156,13 @@ struct
         (opt "state"
           (obj1
             (req "events"
-              (list State_events.encoding))))
+              (list Events.State_event.encoding))))
         (opt "timeline"
           Timeline.encoding)
         (opt "account_data"
           (obj1
             (req "events"
-              (list Room_events.encoding))))
+              (list Events.Room_event.encoding))))
     in
     conv to_tuple of_tuple with_tuple
 end

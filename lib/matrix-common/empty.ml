@@ -1,15 +1,15 @@
+open Json_encoding
+
 module type JSON  =
 sig
-  [%%accessor:
-    type t = unit ]
-  val encoding: t Json_encoding.encoding
+  type%accessor t = unit
+  val encoding: t encoding
   val pp: t Fmt.t
 end
 
 module type QUERY =
 sig
-  [%%accessor:
-    type t = unit ]
+  type%accessor t = unit
   val args: t -> (string * string list) list
 end
 
@@ -17,7 +17,7 @@ module Json : JSON =
 struct
   type t = unit [@@deriving accessor]
 
-  let encoding = Json_encoding.unit
+  let encoding = unit
 
   let pp _ppf () = ()
 end

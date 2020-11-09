@@ -1,0 +1,5 @@
+(library
+ (name        matrix_common)
+ (public_name matrix-common)
+ (preprocess  (pps ppx_deriver_accessor ppx_rewriter_accessor))
+ (libraries   json_encoding))

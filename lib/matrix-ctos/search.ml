@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module Query =
 struct
@@ -228,8 +229,8 @@ struct
           { start: string option
           ; end_: string option
           ; profile_info: (string * User_profile.t) list option
-          ; events_before: Events.t list option
-          ; events_after: Events.t list option
+          ; events_before: Events.Room_event.t list option
+          ; events_after: Events.Room_event.t list option
           } [@@deriving accessor]
 
         let encoding =
@@ -245,15 +246,15 @@ struct
               (opt "start" string)
               (opt "end" string)
               (opt "profile_info" (assoc User_profile.encoding))
-              (opt "events_before" (list Events.encoding))
-              (opt "events_after" (list Events.encoding))
+              (opt "events_before" (list Events.Room_event.encoding))
+              (opt "events_after" (list Events.Room_event.encoding))
           in
           conv to_tuple of_tuple with_tuple
       end
 
       type t =
         { rank: int option
-        ; result: Events.t option
+        ; result: Events.Room_event.t option
         ; context: Event_context.t option
         } [@@deriving accessor]
 
@@ -268,7 +269,7 @@ struct
         let with_tuple =
           obj3
             (opt "rank" int)
-            (opt "result" Events.encoding)
+            (opt "result" Events.Room_event.encoding)
             (opt "context" Event_context.encoding)
         in
         conv to_tuple of_tuple with_tuple
@@ -303,7 +304,7 @@ struct
       { count: int option
       ; highlights: string list option
       ; results: Result.t list option
-      ; state: (string * State_events.t) list option
+      ; state: (string * Events.State_event.t) list option
       ; groups: (string * (string * Group_value.t) list) list option
       ; next_batch: string option
       } [@@deriving accessor]
@@ -321,7 +322,7 @@ struct
           (opt "count" int)
           (opt "highlights" (list string))
           (opt "results" (list Result.encoding))
-          (opt "state" (assoc State_events.encoding))
+          (opt "state" (assoc Events.State_event.encoding))
           (opt "groups" (assoc (assoc Group_value.encoding)))
           (opt "next_batch" string)
       in

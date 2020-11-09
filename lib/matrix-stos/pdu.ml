@@ -1,3 +1,5 @@
-type t = Matrix_ctos.Events.t
+open Matrix_common
 
-let encoding = Matrix_ctos.Events.encoding
+type t = Events.State_event.t
+
+let encoding = Events.State_event.encoding

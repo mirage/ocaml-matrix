@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module Query =
 struct
@@ -79,9 +80,9 @@ struct
   type t =
     { next_batch: string
     ; rooms: Rooms.t option
-    ; presence: Event.t list option
-    ; account_data: Event.t list option
-    ; to_device: Event.t list option
+    ; presence: Events.State_event.t list option
+    ; account_data: Events.State_event.t list option
+    ; to_device: Events.State_event.t list option
     ; device_lists: Device_lists.t option
     ; device_one_time_keys_count: (string * int) list option
     ; groups: Repr.value option (* Not on the documentation*)
@@ -101,13 +102,13 @@ struct
         (opt "rooms" Rooms.encoding)
         (opt "presence"
           (obj1
-            (req "events" (list Event.encoding))))
+            (req "events" (list Events.State_event.encoding))))
         (opt "account_data"
           (obj1
-            (req "events" (list Event.encoding))))
+            (req "events" (list Events.State_event.encoding))))
         (opt "to_device"
           (obj1
-            (req "events" (list Event.encoding))))
+            (req "events" (list Events.State_event.encoding))))
         (opt "device_lists" Device_lists.encoding)
         (opt "device_one_time_keys_count" (assoc int))
         (opt "groups" any)

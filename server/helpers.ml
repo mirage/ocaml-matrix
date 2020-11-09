@@ -1,7 +1,7 @@
-open Matrix_ctos
 open Json_encoding
 open Store
 open Lwt.Infix
+open Matrix_ctos
 
 let id () = Uuidm.(v `V4 |> to_string)
 
@@ -64,17 +64,19 @@ let create_token f username =
     | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
     | Ok () -> f (Some token))
 
-let get_account_data user_id _since =
-  let push_rules =
-  Event.Event
-    (Event.Event.Push_rules
-      (Event.Event.Push_rules.make
-        ~content:[]
-        ~override:[]
-        ~room:[]
-        ~sender:[]
-        ~underride:[]
-        ()))
+let get_account_data _user_id _since =
+  Lwt.return_ok ([], false)
+  (* let push_rules =
+    Events.Event.make
+      ~event_content:
+        (Events.Event_content.Push_rules
+          (Events.Event_content.Push_rules.make
+            ~content:[]
+            ~override:[]
+            ~room:[]
+            ~sender:[]
+            ~underride:[]
+            ()))
   in
   Store.list store Key.(v "users" / user_id / "data") >>=
   (function
@@ -99,4 +101,4 @@ let get_account_data user_id _since =
                   in
                   Lwt.return_some event))) data_types >>=
       (fun account_data ->
-         Lwt.return_ok (push_rules::account_data, false)))
+         Lwt.return_ok (push_rules::account_data, false))) *)

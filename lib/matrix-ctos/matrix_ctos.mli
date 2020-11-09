@@ -1,24 +1,5 @@
 open Json_encoding
-
-module Empty:
-sig
-  module type JSON  =
-  sig
-    type%accessor t = unit
-    val encoding: t encoding
-    val pp: t Fmt.t
-  end
-
-  module type QUERY =
-  sig
-    type%accessor t = unit
-    val args: t -> (string * string list) list
-  end
-
-  module Json: JSON
-
-  module Query: QUERY
-end
+open Matrix_common
 
 module Account_data:
 sig
@@ -522,240 +503,6 @@ sig
   val needs_auth: bool
 end
 
-module Room_events:
-sig
-  module Membership:
-  sig
-    type t = Invite | Join | Knock | Leave | Ban
-    val encoding: t encoding
-  end
-
-  module Unsigned:
-  sig
-    type%accessor t =
-      { whatever: Repr.value
-      }
-    val encoding: t encoding
-  end
-
-  module Room_event:
-  sig
-    module Aliases:
-    sig
-      type%accessor t =
-        { aliases: string list
-        }
-      val encoding: t encoding
-    end
-    module Canonical_alias:
-    sig
-      type%accessor t =
-        { alias: string option option
-        ; alt_aliases: string list option
-        }
-      val encoding: t encoding
-    end
-    module Create:
-    sig
-      module Previous_room:
-      sig
-        type%accessor t =
-          { room_id: string
-          ; event_id: string
-          }
-        val encoding: t encoding
-      end
-      type%accessor t =
-        { creator: string
-        ; federate: bool option
-        ; room_version: string option
-        ; predecessor: Previous_room.t option
-        }
-      val encoding: t encoding
-    end
-    module Join_rules:
-    sig
-      type rule = Public | Knock | Invite | Private
-      type%accessor t =
-        { join_rule: rule
-        }
-      val encoding: t encoding
-    end
-    module Member:
-    sig
-      module Third_party_invite:
-      sig
-        module Signed:
-        sig
-          type%accessor t =
-            { mxid: string
-            ; signature: unit (* to do *)
-            ; token: string
-            }
-          val encoding: t encoding
-        end
-        type%accessor t =
-          { display_name: string
-          ; signed: Signed.t
-          }
-        val encoding: t encoding
-      end
-      type%accessor t =
-        { avatar_url: string option option
-        ; displayname: string option option
-        ; membership: Membership.t
-        ; is_direct: bool option
-        ; reason: string option
-        ; third_party_invite: Third_party_invite.t option
-        ; unsigned: Unsigned.t option
-        }
-      val encoding: t encoding
-    end
-    module Power_levels:
-    sig
-      module Notifications:
-      sig
-        type%accessor t =
-          { room: int
-          }
-        val encoding: t encoding
-      end
-      type%accessor t =
-        { ban: int option
-        ; events: (string * int) list option
-        ; events_default: int option
-        ; invite: int option
-        ; kick: int option
-        ; redact: int option
-        ; state_default: int option
-        ; users: (string * int) list option
-        ; users_default: int option
-        ; notifications: Notifications.t option
-        }
-      val encoding: t encoding
-    end
-    module History_visibility:
-    sig
-      type visibility = Invited | Joined | Shared | World_readable
-      type%accessor t =
-        { visibility: visibility
-        }
-      val encoding: t encoding
-    end
-    module Third_party_invite:
-    sig
-      module Public_key:
-      sig
-        type%accessor t =
-          { key_validity_url: string option
-          ; public_key: string
-          }
-        val encoding: t encoding
-      end
-      type%accessor t =
-        { display_name: string
-        ; key_validity_url: string
-        ; public_key: string
-        ; public_keys: Public_key.t list option
-        }
-      val encoding: t encoding
-    end
-    module Guest_access:
-    sig
-      module Access:
-      sig
-        type t = Can_join | Forbidden val encoding: t encoding
-      end
-      type%accessor t =
-        { guest_access: Access.t
-        }
-      val encoding: t encoding
-    end
-    module Server_acl:
-    sig
-      type%accessor t =
-        { allow_ip_literals: bool option
-        ; allow: string list option
-        ; deny: string list option
-        }
-      val encoding: t encoding
-    end
-    module Tombstone:
-    sig
-      type%accessor t =
-        { body: string
-        ; replacement_room: string
-        }
-      val encoding: t encoding
-    end
-    module Encryption:
-    sig
-      type%accessor t =
-        { algorithm: string
-        ; rotation_period_ms: int option
-        ; rotation_period_msgs: int option
-        }
-      val encoding: t encoding
-    end
-    module Encrypted:
-    sig
-      module Algorithm:
-      sig
-        type t = Curve_sha2 | Aes_sha2
-        val encoding: t encoding
-      end
-      module Cyphertext:
-      sig
-        module Cyphertext_info:
-        sig
-          type%accessor t =
-            { body: string
-            ; msg_type: int
-            }
-          val encoding: t encoding
-        end
-        type t =
-          | Megolm of string
-          | Olm of (string * Cyphertext_info.t) list
-        val encoding: t encoding
-      end
-      type%accessor t =
-        { algorithm: Algorithm.t
-        ; cyphertext: Cyphertext.t
-        ; sender_key: string
-        ; device_id: string option
-        ; session_id: string option
-        }
-      val encoding: t encoding
-    end
-    type t =
-      | Aliases of Aliases.t
-      | Canonical_alias of Canonical_alias.t
-      | Create of Create.t
-      | Join_rules of Join_rules.t
-      | Member of Member.t
-      | Power_levels of Power_levels.t
-      | History_visibility of History_visibility.t
-      | Third_party_invite of Third_party_invite.t
-      | Guest_access of Guest_access.t
-      | Server_acl of Server_acl.t
-      | Tombstone of Tombstone.t
-      | Encryption of Encryption.t
-      | Encrypted of Encrypted.t
-    val encoding: t encoding
-  end
-
-  type%accessor t =
-    { event: Room_event.t
-    ; event_id: string
-    ; sender: string
-    ; origin_server_ts: int
-    ; unsigned: Unsigned.t option
-    ; room_id: string option
-    }
-  val encoding: t encoding
-end
-
 module Deprecated:
 sig
   module Events:
@@ -926,220 +673,6 @@ sig
   val pp: t Fmt.t
 end
 
-module Push_rule:
-sig
-  module Action:
-  sig
-    module Tweak:
-    sig
-      type%accessor t =
-        { tweak: string
-        ; value: Repr.value option
-        }
-      val encoding: t encoding
-    end
-    type t = Notify | Dont_notify | Coalesce | Tweak of Tweak.t
-    val encoding: t encoding
-  end
-  module Push_condition:
-  sig
-    type%accessor t =
-      { kind: string
-      ; key: string option
-      ; pattern: string option
-      ; is: string option
-      }
-    val encoding: t encoding
-  end
-  type%accessor t =
-    { actions: Action.t list
-    ; default: bool
-    ; enabled: bool
-    ; rule_id: string
-    ; conditions: Push_condition.t list option
-    ; pattern: string option
-    }
-  val encoding: t encoding
-end
-
-module Event:
-sig
-  module Event:
-  sig
-    module Presence:
-    sig
-      module Presence:
-      sig
-        type t = Online | Offline | Unavailable
-        val encoding: t encoding
-      end
-      type%accessor t =
-        { sender: string
-        ; avatar_url: string option
-        ; displayname: string option
-        ; last_active_ago: int option
-        ; presence: Presence.t
-        ; currently_active: bool option
-        ; status_msg: string option
-        }
-      val encoding: t encoding
-    end
-    module Push_rules:
-    sig
-      type%accessor t =
-        { content: Push_rule.t list option
-        ; override: Push_rule.t list option
-        ; room: Push_rule.t list option
-        ; sender: Push_rule.t list option
-        ; underride: Push_rule.t list option
-        }
-      val encoding: t encoding
-    end
-    module Typing:
-    sig
-      type%accessor t =
-        { users_id: string list
-        }
-      val encoding: t encoding
-    end
-    module Receipt:
-    sig
-      module Receipts:
-      sig
-        module Timestamp:
-        sig
-          type%accessor t =
-            { ts: int
-            }
-          val encoding: t encoding
-        end
-        type%accessor t =
-          { users: (string * Timestamp.t) list
-          }
-        val encoding: t encoding
-      end
-      type%accessor t =
-        { receipts: (string * Receipts.t) list
-        }
-      val encoding: t encoding
-    end
-    module Fully_read:
-    sig
-      type%accessor t =
-        { event_id: string
-        ; room_id: string
-        }
-      val encoding: t encoding
-    end
-    module Tag:
-    sig
-      module Tag:
-      sig
-        type%accessor t =
-          { order: float option
-          }
-        val encoding: t encoding
-      end
-      type%accessor t =
-        { tags: (string * Tag.t) list
-        }
-      val encoding: t encoding
-    end
-    module Direct:
-    sig
-      type%accessor t =
-        { directs: (string * (string list)) list
-        }
-      val encoding: t encoding
-    end
-    module Ignored_users_list:
-    sig
-      type%accessor t =
-        { users: string list
-        }
-      val encoding: t encoding
-    end
-    module Room_key:
-    sig
-      type%accessor t =
-        { algorithm: string
-        ; room_id: string
-        ; session_id: string
-        ; session_key: string
-        }
-      val encoding: t encoding
-    end
-    module Room_key_request:
-    sig
-      module Request_key_info:
-      sig
-        type%accessor t =
-          { algorithm: string
-          ; room_id: string
-          ; sender_key: string
-          ; session_key: string
-          }
-        val encoding: t encoding
-      end
-      module Action:
-      sig
-        type t = Request | Cancel_request
-        val encoding: t encoding
-      end
-      type%accessor t =
-        { body: Request_key_info.t
-        ; action: Action.t
-        ; requesting_device_id: string
-        ; request_id: string
-        }
-      val encoding: t encoding
-    end
-    module Forwarded_room_key:
-    sig
-      type%accessor t =
-        { algorithm: string
-        ; room_id: string
-        ; sender_key: string
-        ; session_id: string
-        ; session_key: string
-        ; sender_claimed_ed25519_key: string
-        ; forwarding_curve25519_key_chain: string list
-        }
-      val encoding: t encoding
-    end
-    module Dummy:
-    sig
-      type t = unit
-      val encoding: t encoding
-    end
-    type t =
-        Presence of Presence.t
-      | Push_rules of Push_rules.t
-      | Typing of Typing.t
-      | Receipt of Receipt.t
-      | Fully_read of Fully_read.t
-      | Tag of Tag.t
-      | Direct of Direct.t
-      | Room_key of Room_key.t
-      | Room_key_request of Room_key_request.t
-      | Forwarded_room_key of Forwarded_room_key.t
-      | Dummy of unit
-    val encoding: t encoding
-  end
-  module Custom:
-  sig
-    type%accessor t =
-      { type_id: string
-      ; content: Repr.value
-      }
-    val encoding: t encoding
-  end
-  type t =
-      Event of Event.t
-    | Custom of Custom.t
-  val encoding: t encoding
-end
-
 module Thumbnail_info:
 sig
   type%accessor t =
@@ -1202,415 +735,6 @@ sig
   val encoding: t encoding
 end
 
-module Message_event:
-sig
-  module Message_event:
-  sig
-    module Message:
-    sig
-      module Text:
-      sig
-        type%accessor t =
-          { body: string
-          ; format: string option
-          ; formatted_body: string option
-          }
-        val encoding: t encoding
-      end
-      module Emote:
-      sig
-        type%accessor t =
-          { body: string
-          ; format: string option
-          ; formatted_body: string option
-          }
-        val encoding: t encoding
-      end
-      module Notice:
-      sig
-        type%accessor t =
-          { body: string
-          }
-        val encoding: t encoding
-      end
-      module Image:
-      sig
-        type%accessor t =
-          { body: string
-          ; info: Image_info.t option
-          ; url: string
-          ; file: Encrypted_file.t option
-          }
-        val encoding: t encoding
-      end
-      module File:
-      sig
-        type%accessor t =
-          { body: string
-          ; filename: string option
-          ; info: File_info.t option
-          ; url: string
-          ; file: Encrypted_file.t option
-          }
-        val encoding: t encoding
-      end
-      module Audio:
-      sig
-        type%accessor t =
-          { body: string
-          ; info: Audio_info.t option
-          ; url: string
-          ; file: Encrypted_file.t option
-          }
-        val encoding: t encoding
-      end
-      module Location:
-      sig
-        type%accessor t =
-          { body: string
-          ; info: Location_info.t option
-          ; geo_uri: string
-          }
-        val encoding: t encoding
-      end
-      module Video:
-      sig
-        type%accessor t =
-          { body: string
-          ; info: Video_info.t option
-          ; url: string
-          ; file: Encrypted_file.t option
-          }
-        val encoding: t encoding
-      end
-      module Sticker:
-      sig
-        type%accessor t =
-          { body: string
-          ; info: Image_info.t
-          ; url: string
-          }
-        val encoding: t encoding
-      end
-      module Server_notice:
-      sig
-        type%accessor t =
-          { body: string
-          ; server_notice_type: string
-          ; admin_contact: string option
-          ; limit_type: string option
-          }
-        val encoding: t encoding
-      end
-      type t =
-        | Text of Text.t
-        | Emote of Emote.t
-        | Notice of Notice.t
-        | Image of Image.t
-        | File of File.t
-        | Audio of Audio.t
-        | Location of Location.t
-        | Video of Video.t
-        | Sticker of Sticker.t
-        | Server_notice of Server_notice.t
-      val encoding: t encoding
-    end
-    module Feedback:
-    sig
-      module Feedback_type:
-      sig
-        type t = Delivered | Read
-        val encoding: t encoding
-      end
-      type%accessor t =
-        { target_event_id: string
-        ; feedback_type: Feedback_type.t
-        }
-      val encoding: t encoding
-    end
-    module Name:
-    sig
-      type%accessor t =
-        { name: string;
-        }
-      val encoding: t encoding
-    end
-    module Topic:
-    sig
-      type%accessor t =
-        { topic: string;
-        }
-      val encoding: t encoding
-    end
-    module Avatar:
-    sig
-      type%accessor t =
-        { info: Image_info.t option
-        ; url: string
-        }
-      val encoding: t encoding
-    end
-    module Pinned_events:
-    sig
-      type%accessor t =
-        { pinned: string list
-        }
-      val encoding: t encoding
-    end
-    module Call:
-    sig
-      module Invite:
-      sig
-        module Offer:
-        sig
-          type%accessor t =
-            { sdp: string
-            }
-          val encoding: t encoding
-        end
-        type%accessor t =
-          { call_id: string
-          ; offer: Offer.t
-          ; version: int
-          ; lifetime: int
-          }
-        val encoding: t encoding
-      end
-      module Candidates:
-      sig
-        module Candidate:
-        sig
-          type%accessor t =
-            { sdpMid: string
-            ; sdpMLineIndex: int
-            ; candidate: string
-            }
-          val encoding: t encoding
-        end
-        type%accessor t =
-          { call_id: string
-          ; candidates: Candidate.t list
-          ; version: int
-          }
-        val encoding: t encoding
-      end
-      module Answer:
-      sig
-        module Answer:
-        sig
-          type%accessor t =
-            { sdp: string
-            }
-          val encoding: t encoding
-        end
-        type%accessor t =
-          { call_id: string
-          ; answer: Answer.t
-          ; version: int
-          }
-        val encoding: t encoding
-      end
-      module Hangup:
-      sig
-        module Reason:
-        sig
-          type t = Ice_failed | Invite_timeout
-          val encoding: t encoding
-        end
-        type%accessor t =
-          { call_id: string
-          ; version: int
-          ; reason: Reason.t option
-          }
-        val encoding: t encoding
-      end
-    end
-    type t =
-      | Message of Message.t
-      | Feedback of Feedback.t
-      | Name of Name.t
-      | Topic of Topic.t
-      | Avatar of Avatar.t
-      | Pinned of Pinned_events.t
-      | Invite of Call.Invite.t
-      | Candidates of Call.Candidates.t
-      | Answer of Call.Answer.t
-      | Hangup of Call.Hangup.t
-    val encoding: t encoding
-  end
-  type%accessor t =
-    { event: Message_event.t
-    ; event_id: string
-    ; sender: string
-    ; origin_server_ts: int
-    ; unsigned: Room_events.Unsigned.t option
-    ; room_id: string option
-    ; user_id: string option
-    ; age: int option
-    }
-  val encoding: t encoding
-end
-
-module State_events:
-sig
-  module State_event:
-  sig
-    module Aliases:
-    sig
-      type%accessor t =
-        { homeserver: string
-        ; event: Room_events.Room_event.Aliases.t
-        }
-      val encoding: t encoding
-    end
-    module Canonical_alias:
-    sig
-      type%accessor t =
-        { event: Room_events.Room_event.Canonical_alias.t
-        }
-      val encoding: t encoding
-    end
-    module Create:
-    sig
-      type%accessor t =
-        { event: Room_events.Room_event.Create.t
-        }
-      val encoding: t encoding
-    end
-    module Join_rules:
-    sig
-      type%accessor t =
-        { event: Room_events.Room_event.Join_rules.t
-        }
-      val encoding: t encoding
-    end
-    module Member:
-    sig
-      type%accessor t =
-        { user_id: string
-        ; event: Room_events.Room_event.Member.t
-        }
-      val encoding: t encoding
-    end
-    module Power_levels:
-    sig
-      type%accessor t =
-        { event: Room_events.Room_event.Power_levels.t
-        }
-      val encoding: t encoding
-    end
-    module History_visibility:
-    sig
-      type%accessor t =
-        { event: Room_events.Room_event.History_visibility.t
-        }
-      val encoding: t encoding
-    end
-    module Third_party_invite:
-    sig
-      type%accessor t =
-        { to_sign: string
-        ; event: Room_events.Room_event.Third_party_invite.t
-        }
-      val encoding: t encoding
-    end
-    module Guest_access:
-    sig
-      type%accessor t =
-        { event: Room_events.Room_event.Guest_access.t
-        }
-      val encoding: t encoding
-    end
-    module Server_acl:
-    sig
-      type%accessor t =
-        { event: Room_events.Room_event.Server_acl.t
-        }
-      val encoding: t encoding
-    end
-    module Tombstone:
-    sig
-      type%accessor t =
-        { event: Room_events.Room_event.Tombstone.t
-        }
-      val encoding: t encoding
-    end
-    module Encryption:
-    sig
-      type%accessor t =
-        { event: Room_events.Room_event.Encryption.t
-        }
-      val encoding: t encoding
-    end
-    module Name:
-    sig
-      type%accessor t =
-        { event: Message_event.Message_event.Name.t
-        }
-      val encoding: t encoding
-    end
-    module Topic:
-    sig
-      type%accessor t =
-        { event: Message_event.Message_event.Topic.t
-        }
-      val encoding: t encoding
-    end
-    module Avatar:
-    sig
-      type%accessor t =
-        { event: Message_event.Message_event.Avatar.t
-        }
-      val encoding: t encoding
-    end
-    module Pinned_events:
-    sig
-      type%accessor t =
-        { event: Message_event.Message_event.Pinned_events.t
-        }
-      val encoding: t encoding
-    end
-    type t =
-        Aliases of Aliases.t
-      | Canonical_alias of Canonical_alias.t
-      | Create of Create.t
-      | Join_rules of Join_rules.t
-      | Member of Member.t
-      | Power_levels of Power_levels.t
-      | History_visibility of History_visibility.t
-      | Third_party_invite of Third_party_invite.t
-      | Guest_access of Guest_access.t
-      | Server_acl of Server_acl.t
-      | Tombstone of Tombstone.t
-      | Encryption of Encryption.t
-      | Name of Name.t
-      | Topic of Topic.t
-      | Avatar of Avatar.t
-      | Pinned_events of Pinned_events.t
-    val encoding: t encoding
-    val of_room_event: Room_events.Room_event.t -> string -> t
-  end
-  type%accessor t =
-    { event: State_event.t
-    ; event_id: string option (* Only optionnal when coming from client *)
-    ; sender: string option (* Only optionnal when coming from client *)
-    ; origin_server_ts: int option (* Only optionnal when coming from client *)
-    ; unsigned: Room_events.Unsigned.t option
-    ; room_id: string option
-    }
-  val encoding: t encoding
-  val get_state_key: t -> string
-end
-
-module Events:
-sig
-  type t =
-    | Room_event of Room_events.t
-    | Message_event of Message_event.t
-    | State_event of State_events.t
-  val encoding: t encoding
-end
-
 module Context:
 sig
   module Query:
@@ -1626,10 +750,10 @@ sig
     type%accessor t =
       { start: string option
       ; end_: string option
-      ; events_before: Room_events.t option
-      ; event: string option
-      ; events_after: string option
-      ; state: Events.t list option
+      ; events_before: Events.Room_event.t list option
+      ; event: Events.Room_event.t option
+      ; events_after: Events.Room_event.t list option
+      ; state: Events.State_event.t list option
       }
     val encoding: t encoding
   end
@@ -2307,7 +1431,7 @@ sig
     sig
       type%accessor t =
         { actions: Push_rule.Action.t
-        ; event: Event.t
+        ; event: Events.Room_event.t
         ; profile_tag: string option
         ; read: bool
         ; room_id: string
@@ -2322,12 +1446,6 @@ sig
     val encoding: t encoding
   end
   val needs_auth: bool
-end
-
-module Null:
-sig
-  val string: string option encoding
-  val int: int option encoding
 end
 
 module Open_id:
@@ -2349,14 +1467,14 @@ end
 
 module Presence:
 sig
-  module Post:
+  module Put:
   sig
     module Query: Empty.QUERY
     val path: string -> string
     module Request:
     sig
       type%accessor t =
-        { presence: Event.Event.Presence.Presence.t
+        { presence: Events.Event_content.Presence.Presence.t
         ; status_msg: string option
         }
       val encoding: t encoding
@@ -2371,7 +1489,7 @@ sig
     module Response:
     sig
       type%accessor t =
-        { presence: Event.Event.Presence.Presence.t
+        { presence: Events.Event_content.Presence.Presence.t
         ; last_active_ago: int option
         ; status_msg: string option
         ; currently_active: bool option
@@ -2400,7 +1518,7 @@ sig
     type%accessor t =
       { start: string option
       ; end_: string option
-      ; chunk: Events.t list option
+      ; chunk: Events.Room_event.t list option
       }
     val encoding: t encoding
   end
@@ -2832,7 +1950,7 @@ sig
       module Query: Empty.QUERY
       val path: string -> string -> string
       module Request: Empty.JSON
-      module Response = Room_events
+      module Response = Events.Room_event
       val needs_auth: bool
     end
     module State_key:
@@ -2855,7 +1973,7 @@ sig
       module Response:
       sig
         type%accessor t =
-          { events: State_events.t list
+          { events: Events.State_event.t list
           }
         val encoding: t encoding
       end
@@ -2867,8 +1985,8 @@ sig
       sig
         type%accessor t =
           { at: string option
-          ; membership: Room_events.Membership.t option
-          ; not_membership: Room_events.Membership.t option
+          ; membership: Events.Event_content.Membership.t option
+          ; not_membership: Events.Event_content.Membership.t option
           }
         val args: t -> (string * string list) list
       end
@@ -2877,7 +1995,7 @@ sig
       module Response:
       sig
         type%accessor t =
-          { chunk: State_events.t list
+          { chunk: Events.State_event.t list
           }
         val encoding: t encoding
       end
@@ -2915,7 +2033,7 @@ sig
       module Request:
       sig
         type%accessor t =
-          { event: Room_events.Room_event.t
+          { event: Events.Event_content.t
           }
         val encoding: t encoding
       end
@@ -2935,7 +2053,7 @@ sig
       module Request:
       sig
         type%accessor t =
-          { event: Message_event.Message_event.Message.t
+          { event: Events.Event_content.Message.t
           }
         val encoding: t encoding
       end
@@ -2987,11 +2105,11 @@ sig
         ; invite: string list option
         ; invite_3pid: Invite_3pid.t list option
         ; room_version: string option
-        ; creation_content: Room_events.Room_event.Create.t option
-        ; initial_state: State_events.t list option
+        ; creation_content: Events.Event_content.Create.t option
+        ; initial_state: Events.State_event.t list option
         ; preset: Preset.t option
         ; is_direct: bool option
-        ; power_level_content_override: Room_events.Room_event.Power_levels.t option
+        ; power_level_content_override: Events.Event_content.Power_levels.t option
         }
       val encoding: t encoding
     end
@@ -3163,7 +2281,7 @@ sig
   module Timeline:
   sig
     type%accessor t =
-      { events: Events.t list option
+      { events: Events.Room_event.t list option
       ; limited: bool option
       ; prev_batch: string option
       }
@@ -3182,10 +2300,10 @@ sig
     end
     type%accessor t =
       { summary: Room_summary.t option
-      ; state: State_events.t list option
+      ; state: Events.State_event.t list option
       ; timeline: Timeline.t option
-      ; ephemeral: Event.t list option
-      ; account_data: Event.t list option
+      ; ephemeral: Events.Event.t list option
+      ; account_data: Events.Event.t list option
       ; unread_notifications: Unread_notifications.t option
       }
     val encoding: t encoding
@@ -3194,7 +2312,7 @@ sig
   module Invited_room:
   sig
     type%accessor t =
-      { invite_state: State_events.t list option
+      { invite_state: Events.State_event.t list option
       }
     val encoding: t encoding
   end
@@ -3202,9 +2320,9 @@ sig
   module Left_room:
   sig
     type%accessor t =
-      { state: State_events.t list option
+      { state: Events.State_event.t list option
       ; timeline: Timeline.t option
-      ; account_data: Room_events.t list option
+      ; account_data: Events.Room_event.t list option
       }
     val encoding: t encoding
   end
@@ -3314,14 +2432,14 @@ sig
             { start: string option
             ; end_: string option
             ; profile_info: (string * User_profile.t) list option
-            ; events_before: Events.t list option
-            ; events_after: Events.t list option
+            ; events_before: Events.Room_event.t list option
+            ; events_after: Events.Room_event.t list option
             }
           val encoding: t encoding
         end
         type%accessor t =
           { rank: int option
-          ; result: Events.t option
+          ; result: Events.Room_event.t option
           ; context: Event_context.t option
           }
         val encoding: t encoding
@@ -3339,7 +2457,7 @@ sig
         { count: int option
         ; highlights: string list option
         ; results: Result.t list option
-        ; state: (string * State_events.t) list option
+        ; state: (string * Events.State_event.t) list option
         ; groups: (string * (string * Group_value.t) list) list option
         ; next_batch: string option
         }
@@ -3422,9 +2540,9 @@ sig
     type%accessor t =
       { next_batch: string
       ; rooms: Rooms.t option
-      ; presence: Event.t list option
-      ; account_data: Event.t list option
-      ; to_device: Event.t list option
+      ; presence: Events.State_event.t list option
+      ; account_data: Events.State_event.t list option
+      ; to_device: Events.State_event.t list option
       ; device_lists: Device_lists.t option
       ; device_one_time_keys_count: (string * int) list option
       ; groups: Repr.value option (* Not on the documentation*)

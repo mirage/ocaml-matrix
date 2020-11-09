@@ -1,7 +1,7 @@
 open Lwt.Infix
 open Json_encoding
-open Matrix_ctos
 open Store
+open Matrix_common
 open Helpers
 open Room_helpers
 
@@ -42,12 +42,11 @@ struct
                                       (function
                                         | Error _ -> Lwt.return acc
                                         | Ok event ->
-                                          let event = destruct State_events.encoding event in
-                                          (match State_events.get_event event with
-                                          | State_events.State_event.Member event ->
-                                            let event = State_events.State_event.Member.get_event event in
-                                            (match Room_events.Room_event.Member.get_membership event with
-                                              | Room_events.Membership.Join -> Lwt.return (acc + 1)
+                                          let event = destruct Events.State_event.encoding event in
+                                          (match Events.State_event.get_event_content event with
+                                          | Member event ->
+                                            (match Events.Event_content.Member.get_membership event with
+                                              | Join -> Lwt.return (acc + 1)
                                               | _ -> Lwt.return acc)
                                           | _ -> Lwt.return acc)))) 0 user_ids >>=
                             (fun room_members ->
@@ -59,11 +58,10 @@ struct
                                     (function
                                       | Error _ -> Lwt.return_none
                                       | Ok event ->
-                                        let event = destruct State_events.encoding event in
-                                        (match State_events.get_event event with
-                                        | State_events.State_event.Name event ->
-                                          let event = State_events.State_event.Name.get_event event in
-                                          Lwt.return_some (Message_event.Message_event.Name.get_name event)
+                                        let event = destruct Events.State_event.encoding event in
+                                        (match Events.State_event.get_event_content event with
+                                        | Name event ->
+                                          Lwt.return_some (Events.Event_content.Name.get_name event)
                                         | _ -> Lwt.return_none))) >>=
                                 (fun room_name ->
                                   get_state_event room_id "m.room.topic" "" >>=
@@ -74,18 +72,16 @@ struct
                                       (function
                                         | Error _ -> Lwt.return_none
                                         | Ok event ->
-                                          let event = destruct State_events.encoding event in
-                                          (match State_events.get_event event with
-                                            | State_events.State_event.Name event ->
-                                              let event = State_events.State_event.Name.get_event event in
-                                              Lwt.return_some (Message_event.Message_event.Name.get_name event)
+                                          let event = destruct Events.State_event.encoding event in
+                                          (match Events.State_event.get_event_content event with
+                                            | Name event ->
+                                              Lwt.return_some (Events.Event_content.Name.get_name event)
                                             | _ -> Lwt.return_none))) >>=
                                   (fun room_topic ->
-                                      let event = destruct State_events.encoding event in
-                                      (match State_events.get_event event with
-                                      | State_events.State_event.Join_rules event ->
-                                        let event = State_events.State_event.Join_rules.get_event event in
-                                        (match Room_events.Room_event.Join_rules.get_join_rule event with
+                                      let event = destruct Events.State_event.encoding event in
+                                      (match Events.State_event.get_event_content event with
+                                      | Join_rules event ->
+                                        (match Events.Event_content.Join_rules.get_join_rule event with
                                           | Public ->
                                             let room_summary =
                                               Response.Public_rooms_chunk.make
@@ -149,12 +145,11 @@ struct
                                       (function
                                         | Error _ -> Lwt.return acc
                                         | Ok event ->
-                                          let event = destruct State_events.encoding event in
-                                          (match State_events.get_event event with
-                                          | State_events.State_event.Member event ->
-                                            let event = State_events.State_event.Member.get_event event in
-                                            (match Room_events.Room_event.Member.get_membership event with
-                                              | Room_events.Membership.Join -> Lwt.return (acc + 1)
+                                          let event = destruct Events.State_event.encoding event in
+                                          (match Events.State_event.get_event_content event with
+                                          | Member event ->
+                                            (match Events.Event_content.Member.get_membership event with
+                                              | Join -> Lwt.return (acc + 1)
                                               | _ -> Lwt.return acc)
                                           | _ -> Lwt.return acc)))) 0 user_ids >>=
                             (fun room_members ->
@@ -166,11 +161,10 @@ struct
                                     (function
                                       | Error _ -> Lwt.return_none
                                       | Ok event ->
-                                        let event = destruct State_events.encoding event in
-                                        (match State_events.get_event event with
-                                        | State_events.State_event.Name event ->
-                                          let event = State_events.State_event.Name.get_event event in
-                                          Lwt.return_some (Message_event.Message_event.Name.get_name event)
+                                        let event = destruct Events.State_event.encoding event in
+                                        (match Events.State_event.get_event_content event with
+                                        | Name event ->
+                                          Lwt.return_some (Events.Event_content.Name.get_name event)
                                         | _ -> Lwt.return_none))) >>=
                                 (fun room_name ->
                                   get_state_event room_id "m.room.topic" "" >>=
@@ -181,18 +175,16 @@ struct
                                       (function
                                         | Error _ -> Lwt.return_none
                                         | Ok event ->
-                                          let event = destruct State_events.encoding event in
-                                          (match State_events.get_event event with
-                                            | State_events.State_event.Name event ->
-                                              let event = State_events.State_event.Name.get_event event in
-                                              Lwt.return_some (Message_event.Message_event.Name.get_name event)
+                                          let event = destruct Events.State_event.encoding event in
+                                          (match Events.State_event.get_event_content event with
+                                            | Name event ->
+                                              Lwt.return_some (Events.Event_content.Name.get_name event)
                                             | _ -> Lwt.return_none))) >>=
                                   (fun room_topic ->
-                                      let event = destruct State_events.encoding event in
-                                      (match State_events.get_event event with
-                                      | State_events.State_event.Join_rules event ->
-                                        let event = State_events.State_event.Join_rules.get_event event in
-                                        (match Room_events.Room_event.Join_rules.get_join_rule event with
+                                      let event = destruct Events.State_event.encoding event in
+                                      (match Events.State_event.get_event_content event with
+                                      | Join_rules event ->
+                                        (match Events.Event_content.Join_rules.get_join_rule event with
                                           | Public ->
                                             let room_summary =
                                               Response.Public_rooms_chunk.make
@@ -262,28 +254,32 @@ struct
       let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
       let id = event_id () in
       let event =
-        State_events.make
-          ~event:
-            (State_events.State_event.Member
-                (State_events.State_event.Member.make
-                  ~user_id:(Request.get_state_key request)
-                  ~event:(Request.get_content request)
-                  ()))
-          ?event_id:(Some id)
-          ~sender:(Request.get_sender request)
-          ~origin_server_ts:(time () * 1000)
-          ~unsigned:
-            (Room_events.Unsigned.make
-              ~whatever:(`O ["age", `Float 0.])
+        Events.State_event.make
+          ~room_event:
+            (Events.Room_event.make
+              ~event:
+                (Events.Event.make
+                    ~event_content:
+                      (Events.Event_content.Member
+                        (Request.get_content request))
+                    ())
+              ~event_id:id
+              ~sender:(Request.get_sender request)
+              ~origin_server_ts:(time () * 1000)
+              ~unsigned:
+                (Events.Room_event.Unsigned.make
+                    ~age:0
+                    ())
               ())
+          ~state_key:(Request.get_state_key request)
           ()
       in
-      let encoded_event = Json_encoding.construct State_events.encoding event in
+      let encoded_event = Json_encoding.construct Events.State_event.encoding event in
       Event_store.set event_store Key.(v id) encoded_event >>=
       (function
         | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
         | Ok () ->
-          set_state_event room_id "m.room.member" (State_events.get_state_key event) id >>=
+          set_state_event room_id "m.room.member" (Events.State_event.get_state_key event) id >>=
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
             | Ok () ->
@@ -291,7 +287,6 @@ struct
               (function
                 | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok state ->
-                  let state = List.map (fun event -> Events.State_event event) state in
                   let response =
                     Response.make
                       ~origin:Const.homeserver

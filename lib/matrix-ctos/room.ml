@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module Visibility =
 struct
@@ -67,11 +68,11 @@ struct
       ; invite: string list option
       ; invite_3pid: Invite_3pid.t list option
       ; room_version: string option
-      ; creation_content: Room_events.Room_event.Create.t option
-      ; initial_state: State_events.t list option
+      ; creation_content: Events.Event_content.Create.t option
+      ; initial_state: Events.State_event.t list option
       ; preset: Preset.t option
       ; is_direct: bool option
-      ; power_level_content_override: Room_events.Room_event.Power_levels.t option
+      ; power_level_content_override: Events.Event_content.Power_levels.t option
       } [@@deriving accessor]
 
     let encoding =
@@ -92,12 +93,12 @@ struct
             (opt "invite" (list string))
             (opt "invite_3pid" (list Invite_3pid.encoding))
             (opt "room_version" string)
-            (opt "creation_content" Room_events.Room_event.Create.encoding)
-            (opt "initial_state" (list State_events.encoding))
+            (opt "creation_content" Events.Event_content.Create.encoding)
+            (opt "initial_state" (list Events.State_event.encoding))
             (opt "preset" Preset.encoding))
           (obj2
             (opt "is_direct" bool)
-            (opt "power_level_content_override" Room_events.Room_event.Power_levels.encoding))
+            (opt "power_level_content_override" Events.Event_content.Power_levels.encoding))
       in
       conv to_tuple of_tuple with_tuple
   end

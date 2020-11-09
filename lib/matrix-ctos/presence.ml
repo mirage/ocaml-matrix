@@ -1,6 +1,7 @@
 open Json_encoding
+open Matrix_common
 
-module Post =
+module Put =
 struct
   module Query = Empty.Query
 
@@ -9,7 +10,7 @@ struct
   module Request =
   struct
     type t =
-      { presence: Event.Event.Presence.Presence.t
+      { presence: Events.Event_content.Presence.Presence.t
       ; status_msg: string option
       } [@@deriving accessor]
 
@@ -23,7 +24,7 @@ struct
       in
       let with_tuple =
         obj2
-          (req "presence" Event.Event.Presence.Presence.encoding)
+          (req "presence" Events.Event_content.Presence.Presence.encoding)
           (opt "status_msg" string)
       in
       conv to_tuple of_tuple with_tuple
@@ -43,7 +44,7 @@ struct
   module Response =
   struct
     type t =
-      { presence: Event.Event.Presence.Presence.t
+      { presence: Events.Event_content.Presence.Presence.t
       ; last_active_ago: int option
       ; status_msg: string option
       ; currently_active: bool option
@@ -60,7 +61,7 @@ struct
       in
       let with_tuple =
         obj5
-          (req "presence" Event.Event.Presence.Presence.encoding)
+          (req "presence" Events.Event_content.Presence.Presence.encoding)
           (opt "last_active_ago" int)
           (opt "status_msg" string)
           (opt "currently_active" bool)

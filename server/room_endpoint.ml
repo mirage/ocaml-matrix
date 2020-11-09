@@ -1,5 +1,6 @@
 open Lwt.Infix
 open Json_encoding
+open Matrix_common
 open Matrix_ctos
 open Store
 open Helpers
@@ -21,175 +22,194 @@ let create_room =
           | Ok () ->
             let id = event_id () in
             let event =
-              State_events.make
-                ~event:
-                  (State_events.State_event.Power_levels
-                     (State_events.State_event.Power_levels.make
-                        ~event:
-                          (Room_events.Room_event.Power_levels.make
-                             ?ban:(Some 50)
-                             ?events:(Some
-                                        [ "m.room.name", 50
-                                        ; "m.room.power_levels", 100
-                                        ; "m.room.history_visibility", 100
-                                        ; "m.room.canonical_alias", 50
-                                        ; "m.room.avatar", 50
-                                        ])
-                             ?events_default:(Some 0)
-                             ?invite:(Some 0)
-                             ?kick:(Some 50)
-                             ?redact:(Some 50)
-                             ?state_default:(Some 0)
-                             ?users:(Some [user_id, 100])
-                             ?users_default:(Some 0)
-                             ())
-                        ()))
-                ?event_id:(Some id)
-                ?sender:(Some user_id)
-                ~origin_server_ts:(time () * 1000)
-                ~unsigned:
-                  (Room_events.Unsigned.make
-                    ~whatever:(`O ["age", `Float 0.])
-                    ())
+              Events.State_event.make
+                ~room_event:
+                  (Events.Room_event.make
+                     ~event:
+                       (Events.Event.make
+                          ~event_content:
+                            (Events.Event_content.Power_levels
+                               (Events.Event_content.Power_levels.make
+                                  ?ban:(Some 50)
+                                  ?events:(Some
+                                             [ "m.room.name", 50
+                                             ; "m.room.power_levels", 100
+                                             ; "m.room.history_visibility", 100
+                                             ; "m.room.canonical_alias", 50
+                                             ; "m.room.avatar", 50
+                                             ])
+                                  ?events_default:(Some 0)
+                                  ?invite:(Some 0)
+                                  ?kick:(Some 50)
+                                  ?redact:(Some 50)
+                                  ?state_default:(Some 0)
+                                  ?users:(Some [user_id, 100])
+                                  ?users_default:(Some 0)
+                                  ()))
+                          ())
+                     ~event_id:id
+                     ~sender:user_id
+                     ~origin_server_ts:(time () * 1000)
+                     ~unsigned:
+                       (Events.Room_event.Unsigned.make
+                          ~age:0
+                          ())
+                     ())
+                ~state_key:""
                 ()
             in
-            let encoded_event = Json_encoding.construct State_events.encoding event in
+            let encoded_event = Json_encoding.construct Events.State_event.encoding event in
             Event_store.set event_store Key.(v id) encoded_event >>=
             (function
               | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
               | Ok () ->
-                set_state_event room_id "m.room.power_levels" (State_events.get_state_key event) id >>=
+                set_state_event room_id "m.room.power_levels" (Events.State_event.get_state_key event) id >>=
                 (function
                   | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                   | Ok () ->
                     let id = event_id () in
                     let event =
-                      State_events.make
-                        ~event:
-                          (State_events.State_event.History_visibility
-                             (State_events.State_event.History_visibility.make
-                                ~event:
-                                  (Room_events.Room_event.History_visibility.make
-                                     ~visibility:Room_events.Room_event.History_visibility.Shared
-                                     ())
-                                ()))
-                        ?event_id:(Some id)
-                        ?sender:(Some user_id)
-                        ~origin_server_ts:(time () * 1000)
-                        ~unsigned:
-                          (Room_events.Unsigned.make
-                            ~whatever:(`O ["age", `Float 0.])
-                            ())
+                      Events.State_event.make
+                        ~room_event:
+                          (Events.Room_event.make
+                             ~event:
+                               (Events.Event.make
+                                  ~event_content:
+                                    (Events.Event_content.History_visibility
+                                       (Events.Event_content.History_visibility.make
+                                          ~visibility:Shared
+                                          ()))
+                                  ())
+                             ~event_id:id
+                             ~sender:user_id
+                             ~origin_server_ts:(time () * 1000)
+                             ~unsigned:
+                               (Events.Room_event.Unsigned.make
+                                  ~age:0
+                                  ())
+                             ())
+                        ~state_key:""
                         ()
                     in
-                    let encoded_event = Json_encoding.construct State_events.encoding event in
+                    let encoded_event = Json_encoding.construct Events.State_event.encoding event in
                     Event_store.set event_store Key.(v id) encoded_event >>=
                     (function
                       | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                       | Ok () ->
-                        set_state_event room_id "m.room.history_visibility" (State_events.get_state_key event) id >>=
+                        set_state_event room_id "m.room.history_visibility" (Events.State_event.get_state_key event) id >>=
                         (function
                           | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                           | Ok () ->
                             let id = event_id () in
                             let event =
-                              State_events.make
-                                ~event:
-                                  (State_events.State_event.Create
-                                     (State_events.State_event.Create.make
-                                        ~event:
-                                          (Room_events.Room_event.Create.make
-                                             ~creator:user_id
-                                             ?room_version:(Some Const.room_version)
-                                             ())
-                                        ()))
-                                ?event_id:(Some id)
-                                ?sender:(Some user_id)
-                                ~origin_server_ts:(time () * 1000)
-                                ~unsigned:
-                                  (Room_events.Unsigned.make
-                                    ~whatever:(`O ["age", `Float 0.])
-                                    ())
+                              Events.State_event.make
+                                ~room_event:
+                                  (Events.Room_event.make
+                                     ~event:
+                                       (Events.Event.make
+                                          ~event_content:
+                                            (Events.Event_content.Create
+                                               (Events.Event_content.Create.make
+                                                  ~creator:user_id
+                                                  ?room_version:(Some Const.room_version)
+                                                  ()))
+                                          ())
+                                     ~event_id:id
+                                     ~sender:user_id
+                                     ~origin_server_ts:(time () * 1000)
+                                     ~unsigned:
+                                       (Events.Room_event.Unsigned.make
+                                          ~age:0
+                                          ())
+                                     ())
+                                ~state_key:""
                                 ()
                             in
-                            let encoded_event = Json_encoding.construct State_events.encoding event in
+                            let encoded_event = Json_encoding.construct Events.State_event.encoding event in
                             Event_store.set event_store Key.(v id) encoded_event >>=
                             (function
                               | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                               | Ok () ->
-                                set_state_event room_id "m.room.create" (State_events.get_state_key event) id >>=
+                                set_state_event room_id "m.room.create" (Events.State_event.get_state_key event) id >>=
                                 (function
                                   | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                                   | Ok () ->
                                     let id = event_id () in
                                     let event =
-                                      State_events.make
-                                        ~event:
-                                          (State_events.State_event.Member
-                                             (State_events.State_event.Member.make
-                                                ~user_id:user_id
-                                                ~event:
-                                                  (Room_events.Room_event.Member.make
-                                                     ~avatar_url:None
-                                                     ~displayname:(Some user_id)
-                                                     ~membership:Room_events.Membership.Join
-                                                     ())
-                                                ()))
-                                        ?event_id:(Some id)
-                                        ?sender:(Some user_id)
-                                        ~origin_server_ts:(time () * 1000)
-                                        ~unsigned:
-                                          (Room_events.Unsigned.make
-                                            ~whatever:(`O ["age", `Float 0.])
-                                            ())
+                                      Events.State_event.make
+                                        ~room_event:
+                                          (Events.Room_event.make
+                                             ~event:
+                                               (Events.Event.make
+                                                  ~event_content:
+                                                    (Events.Event_content.Member
+                                                       (Events.Event_content.Member.make
+                                                          ~avatar_url:None
+                                                          ~displayname:(Some user_id)
+                                                          ~membership:Join
+                                                          ()))
+                                                  ())
+                                             ~event_id:id
+                                             ~sender:user_id
+                                             ~origin_server_ts:(time () * 1000)
+                                             ~unsigned:
+                                               (Events.Room_event.Unsigned.make
+                                                  ~age:0
+                                                  ())
+                                             ())
+                                        ~state_key:user_id
                                         ()
                                     in
-                                    let encoded_event = Json_encoding.construct State_events.encoding event in
+                                    let encoded_event = Json_encoding.construct Events.State_event.encoding event in
                                     Event_store.set event_store Key.(v id) encoded_event >>=
                                     (function
                                       | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                                       | Ok () ->
-                                        set_state_event room_id "m.room.member" (State_events.get_state_key event) id >>=
+                                        set_state_event room_id "m.room.member" (Events.State_event.get_state_key event) id >>=
                                         (function
                                           | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                                           | Ok () ->
-                                            let join_rule =
+                                            let join_rule : Events.Event_content.Join_rules.rule =
                                               match Request.get_preset request with
-                                              | Some Request.Preset.Public -> Room_events.Room_event.Join_rules.Public
-                                              | Some Request.Preset.Private -> Room_events.Room_event.Join_rules.Invite
-                                              | Some Request.Preset.Trusted_private -> Room_events.Room_event.Join_rules.Invite
+                                              | Some Request.Preset.Public -> Public
+                                              | Some Request.Preset.Private -> Invite
+                                              | Some Request.Preset.Trusted_private -> Invite
                                               | None ->
                                                 (match Request.get_visibility request with
-                                                 | Some Room.Visibility.Public -> Room_events.Room_event.Join_rules.Public
-                                                 | Some Room.Visibility.Private -> Room_events.Room_event.Join_rules.Invite
-                                                 | None -> Room_events.Room_event.Join_rules.Invite)
+                                                 | Some Room.Visibility.Public -> Public
+                                                 | Some Room.Visibility.Private -> Invite
+                                                 | None -> Invite)
                                             in
                                             let id = event_id () in
                                             let event =
-                                              State_events.make
-                                                ~event:
-                                                  (State_events.State_event.Join_rules
-                                                     (State_events.State_event.Join_rules.make
-                                                        ~event:
-                                                          (Room_events.Room_event.Join_rules.make
-                                                             ~join_rule
-                                                             ())
-                                                        ()))
-                                                ?event_id:(Some id)
-                                                ?sender:(Some user_id)
-                                                ~origin_server_ts:(time () * 1000)
-                                                ~unsigned:
-                                                  (Room_events.Unsigned.make
-                                                    ~whatever:(`O ["age", `Float 0.])
-                                                    ())
+                                              Events.State_event.make
+                                                ~room_event:
+                                                  (Events.Room_event.make
+                                                     ~event:
+                                                       (Events.Event.make
+                                                          ~event_content:
+                                                            (Events.Event_content.Join_rules
+                                                               (Events.Event_content.Join_rules.make
+                                                                  ~join_rule
+                                                                  ()))
+                                                          ())
+                                                     ~event_id:id
+                                                     ~sender:user_id
+                                                     ~origin_server_ts:(time () * 1000)
+                                                     ~unsigned:
+                                                       (Events.Room_event.Unsigned.make
+                                                          ~age:0
+                                                          ())
+                                                     ())
+                                                ~state_key:""
                                                 ()
                                             in
-                                            let encoded_event = Json_encoding.construct State_events.encoding event in
+                                            let encoded_event = Json_encoding.construct Events.State_event.encoding event in
                                             Event_store.set event_store Key.(v id) encoded_event >>=
                                             (function
                                               | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                                               | Ok () ->
-                                                set_state_event room_id "m.room.join_rules" (State_events.get_state_key event) id >>=
+                                                set_state_event room_id "m.room.join_rules" (Events.State_event.get_state_key event) id >>=
                                                 (function
                                                   | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                                                   | Ok () ->
@@ -197,30 +217,34 @@ let create_room =
                                                      | Some room_name ->
                                                        let id = event_id () in
                                                        let event =
-                                                         State_events.make
-                                                           ~event:
-                                                             (State_events.State_event.Name
-                                                                (State_events.State_event.Name.make
-                                                                   ~event:
-                                                                     (Message_event.Message_event.Name.make
-                                                                        ~name:room_name
-                                                                        ())
-                                                                   ()))
-                                                           ?event_id:(Some id)
-                                                           ?sender:(Some user_id)
-                                                           ~origin_server_ts:(time () * 1000)
-                                                           ~unsigned:
-                                                             (Room_events.Unsigned.make
-                                                               ~whatever:(`O ["age", `Float 0.])
-                                                               ())
+                                                         Events.State_event.make
+                                                           ~room_event:
+                                                             (Events.Room_event.make
+                                                                ~event:
+                                                                  (Events.Event.make
+                                                                     ~event_content:
+                                                                       (Events.Event_content.Name
+                                                                          (Events.Event_content.Name.make
+                                                                             ~name:room_name
+                                                                             ()))
+                                                                     ())
+                                                                ~event_id:id
+                                                                ~sender:user_id
+                                                                ~origin_server_ts:(time () * 1000)
+                                                                ~unsigned:
+                                                                  (Events.Room_event.Unsigned.make
+                                                                     ~age:0
+                                                                     ())
+                                                                ())
+                                                           ~state_key:""
                                                            ()
                                                        in
-                                                       let encoded_event = Json_encoding.construct State_events.encoding event in
+                                                       let encoded_event = Json_encoding.construct Events.State_event.encoding event in
                                                        Event_store.set event_store Key.(v id) encoded_event >>=
                                                        (function
                                                          | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                                                          | Ok () ->
-                                                           set_state_event room_id "m.room.name" (State_events.get_state_key event) id >>=
+                                                           set_state_event room_id "m.room.name" (Events.State_event.get_state_key event) id >>=
                                                            (function
                                                              | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                                                              | Ok () -> Lwt.return_ok ()))
@@ -232,30 +256,34 @@ let create_room =
                                                          | Some room_topic ->
                                                            let id = event_id () in
                                                            let event =
-                                                             State_events.make
-                                                               ~event:
-                                                                 (State_events.State_event.Topic
-                                                                    (State_events.State_event.Topic.make
-                                                                       ~event:
-                                                                         (Message_event.Message_event.Topic.make
-                                                                            ~topic:room_topic
-                                                                            ())
-                                                                       ()))
-                                                               ?event_id:(Some id)
-                                                               ?sender:(Some user_id)
-                                                               ~origin_server_ts:(time () * 1000)
-                                                               ~unsigned:
-                                                                 (Room_events.Unsigned.make
-                                                                   ~whatever:(`O ["age", `Float 0.])
-                                                                   ())
+                                                             Events.State_event.make
+                                                               ~room_event:
+                                                                 (Events.Room_event.make
+                                                                    ~event:
+                                                                      (Events.Event.make
+                                                                         ~event_content:
+                                                                           (Events.Event_content.Topic
+                                                                              (Events.Event_content.Topic.make
+                                                                                 ~topic:room_topic
+                                                                                 ()))
+                                                                         ())
+                                                                    ~event_id:id
+                                                                    ~sender:user_id
+                                                                    ~origin_server_ts:(time () * 1000)
+                                                                    ~unsigned:
+                                                                      (Events.Room_event.Unsigned.make
+                                                                         ~age:0
+                                                                         ())
+                                                                    ())
+                                                               ~state_key:""
                                                                ()
                                                            in
-                                                           let encoded_event = Json_encoding.construct State_events.encoding event in
+                                                           let encoded_event = Json_encoding.construct Events.State_event.encoding event in
                                                            Event_store.set event_store Key.(v id) encoded_event >>=
                                                            (function
                                                              | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                                                              | Ok () ->
-                                                               set_state_event room_id "m.room.topic" (State_events.get_state_key event) id >>=
+                                                               set_state_event room_id "m.room.topic" (Events.State_event.get_state_key event) id >>=
                                                                (function
                                                                  | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                                                                  | Ok () -> Lwt.return_ok ()))
@@ -372,47 +400,49 @@ struct
               (function
                 | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok event ->
-                  let event = destruct State_events.encoding event in
-                  (match State_events.get_event event with
-                  | State_events.State_event.Member event ->
-                    let event = State_events.State_event.Member.get_event event in
-                    (match Room_events.Room_event.Member.get_membership event with
+                  let event = destruct Events.State_event.encoding event in
+                  (match Events.State_event.get_event_content event with
+                   | Member event ->
+                     (match Events.Event_content.Member.get_membership event with
                       | Join -> Lwt.return_error (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s had already joined the room" user_id), None)
                       | Ban -> Lwt.return_error (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s is banned from the room" user_id), None)
                       | _ -> Lwt.return_ok ())
-                  | _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))) >>=
+                   | _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))) >>=
           (function
             | Error err -> Lwt.return err
             | Ok () ->
               let id = event_id () in
               let event =
-                State_events.make
-                  ~event:
-                    (State_events.State_event.Member
-                      (State_events.State_event.Member.make
-                          ~user_id:user_id
-                          ~event:
-                            (Room_events.Room_event.Member.make
-                              ~avatar_url:None
-                              ~displayname:(Some user_id)
-                              ~membership:Room_events.Membership.Invite
-                              ())
-                          ()))
-                  ?event_id:(Some id)
-                  ?sender:(Some request_user_id)
-                  ~origin_server_ts:(time () * 1000)
-                  ~unsigned:
-                    (Room_events.Unsigned.make
-                      ~whatever:(`O ["age", `Float 0.])
+                Events.State_event.make
+                  ~room_event:
+                    (Events.Room_event.make
+                      ~event:
+                        (Events.Event.make
+                            ~event_content:
+                              (Events.Event_content.Member
+                                (Events.Event_content.Member.make
+                                  ~avatar_url:None
+                                  ~displayname:(Some user_id)
+                                  ~membership:Invite
+                                  ()))
+                            ())
+                      ~event_id:id
+                      ~sender:request_user_id
+                      ~origin_server_ts:(time () * 1000)
+                      ~unsigned:
+                        (Events.Room_event.Unsigned.make
+                            ~age:0
+                            ())
                       ())
+                  ~state_key:user_id
                   ()
               in
-              let encoded_event = Json_encoding.construct State_events.encoding event in
+              let encoded_event = Json_encoding.construct Events.State_event.encoding event in
               Event_store.set event_store Key.(v id) encoded_event >>=
               (function
                 | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok () ->
-                  set_state_event room_id "m.room.member" (State_events.get_state_key event) id >>=
+                  set_state_event room_id "m.room.member" (Events.State_event.get_state_key event) id >>=
                   (function
                     | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                     | Ok () ->
@@ -444,47 +474,49 @@ struct
               (function
                 | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok event ->
-                  let event = destruct State_events.encoding event in
-                  (match State_events.get_event event with
-                  | State_events.State_event.Member event ->
-                    let event = State_events.State_event.Member.get_event event in
-                    (match Room_events.Room_event.Member.get_membership event with
+                  let event = destruct Events.State_event.encoding event in
+                  (match Events.State_event.get_event_content event with
+                   | Member event ->
+                     (match Events.Event_content.Member.get_membership event with
                       | Join -> Lwt.return_error (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s had already joined the room" user_id), None)
                       | Ban -> Lwt.return_error (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s is banned from the room" user_id), None)
                       | _ -> Lwt.return_ok ())
-                  | _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))) >>=
+                   | _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))) >>=
           (function
             | Error err -> Lwt.return err
             | Ok () ->
               let id = event_id () in
               let event =
-                State_events.make
-                  ~event:
-                    (State_events.State_event.Member
-                      (State_events.State_event.Member.make
-                          ~user_id:user_id
-                          ~event:
-                            (Room_events.Room_event.Member.make
-                              ~avatar_url:None
-                              ~displayname:(Some user_id)
-                              ~membership:Room_events.Membership.Join
-                              ())
-                          ()))
-                  ?event_id:(Some id)
-                  ?sender:(Some user_id)
-                  ~origin_server_ts:(time () * 1000)
-                  ~unsigned:
-                    (Room_events.Unsigned.make
-                      ~whatever:(`O ["age", `Float 0.])
+                Events.State_event.make
+                  ~room_event:
+                    (Events.Room_event.make
+                      ~event:
+                        (Events.Event.make
+                            ~event_content:
+                              (Events.Event_content.Member
+                                (Events.Event_content.Member.make
+                                  ~avatar_url:None
+                                  ~displayname:(Some user_id)
+                                  ~membership:Join
+                                  ()))
+                            ())
+                      ~event_id:id
+                      ~sender:user_id
+                      ~origin_server_ts:(time () * 1000)
+                      ~unsigned:
+                        (Events.Room_event.Unsigned.make
+                            ~age:0
+                            ())
                       ())
+                  ~state_key:user_id
                   ()
               in
-              let encoded_event = Json_encoding.construct State_events.encoding event in
+              let encoded_event = Json_encoding.construct Events.State_event.encoding event in
               Event_store.set event_store Key.(v id) encoded_event >>=
               (function
                 | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok () ->
-                  set_state_event room_id "m.room.member" (State_events.get_state_key event) id >>=
+                  set_state_event room_id "m.room.member" (Events.State_event.get_state_key event) id >>=
                   (function
                     | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                     | Ok () ->
@@ -517,47 +549,49 @@ struct
               (function
                 | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok event ->
-                  let event = destruct State_events.encoding event in
-                  (match State_events.get_event event with
-                  | State_events.State_event.Member event ->
-                    let event = State_events.State_event.Member.get_event event in
-                    (match Room_events.Room_event.Member.get_membership event with
-                      | Join -> Lwt.return_ok ()
-                      | Leave -> Lwt.return_error (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s is not in the room" user_id), None)
-                      | _ -> Lwt.return_error (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s is banned from the room" user_id), None))
-                  | _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))) >>=
+                  let event = destruct Events.State_event.encoding event in
+                  (match Events.State_event.get_event_content event with
+                   | Member event ->
+                     (match Events.Event_content.Member.get_membership event with
+                      | Join -> Lwt.return_error (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s had already joined the room" user_id), None)
+                      | Ban -> Lwt.return_error (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s is banned from the room" user_id), None)
+                      | _ -> Lwt.return_ok ())
+                   | _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))) >>=
           (function
             | Error err -> Lwt.return err
             | Ok () ->
               let id = event_id () in
               let event =
-                State_events.make
-                  ~event:
-                    (State_events.State_event.Member
-                      (State_events.State_event.Member.make
-                          ~user_id:user_id
-                          ~event:
-                            (Room_events.Room_event.Member.make
-                              ~avatar_url:None
-                              ~displayname:(Some user_id)
-                              ~membership:Room_events.Membership.Leave
-                              ())
-                          ()))
-                  ?event_id:(Some id)
-                  ?sender:(Some user_id)
-                  ~origin_server_ts:(time () * 1000)
-                  ~unsigned:
-                    (Room_events.Unsigned.make
-                      ~whatever:(`O ["age", `Float 0.])
+                Events.State_event.make
+                  ~room_event:
+                    (Events.Room_event.make
+                      ~event:
+                        (Events.Event.make
+                            ~event_content:
+                              (Events.Event_content.Member
+                                (Events.Event_content.Member.make
+                                  ~avatar_url:None
+                                  ~displayname:(Some user_id)
+                                  ~membership:Leave
+                                  ()))
+                            ())
+                      ~event_id:id
+                      ~sender:user_id
+                      ~origin_server_ts:(time () * 1000)
+                      ~unsigned:
+                        (Events.Room_event.Unsigned.make
+                            ~age:0
+                            ())
                       ())
+                  ~state_key:user_id
                   ()
               in
-              let encoded_event = Json_encoding.construct State_events.encoding event in
+              let encoded_event = Json_encoding.construct Events.State_event.encoding event in
               Event_store.set event_store Key.(v id) encoded_event >>=
               (function
                 | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok () ->
-                  set_state_event room_id "m.room.member" (State_events.get_state_key event) id >>=
+                  set_state_event room_id "m.room.member" (Events.State_event.get_state_key event) id >>=
                   (function
                     | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                     | Ok () ->
@@ -589,11 +623,15 @@ struct
               (function
                 | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok event ->
-                  let event = destruct State_events.encoding event in
-                  (match State_events.get_event event with
-                  | State_events.State_event.Member event ->
-                    let event = State_events.State_event.Member.get_event event in
-                    (match Room_events.Room_event.Member.get_membership event with
+
+
+
+
+
+                  let event = destruct Events.State_event.encoding event in
+                  (match Events.State_event.get_event_content event with
+                   | Member event ->
+                     (match Events.Event_content.Member.get_membership event with
                       | Leave ->
                         Event_store.remove event_store Key.(v event_id) >>=
                         (function
@@ -613,7 +651,7 @@ struct
                                 in
                                 Lwt.return (`OK, response, None)))
                       | _ -> Lwt.return (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s is banned from the room" user_id), None))
-                  | _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))))
+                   | _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))))
     in
     needs_auth, f
 
@@ -635,46 +673,48 @@ struct
               (function
                 | Error _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok event ->
-                  let event = destruct State_events.encoding event in
-                  (match State_events.get_event event with
-                  | State_events.State_event.Member event ->
-                    let event = State_events.State_event.Member.get_event event in
-                    (match Room_events.Room_event.Member.get_membership event with
+                  let event = destruct Events.State_event.encoding event in
+                  (match Events.State_event.get_event_content event with
+                   | Member event ->
+                     (match Events.Event_content.Member.get_membership event with
                       | Join -> Lwt.return_ok ()
                       | _ -> Lwt.return_error (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s is banned from the room" user_id), None))
-                  | _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))) >>=
+                   | _ -> Lwt.return_error (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))) >>=
           (function
             | Error err -> Lwt.return err
             | Ok () ->
               let id = event_id () in
               let event =
-                State_events.make
-                  ~event:
-                    (State_events.State_event.Member
-                      (State_events.State_event.Member.make
-                          ~user_id:user_id
-                          ~event:
-                            (Room_events.Room_event.Member.make
-                              ~avatar_url:None
-                              ~displayname:(Some user_id)
-                              ~membership:Room_events.Membership.Leave
-                              ())
-                          ()))
-                  ?event_id:(Some id)
-                  ?sender:(Some request_user_id)
-                  ~origin_server_ts:(time () * 1000)
-                  ~unsigned:
-                    (Room_events.Unsigned.make
-                      ~whatever:(`O ["age", `Float 0.])
+                Events.State_event.make
+                  ~room_event:
+                    (Events.Room_event.make
+                      ~event:
+                        (Events.Event.make
+                            ~event_content:
+                              (Events.Event_content.Member
+                                (Events.Event_content.Member.make
+                                  ~avatar_url:None
+                                  ~displayname:(Some user_id)
+                                  ~membership:Leave
+                                  ()))
+                            ())
+                      ~event_id:id
+                      ~sender:request_user_id
+                      ~origin_server_ts:(time () * 1000)
+                      ~unsigned:
+                        (Events.Room_event.Unsigned.make
+                            ~age:0
+                            ())
                       ())
+                  ~state_key:user_id
                   ()
               in
-              let encoded_event = Json_encoding.construct State_events.encoding event in
+              let encoded_event = Json_encoding.construct Events.State_event.encoding event in
               Event_store.set event_store Key.(v id) encoded_event >>=
               (function
                 | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok () ->
-                  set_state_event room_id "m.room.member" (State_events.get_state_key event) id >>=
+                  set_state_event room_id "m.room.member" (Events.State_event.get_state_key event) id >>=
                   (function
                     | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                     | Ok () ->
@@ -701,33 +741,36 @@ struct
           let user_id = Request.get_user_id request in
           let id = event_id () in
           let event =
-            State_events.make
-              ~event:
-                (State_events.State_event.Member
-                  (State_events.State_event.Member.make
-                      ~user_id:user_id
-                      ~event:
-                        (Room_events.Room_event.Member.make
-                          ~avatar_url:None
-                          ~displayname:(Some user_id)
-                          ~membership:Room_events.Membership.Ban
-                          ())
-                      ()))
-              ?event_id:(Some id)
-              ?sender:(Some request_user_id)
-              ~origin_server_ts:(time () * 1000)
-              ~unsigned:
-                (Room_events.Unsigned.make
-                  ~whatever:(`O ["age", `Float 0.])
+            Events.State_event.make
+              ~room_event:
+                (Events.Room_event.make
+                  ~event:
+                    (Events.Event.make
+                        ~event_content:
+                          (Events.Event_content.Member
+                            (Events.Event_content.Member.make
+                              ~avatar_url:None
+                              ~displayname:(Some user_id)
+                              ~membership:Ban
+                              ()))
+                        ())
+                  ~event_id:id
+                  ~sender:request_user_id
+                  ~origin_server_ts:(time () * 1000)
+                  ~unsigned:
+                    (Events.Room_event.Unsigned.make
+                        ~age:0
+                        ())
                   ())
+              ~state_key:user_id
               ()
           in
-          let encoded_event = Json_encoding.construct State_events.encoding event in
+          let encoded_event = Json_encoding.construct Events.State_event.encoding event in
           Event_store.set event_store Key.(v id) encoded_event >>=
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
             | Ok () ->
-              set_state_event room_id "m.room.member" (State_events.get_state_key event) id >>=
+              set_state_event room_id "m.room.member" (Events.State_event.get_state_key event) id >>=
               (function
                 | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok () ->
@@ -761,11 +804,10 @@ struct
               (function
                 | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok event ->
-                  let event = destruct State_events.encoding event in
-                  (match State_events.get_event event with
-                  | State_events.State_event.Member event ->
-                    let event = State_events.State_event.Member.get_event event in
-                    (match Room_events.Room_event.Member.get_membership event with
+                  let event = destruct Events.State_event.encoding event in
+                  (match Events.State_event.get_event_content event with
+                   | Member event ->
+                     (match Events.Event_content.Member.get_membership event with
                       | Ban ->
                         Event_store.remove event_store Key.(v event_id) >>=
                         (function
@@ -785,7 +827,7 @@ struct
                                 in
                                 Lwt.return (`OK, response, None)))
                       | _ -> Lwt.return (`Internal_server_error, error "M_FORBIDDEN" (Fmt.str "%s is banned from the room" user_id), None))
-                  | _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))))
+                   | _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)))))
     in
     needs_auth, f
 end
@@ -803,26 +845,25 @@ struct
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
             | Ok event ->
-              let event = destruct State_events.encoding event in
-              (match State_events.get_event event with
-                | State_events.State_event.Join_rules event ->
-                  let event = State_events.State_event.Join_rules.get_event event in
-                  let visibility =
-                    (match Room_events.Room_event.Join_rules.get_join_rule event with
-                      | Public -> Room.Visibility.Public
-                      | _ -> Room.Visibility.Private)
-                    in
-                    let response =
-                      Response.make
-                        ~visibility
-                        ()
-                    in
-                    let response =
-                      construct Response.encoding response |>
-                      Ezjsonm.value_to_string
-                    in
-                    Lwt.return (`OK, response, None)
-                | _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None))))
+              let event = destruct Events.State_event.encoding event in
+              (match Events.State_event.get_event_content event with
+               | Join_rules event ->
+                 let visibility =
+                   (match Events.Event_content.Join_rules.get_join_rule event with
+                    | Public -> Room.Visibility.Public
+                    | _ -> Room.Visibility.Private)
+                 in
+                 let response =
+                   Response.make
+                     ~visibility
+                     ()
+                 in
+                 let response =
+                   construct Response.encoding response |>
+                   Ezjsonm.value_to_string
+                 in
+                 Lwt.return (`OK, response, None)
+               | _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None))))
     in
     needs_auth, f
 
@@ -837,36 +878,40 @@ struct
           let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
           let join_rule =
             match Request.get_visibility request with
-              | Some Room.Visibility.Public -> Room_events.Room_event.Join_rules.Public
-              | Some Room.Visibility.Private -> Room_events.Room_event.Join_rules.Invite
-              | None -> Room_events.Room_event.Join_rules.Invite
+            | Some Room.Visibility.Public -> Events.Event_content.Join_rules.Public
+            | Some Room.Visibility.Private -> Events.Event_content.Join_rules.Invite
+            | None -> Events.Event_content.Join_rules.Invite
           in
           let id = event_id () in
           let event =
-            State_events.make
-              ~event:
-                (State_events.State_event.Join_rules
-                    (State_events.State_event.Join_rules.make
-                      ~event:
-                        (Room_events.Room_event.Join_rules.make
-                            ~join_rule
-                            ())
-                      ()))
-              ~event_id:id
-              ~sender:user_id
-              ~origin_server_ts:(time () * 1000)
-              ~unsigned:
-                (Room_events.Unsigned.make
-                  ~whatever:(`O ["age", `Float 0.])
+            Events.State_event.make
+              ~room_event:
+                (Events.Room_event.make
+                  ~event:
+                    (Events.Event.make
+                        ~event_content:
+                          (Events.Event_content.Join_rules
+                            (Events.Event_content.Join_rules.make
+                              ~join_rule
+                              ()))
+                        ())
+                  ~event_id:id
+                  ~sender:user_id
+                  ~origin_server_ts:(time () * 1000)
+                  ~unsigned:
+                    (Events.Room_event.Unsigned.make
+                        ~age:0
+                        ())
                   ())
+              ~state_key:""
               ()
           in
-          let encoded_event = Json_encoding.construct State_events.encoding event in
+          let encoded_event = Json_encoding.construct Events.State_event.encoding event in
           Event_store.set event_store Key.(v id) encoded_event >>=
           (function
             | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
             | Ok () ->
-              set_state_event room_id "m.room.join_rules" (State_events.get_state_key event) id >>=
+              set_state_event room_id "m.room.join_rules" (Events.State_event.get_state_key event) id >>=
               (function
                 | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok () ->
@@ -891,20 +936,20 @@ struct
         | Ok rooms ->
           Lwt_list.filter_map_p
             (fun (room_id, _) ->
-              get_state_event room_id "m.room.join_rules" "" >>=
-              (function
-                | Error _ -> Lwt.return_none
-                | Ok event_id ->
-                  Event_store.get event_store Key.(v event_id) >>=
-                  (function
-                    | Error _ -> Lwt.return_none
-                    | Ok event ->
-                      Store.list store Key.(v "rooms" / room_id / "state" / "m.room.member") >>=
-                      (function
-                        | Error _ -> Lwt.return_none
-                        | Ok user_ids ->
-                          Lwt_list.fold_left_s
-                            (fun acc (user_id, _) ->
+               get_state_event room_id "m.room.join_rules" "" >>=
+               (function
+                 | Error _ -> Lwt.return_none
+                 | Ok event_id ->
+                   Event_store.get event_store Key.(v event_id) >>=
+                   (function
+                     | Error _ -> Lwt.return_none
+                     | Ok event ->
+                       Store.list store Key.(v "rooms" / room_id / "state" / "m.room.member") >>=
+                       (function
+                         | Error _ -> Lwt.return_none
+                         | Ok user_ids ->
+                           Lwt_list.fold_left_s
+                             (fun acc (user_id, _) ->
                                 get_state_event room_id "m.room.member" user_id >>=
                                 (function
                                   | Error _ -> Lwt.return acc
@@ -913,15 +958,14 @@ struct
                                     (function
                                       | Error _ -> Lwt.return acc
                                       | Ok event ->
-                                        let event = destruct State_events.encoding event in
-                                        (match State_events.get_event event with
-                                        | State_events.State_event.Member event ->
-                                          let event = State_events.State_event.Member.get_event event in
-                                          (match Room_events.Room_event.Member.get_membership event with
-                                            | Room_events.Membership.Join -> Lwt.return (acc + 1)
+                                        let event = destruct Events.State_event.encoding event in
+                                        (match Events.State_event.get_event_content event with
+                                         | Member event ->
+                                           (match Events.Event_content.Member.get_membership event with
+                                            | Join -> Lwt.return (acc + 1)
                                             | _ -> Lwt.return acc)
-                                        | _ -> Lwt.return acc)))) 0 user_ids >>=
-                          (fun room_members ->
+                                         | _ -> Lwt.return acc)))) 0 user_ids >>=
+                           (fun room_members ->
                               get_state_event room_id "m.room.name" "" >>=
                               (function
                                 | Error _ -> Lwt.return_none
@@ -930,33 +974,30 @@ struct
                                   (function
                                     | Error _ -> Lwt.return_none
                                     | Ok event ->
-                                      let event = destruct State_events.encoding event in
-                                      (match State_events.get_event event with
-                                      | State_events.State_event.Name event ->
-                                        let event = State_events.State_event.Name.get_event event in
-                                        Lwt.return_some (Message_event.Message_event.Name.get_name event)
-                                      | _ -> Lwt.return_none))) >>=
+                                      let event = destruct Events.State_event.encoding event in
+                                      (match Events.State_event.get_event_content event with
+                                       | Name event ->
+                                         Lwt.return_some (Events.Event_content.Name.get_name event)
+                                       | _ -> Lwt.return_none))) >>=
                               (fun room_name ->
-                                get_state_event room_id "m.room.topic" "" >>=
-                                (function
-                                  | Error _ -> Lwt.return_none
-                                  | Ok event_id ->
-                                    Event_store.get event_store Key.(v event_id) >>=
-                                    (function
-                                      | Error _ -> Lwt.return_none
-                                      | Ok event ->
-                                        let event = destruct State_events.encoding event in
-                                        (match State_events.get_event event with
-                                          | State_events.State_event.Name event ->
-                                            let event = State_events.State_event.Name.get_event event in
-                                            Lwt.return_some (Message_event.Message_event.Name.get_name event)
+                                 get_state_event room_id "m.room.topic" "" >>=
+                                 (function
+                                   | Error _ -> Lwt.return_none
+                                   | Ok event_id ->
+                                     Event_store.get event_store Key.(v event_id) >>=
+                                     (function
+                                       | Error _ -> Lwt.return_none
+                                       | Ok event ->
+                                         let event = destruct Events.State_event.encoding event in
+                                         (match Events.State_event.get_event_content event with
+                                          | Name event ->
+                                            Lwt.return_some (Events.Event_content.Name.get_name event)
                                           | _ -> Lwt.return_none))) >>=
-                                (fun room_topic ->
-                                    let event = destruct State_events.encoding event in
-                                    (match State_events.get_event event with
-                                    | State_events.State_event.Join_rules event ->
-                                      let event = State_events.State_event.Join_rules.get_event event in
-                                      (match Room_events.Room_event.Join_rules.get_join_rule event with
+                                 (fun room_topic ->
+                                    let event = destruct Events.State_event.encoding event in
+                                    (match Events.State_event.get_event_content event with
+                                     | Join_rules event ->
+                                       (match Events.Event_content.Join_rules.get_join_rule event with
                                         | Public ->
                                           let room_summary =
                                             Response.Public_rooms_chunk.make
@@ -974,18 +1015,18 @@ struct
                                           in
                                           Lwt.return_some room_summary
                                         | _ -> Lwt.return_none)
-                                    | _ -> Lwt.return_none)))))))) rooms >>=
+                                     | _ -> Lwt.return_none)))))))) rooms >>=
           (fun rooms ->
-            let response =
-              Response.make
-                ~chunk:rooms
-                ()
-            in
-            let response =
-              construct Response.encoding response |>
-              Ezjsonm.value_to_string
-            in
-            Lwt.return (`OK, response, None)))
+             let response =
+               Response.make
+                 ~chunk:rooms
+                 ()
+             in
+             let response =
+               construct Response.encoding response |>
+               Ezjsonm.value_to_string
+             in
+             Lwt.return (`OK, response, None)))
     in
     needs_auth, f
 end
@@ -1022,26 +1063,26 @@ struct
           | Ok state_keys ->
             Lwt_list.filter_map_p
               (fun (state_key, _) ->
-                get_state_event room_id "m.room_member" state_key >>=
-                (function
-                  | Error _ -> Lwt.return_none
-                  | Ok event_id ->
-                    Event_store.get event_store Key.(v event_id) >>=
-                    (function
-                      | Error _ -> Lwt.return_none
-                      | Ok event -> Lwt.return_some event))) state_keys >>=
+                 get_state_event room_id "m.room_member" state_key >>=
+                 (function
+                   | Error _ -> Lwt.return_none
+                   | Ok event_id ->
+                     Event_store.get event_store Key.(v event_id) >>=
+                     (function
+                       | Error _ -> Lwt.return_none
+                       | Ok event -> Lwt.return_some event))) state_keys >>=
             (fun events ->
-              let events = List.map (destruct State_events.encoding) events in
-              let response =
-                Response.make
-                  ~chunk:events
-                  ()
-              in
-              let response =
-                construct Response.encoding response |>
-                Ezjsonm.value_to_string
-              in
-              Lwt.return (`OK, response, None)))
+               let events = List.map (destruct Events.State_event.encoding) events in
+               let response =
+                 Response.make
+                   ~chunk:events
+                   ()
+               in
+               let response =
+                 construct Response.encoding response |>
+                 Ezjsonm.value_to_string
+               in
+               Lwt.return (`OK, response, None)))
       in
       needs_auth, f
 
@@ -1052,75 +1093,83 @@ struct
     let state =
       let open Room_event.Put.State_event in
       let f ((((), room_id), _), state_key) request _ token = (* should use event_type *)
-      get_logged_user token >>=
-      (function
-        | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
-        | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None) (* should not happend *)
-        | Ok (Some user_id) ->
+        get_logged_user token >>=
+        (function
+          | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
+          | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None) (* should not happend *)
+          | Ok (Some user_id) ->
             let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
             let id = event_id () in
-            let event = Request.get_event request in
-            let state_event = State_events.State_event.of_room_event event state_key in
+            let event_content = Request.get_event request in
             let event =
-              State_events.make
-                ~event:state_event
-                ~event_id:id
-                ~sender:user_id
-                ~origin_server_ts:(time () * 1000)
-                ~unsigned:
-                  (Room_events.Unsigned.make
-                    ~whatever:(`O ["age", `Float 0.])
-                    ())
+              Events.State_event.make
+                ~room_event:
+                  (Events.Room_event.make
+                    ~event:
+                      (Events.Event.make
+                        ~event_content
+                        ())
+                  ~event_id:id
+                  ~sender:user_id
+                  ~origin_server_ts:(time () * 1000)
+                  ~unsigned:
+                    (Events.Room_event.Unsigned.make
+                        ~age:0
+                        ())
+                  ())
+                ~state_key
                 ()
             in
-            let encoded_event = Json_encoding.construct State_events.encoding event in
+            let encoded_event = Json_encoding.construct Events.State_event.encoding event in
             Event_store.set event_store Key.(v id) encoded_event >>=
             (function
               | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
               | Ok () ->
-                set_state_event room_id state_key (State_events.get_state_key event) id >>=
+                set_state_event room_id state_key (Events.State_event.get_state_key event) id >>=
                 (function
                   | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                   | Ok () ->
-                  let response =
-                    Response.make
-                      ~event_id:id
-                      ()
-                  in
-                  let response =
-                    construct Response.encoding response |>
-                    Ezjsonm.value_to_string
-                  in
-                  Lwt.return (`OK, response, None))))
+                    let response =
+                      Response.make
+                        ~event_id:id
+                        ()
+                    in
+                    let response =
+                      construct Response.encoding response |>
+                      Ezjsonm.value_to_string
+                    in
+                    Lwt.return (`OK, response, None))))
       in
       needs_auth, f
 
     let send_message =
       let open Room_event.Put.Message_event in
       let f ((((), room_id), _), _txn_id) request _ token =
-      get_logged_user token >>=
-      (function
-        | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
-        | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None) (* should not happend *)
-        | Ok (Some user_id) ->
+        get_logged_user token >>=
+        (function
+          | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
+          | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None) (* should not happend *)
+          | Ok (Some user_id) ->
             let request = destruct Request.encoding (Ezjsonm.value_from_string request) in
             let id = event_id () in
-            let message = Request.get_event request in
+            let message_content = Request.get_event request in
             let event =
-              Message_event.make
+              Events.Room_event.make
                 ~event:
-                  (Message_event.Message_event.Message message)
-                ~event_id:id
-                ~room_id:room_id
-                ~sender:user_id
-                ~origin_server_ts:(time () * 1000)
-                ~unsigned:
-                  (Room_events.Unsigned.make
-                    ~whatever:(`O ["age", `Float 0.])
+                  (Events.Event.make
+                    ~event_content:
+                      (Events.Event_content.Message message_content)
                     ())
-                ()
+              ~event_id:id
+              ~sender:user_id
+              ~origin_server_ts:(time () * 1000)
+              ~unsigned:
+                (Events.Room_event.Unsigned.make
+                    ~age:0
+                    ())
+              ()
             in
-            let encoded_event = Json_encoding.construct Message_event.encoding event in
+            let encoded_event = Json_encoding.construct Events.Room_event.encoding event in
             Event_store.set event_store Key.(v id) encoded_event >>=
             (function
               | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)

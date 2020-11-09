@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module Public_rooms:
 sig
@@ -101,26 +102,6 @@ sig
     val needs_auth: bool
   end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   module Send_join:
   sig
     module V1:
@@ -134,7 +115,7 @@ sig
           ; origin_server_ts: int
           ; event_type: string
           ; state_key: string
-          ; content: Matrix_ctos.Room_events.Room_event.Member.t
+          ; content: Events.Event_content.Member.t
           }
         val encoding: t encoding
       end
@@ -144,8 +125,8 @@ sig
         sig
           type%accessor t =
             { origin: string
-            ; auth_chain: Matrix_ctos.Events.t list
-            ; state: Matrix_ctos.Events.t list
+            ; auth_chain: Events.State_event.t list
+            ; state: Events.State_event.t list
             }
           val encoding: t encoding
         end
@@ -167,7 +148,7 @@ sig
           ; origin_server_ts: int
           ; event_type: string
           ; state_key: string
-          ; content: Matrix_ctos.Room_events.Room_event.Member.t
+          ; content: Events.Event_content.Member.t
           }
         val encoding: t encoding
       end
@@ -175,8 +156,8 @@ sig
       sig
         type%accessor t =
           { origin: string
-          ; auth_chain: Matrix_ctos.Events.t list
-          ; state: Matrix_ctos.Events.t list
+          ; auth_chain: Events.State_event.t list
+          ; state: Events.State_event.t list
           }
         val encoding: t encoding
       end

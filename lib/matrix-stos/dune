@@ -2,4 +2,4 @@
  (name        matrix_stos)
  (public_name matrix-stos)
  (preprocess  (pps ppx_deriver_accessor ppx_rewriter_accessor))
- (libraries   matrix-ctos json_encoding))
+ (libraries   matrix-common json_encoding))

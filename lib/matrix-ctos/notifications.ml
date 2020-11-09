@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module Query =
 struct
@@ -40,7 +41,7 @@ struct
   struct
     type t =
       { actions: Push_rule.Action.t
-      ; event: Event.t
+      ; event: Events.Room_event.t
       ; profile_tag: string option
       ; read: bool
       ; room_id: string
@@ -58,7 +59,7 @@ struct
       let with_tuple =
         obj6
           (req "actions" Push_rule.Action.encoding)
-          (req "event" Event.encoding)
+          (req "event" Events.Room_event.encoding)
           (opt "profile_tag" string)
           (req "read" bool)
           (req "room_id" string)

@@ -1,3 +1,5 @@
+open Matrix_common
+
 module Logout =
 struct
   module Query = Empty.Query

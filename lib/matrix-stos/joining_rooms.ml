@@ -1,4 +1,5 @@
 open Json_encoding
+open Matrix_common
 
 module Make_join =
 struct
@@ -91,7 +92,7 @@ struct
         ; origin_server_ts: int
         ; event_type: string
         ; state_key: string
-        ; content: Matrix_ctos.Room_events.Room_event.Member.t
+        ; content: Events.Event_content.Member.t
         } [@@deriving accessor]
 
       let encoding =
@@ -109,7 +110,7 @@ struct
             (req "origin_server_ts" int)
             (req "type" string)
             (req "state_key" string)
-            (req "content" Matrix_ctos.Room_events.Room_event.Member.encoding)
+            (req "content" Events.Event_content.Member.encoding)
         in
         conv to_tuple of_tuple with_tuple
     end
@@ -120,8 +121,8 @@ struct
       struct
         type t =
           { origin: string
-          ; auth_chain: Matrix_ctos.Events.t list
-          ; state: Matrix_ctos.Events.t list
+          ; auth_chain: Events.State_event.t list
+          ; state: Events.State_event.t list
           } [@@deriving accessor]
 
         let encoding =
@@ -135,8 +136,8 @@ struct
           let with_tuple =
             obj3
               (req "origin" string)
-              (req "auth_chain" (list Matrix_ctos.Events.encoding))
-              (req "state" (list Matrix_ctos.Events.encoding))
+              (req "auth_chain" (list Events.State_event.encoding))
+              (req "state" (list Events.State_event.encoding))
           in
           conv to_tuple of_tuple with_tuple
       end
@@ -177,7 +178,7 @@ struct
         ; origin_server_ts: int
         ; event_type: string
         ; state_key: string
-        ; content: Matrix_ctos.Room_events.Room_event.Member.t
+        ; content: Events.Event_content.Member.t
         } [@@deriving accessor]
 
       let encoding =
@@ -195,7 +196,7 @@ struct
             (req "origin_server_ts" int)
             (req "type" string)
             (req "state_key" string)
-            (req "content" Matrix_ctos.Room_events.Room_event.Member.encoding)
+            (req "content" Events.Event_content.Member.encoding)
         in
         conv to_tuple of_tuple with_tuple
     end
@@ -204,8 +205,8 @@ struct
     struct
       type t =
         { origin: string
-        ; auth_chain: Matrix_ctos.Events.t list
-        ; state: Matrix_ctos.Events.t list
+        ; auth_chain: Events.State_event.t list
+        ; state: Events.State_event.t list
         } [@@deriving accessor]
 
       let encoding =
@@ -219,8 +220,8 @@ struct
         let with_tuple =
           obj3
             (req "origin" string)
-            (req "auth_chain" (list Matrix_ctos.Events.encoding))
-            (req "state" (list Matrix_ctos.Events.encoding))
+            (req "auth_chain" (list Events.State_event.encoding))
+            (req "state" (list Events.State_event.encoding))
         in
         conv to_tuple of_tuple with_tuple
     end
