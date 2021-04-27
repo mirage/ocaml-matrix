@@ -4,8 +4,6 @@ open Matrix_common
 module Put = struct
   module Query = Empty.Query
 
-  let path user_id = "_matrix/client/r0/presence/" ^ user_id ^ "/status"
-
   module Request = struct
     type t = {
         presence: Events.Event_content.Presence.Presence.t
@@ -26,14 +24,10 @@ module Put = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end
 
 module Get = struct
   module Query = Empty.Query
-
-  let path user_id = "_matrix/client/r0/presence/" ^ user_id ^ "/status"
 
   module Response = struct
     type t = {
@@ -66,6 +60,4 @@ module Get = struct
           (opt "user_id" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end

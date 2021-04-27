@@ -23,8 +23,6 @@ module Upload = struct
     end
   end
 
-  let path = "/_matrix/media/r0/upload"
-
   module Request = struct
     type t = {file: string} [@@deriving accessor]
 
@@ -42,8 +40,6 @@ module Upload = struct
       let with_tuple = obj1 (req "content_uri" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Download = struct
@@ -58,24 +54,14 @@ module Download = struct
     (* handle the header from the response *)
   end
 
-  let path server_name media_id =
-    "_matrix/media/r0/download/" ^ server_name ^ "/" ^ media_id
-
   module Response = struct
     type t = {file: string} [@@deriving accessor]
 
     let of_string file = {file}
   end
-
-  let needs_auth = true
 end
 
-module Download_filename = struct
-  include Download
-
-  let path server_name media_id filename =
-    "_matrix/media/r0/download/" ^ server_name ^ "/" ^ media_id ^ "/" ^ filename
-end
+module Download_filename = struct include Download end
 
 module Thumbnail = struct
   module Query = struct
@@ -110,16 +96,11 @@ module Thumbnail = struct
     (* handle the header from the response *)
   end
 
-  let path server_name media_id =
-    "_matrix/media/r0/thumbnail/" ^ server_name ^ "/" ^ media_id
-
   module Response = struct
     type t = {thumbnail: string} [@@deriving accessor]
 
     let of_string thumbnail = {thumbnail}
   end
-
-  let needs_auth = false
 end
 
 module Preview = struct
@@ -130,8 +111,6 @@ module Preview = struct
       let l = ["url", [t.url]] in
       match t.ts with None -> l | Some ts -> ("ts", [Int.to_string ts]) :: l
   end
-
-  let path = "/_matrix/media/r0/preview_url"
 
   module Response = struct
     type t = {infos: (string * Repr.value) list} [@@deriving accessor]
@@ -144,14 +123,10 @@ module Preview = struct
       let with_tuple = assoc any in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Config = struct
   module Query = Empty.Query
-
-  let path = "/_matrix/media/r0/config"
 
   module Response = struct
     type t = {upload_size: int option} [@@deriving accessor]
@@ -164,6 +139,4 @@ module Config = struct
       let with_tuple = obj1 (opt "m.upload.size" int) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end

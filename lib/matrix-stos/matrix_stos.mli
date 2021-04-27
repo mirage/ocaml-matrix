@@ -41,8 +41,6 @@ module Public_rooms : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Filter_public_rooms : sig
@@ -67,8 +65,6 @@ module Public_rooms : sig
     end
 
     module Response = Get_public_rooms.Response
-
-    val needs_auth : bool
   end
 end
 
@@ -101,8 +97,6 @@ module Joining_rooms : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Send_join : sig
@@ -137,8 +131,6 @@ module Joining_rooms : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
 
     module V2 : sig
@@ -166,8 +158,6 @@ module Joining_rooms : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
   end
 end

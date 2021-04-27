@@ -93,8 +93,6 @@ end
 module Protocols = struct
   module Query = Empty.Query
 
-  let path = "/_matrix/client/r0/thirdparty/protocols"
-
   module Response = struct
     type t = {protocols: (string * Protocol.t) list} [@@deriving accessor]
 
@@ -106,18 +104,10 @@ module Protocols = struct
       let with_tuple = assoc Protocol.encoding in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Get_protocol = struct
-  module Query = Empty.Query
-
-  let path protocol = "_matrix/client/r0/thirdparty/protocol/" ^ protocol
-
-  module Response = Protocol
-
-  let needs_auth = true
+  module Query = Empty.Query module Response = Protocol
 end
 
 module Get_location = struct
@@ -130,8 +120,6 @@ module Get_location = struct
       | Some search_fields -> ["searchFields", [search_fields]]
   end
 
-  let path protocol = "_matrix/client/r0/thirdparty/location/" ^ protocol
-
   module Response = struct
     type t = {locations: Location.t list} [@@deriving accessor]
 
@@ -143,8 +131,6 @@ module Get_location = struct
       let with_tuple = list Location.encoding in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Get_user = struct
@@ -154,8 +140,6 @@ module Get_user = struct
     let args t = match t.fields with None -> [] | Some fields -> fields
   end
 
-  let path protocol = "_matrix/client/r0/thirdparty/user/" ^ protocol
-
   module Response = struct
     type t = {users: User.t list} [@@deriving accessor]
 
@@ -167,8 +151,6 @@ module Get_user = struct
       let with_tuple = list User.encoding in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Location_from_alias = struct
@@ -177,8 +159,6 @@ module Location_from_alias = struct
 
     let args t = ["alias", [t.alias]]
   end
-
-  let path = "/_matrix/client/r0/thirdparty/location"
 
   module Response = struct
     type t = {locations: Location.t list} [@@deriving accessor]
@@ -191,8 +171,6 @@ module Location_from_alias = struct
       let with_tuple = list Location.encoding in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module User_from_user_id = struct
@@ -201,8 +179,6 @@ module User_from_user_id = struct
 
     let args t = ["userid", [t.user_id]]
   end
-
-  let path = "/_matrix/client/r0/thirdparty/user"
 
   module Response = struct
     type t = {users: User.t list} [@@deriving accessor]
@@ -215,6 +191,4 @@ module User_from_user_id = struct
       let with_tuple = list User.encoding in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end

@@ -21,8 +21,6 @@ module Query = struct
     l
 end
 
-let path = "/_matrix/client/r0/events"
-
 module Response = struct
   type t = {
       start: string option
@@ -41,5 +39,3 @@ module Response = struct
         (opt "chunk" (list Events.Room_event.encoding)) in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = true

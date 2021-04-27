@@ -18,7 +18,7 @@ let versions =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     Lwt.return (`OK, response, None) in
-  needs_auth, f
+  false, f
 
 let login_get =
   let open Login.Get in
@@ -27,7 +27,7 @@ let login_get =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     Lwt.return (`OK, response, None) in
-  needs_auth, f
+  false, f
 
 let login_post =
   let open Login.Post in
@@ -75,7 +75,7 @@ let login_post =
       )
     | _ -> Lwt.return (`Bad_request, error "M_UNKNOWN" "Bad request type", None)
   in
-  needs_auth, f
+  false, f
 
 let logout =
   let open Logout.Logout in
@@ -94,7 +94,7 @@ let logout =
         let response =
           construct Response.encoding response |> Ezjsonm.value_to_string in
         Lwt.return (`OK, response, None)) in
-  needs_auth, f
+  true, f
 
 let register =
   let open Register.Register in
@@ -169,7 +169,7 @@ let register =
               match Request.get_inhibit_login request with
               | Some true -> f None
               | _ -> create_token f user_id))))) in
-  needs_auth, f
+  false, f
 
 let presence_put =
   let open Presence.Put in
@@ -180,7 +180,7 @@ let presence_put =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     (`OK, response, None) |> Lwt.return in
-  needs_auth, f
+  true, f
 
 let presence_get =
   let open Presence.Get in
@@ -191,7 +191,7 @@ let presence_get =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     (`OK, response, None) |> Lwt.return in
-  needs_auth, f
+  true, f
 
 let pushrules_get =
   let open Push_rules.Get_all in
@@ -200,7 +200,7 @@ let pushrules_get =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     (`OK, response, None) |> Lwt.return in
-  needs_auth, f
+  true, f
 
 let filter_post =
   let open Filter.Post in
@@ -211,7 +211,7 @@ let filter_post =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     (`OK, response, None) |> Lwt.return in
-  needs_auth, f
+  true, f
 
 let filter_get =
   let open Filter.Get in
@@ -220,7 +220,7 @@ let filter_get =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     (`OK, response, None) |> Lwt.return in
-  needs_auth, f
+  true, f
 
 let sync =
   let open Sync in
@@ -279,7 +279,7 @@ let sync =
               in
               Lwt.return (`OK, response, None)) in
       loop 0. () in
-  needs_auth, f
+  true, f
 
 let turn_server =
   let open Voip in
@@ -288,7 +288,7 @@ let turn_server =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     (`OK, response, None) |> Lwt.return in
-  needs_auth, f
+  true, f
 
 module Account_data = struct
   let put =
@@ -331,7 +331,7 @@ module Account_data = struct
                 construct Response.encoding response |> Ezjsonm.value_to_string
               in
               (`OK, response, None) |> Lwt.return)) in
-    needs_auth, f
+    true, f
 
   let get =
     let open Account_data.Get in
@@ -369,7 +369,7 @@ module Account_data = struct
                 construct Response.encoding response |> Ezjsonm.value_to_string
               in
               (`OK, response, None) |> Lwt.return)) in
-    needs_auth, f
+    true, f
 end
 
 module Profile = struct
@@ -412,7 +412,7 @@ module Profile = struct
                 construct Response.encoding response |> Ezjsonm.value_to_string
               in
               (`OK, response, None) |> Lwt.return) in
-      needs_auth, f
+      true, f
 
     let get =
       let open Profile.Display_name.Get in
@@ -446,7 +446,7 @@ module Profile = struct
               construct Response.encoding response |> Ezjsonm.value_to_string
             in
             (`OK, response, None) |> Lwt.return) in
-      needs_auth, f
+      false, f
   end
 
   module Avatar_url = struct
@@ -488,7 +488,7 @@ module Profile = struct
                 construct Response.encoding response |> Ezjsonm.value_to_string
               in
               (`OK, response, None) |> Lwt.return) in
-      needs_auth, f
+      true, f
 
     let get =
       let open Profile.Avatar_url.Get in
@@ -521,7 +521,7 @@ module Profile = struct
               construct Response.encoding response |> Ezjsonm.value_to_string
             in
             (`OK, response, None) |> Lwt.return) in
-      needs_auth, f
+      false, f
   end
 
   let get =
@@ -566,7 +566,7 @@ module Profile = struct
               construct Response.encoding response |> Ezjsonm.value_to_string
             in
             (`OK, response, None) |> Lwt.return)) in
-    needs_auth, f
+    false, f
 end
 
 let joined_groups =
@@ -586,7 +586,7 @@ let well_known =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     (`OK, response, None) |> Lwt.return in
-  needs_auth, f
+  false, f
 
 let keys_upload =
   let open Keys.Upload in
@@ -635,7 +635,7 @@ let keys_upload =
             construct Response.encoding response |> Ezjsonm.value_to_string
           in
           Lwt.return (`OK, response, None)) in
-  needs_auth, f
+  true, f
 
 let keys_query =
   let open Keys.Query in
@@ -657,7 +657,7 @@ let keys_query =
       let response =
         construct Response.encoding response |> Ezjsonm.value_to_string in
       Lwt.return (`OK, response, None) in
-  needs_auth, f
+  true, f
 
 let pushers_get =
   let open Pushers.Get in
@@ -666,7 +666,7 @@ let pushers_get =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     Lwt.return (`OK, response, None) in
-  needs_auth, f
+  true, f
 
 let capabilities =
   let open Capabilities in
@@ -689,7 +689,7 @@ let capabilities =
       let response =
         construct Response.encoding response |> Ezjsonm.value_to_string in
       Lwt.return (`OK, response, None) in
-  needs_auth, f
+  true, f
 
 let thirdparty_protocols =
   let open Third_party_network.Protocols in
@@ -698,7 +698,7 @@ let thirdparty_protocols =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     Lwt.return (`OK, response, None) in
-  needs_auth, f
+  true, f
 
 let user_search =
   let open User_directory.Search in
@@ -724,7 +724,7 @@ let user_search =
       let response =
         construct Response.encoding response |> Ezjsonm.value_to_string in
       Lwt.return (`OK, response, None) in
-  needs_auth, f
+  true, f
 
 module Account = struct
   module Thirdparty_pid = struct
@@ -735,6 +735,6 @@ module Account = struct
         let response =
           construct Response.encoding response |> Ezjsonm.value_to_string in
         Lwt.return (`OK, response, None) in
-      needs_auth, f
+      true, f
   end
 end

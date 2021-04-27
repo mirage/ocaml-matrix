@@ -4,8 +4,6 @@ open Matrix_common
 module Upload = struct
   module Query = Empty.Query
 
-  let path = "/_matrix/client/r0/keys/upload"
-
   module Request = struct
     module Device_keys = struct
       type t = {
@@ -73,14 +71,10 @@ module Upload = struct
       let with_tuple = obj1 (req "one_time_key_counts" (assoc int)) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Query = struct
   module Query = Empty.Query
-
-  let path = "/_matrix/client/r0/keys/query"
 
   module Request = struct
     type t = {
@@ -159,14 +153,10 @@ module Query = struct
           (opt "device_keys" (assoc (assoc Device_keys.encoding))) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Claim = struct
   module Query = Empty.Query
-
-  let path = "/_matrix/client/r0/keys/claim"
 
   module Request = struct
     type t = {
@@ -204,8 +194,6 @@ module Claim = struct
           (req "one_time_keys" (assoc (assoc string))) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Changes = struct
@@ -214,8 +202,6 @@ module Changes = struct
 
     let args t = ["from", [t.from]; "to", [t._to]]
   end
-
-  let path = "/_matrix/client/r0/keys/changes"
 
   module Response = struct
     type t = {changed: string list option; left: string list option}
@@ -230,6 +216,4 @@ module Changes = struct
         obj2 (opt "changed" (list string)) (opt "left" (list string)) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end

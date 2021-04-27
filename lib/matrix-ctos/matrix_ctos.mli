@@ -5,8 +5,6 @@ module Account_data : sig
   module Put : sig
     module Query : Empty.QUERY
 
-    val path : string -> string -> string
-
     module Request : sig
       type%accessor t = {data: Repr.value}
 
@@ -14,28 +12,20 @@ module Account_data : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Get : sig
     module Query : Empty.QUERY
 
-    val path : string -> string -> string
-
     module Response : sig
       type%accessor t = {data: Repr.value}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Put_by_room : sig
     module Query : Empty.QUERY
-
-    val path : string -> string -> string -> string
 
     module Request : sig
       type%accessor t = {data: (string * string) list}
@@ -44,22 +34,16 @@ module Account_data : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Get_by_room : sig
     module Query : Empty.QUERY
-
-    val path : string -> string -> string -> string
 
     module Response : sig
       type%accessor t = {data: (string * string) list}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 end
 
@@ -150,8 +134,6 @@ module Account : sig
     module Post : sig
       module Query : Empty.QUERY
 
-      val path : string
-
       module Request : sig
         type%accessor t = {
             auth: Authentication.Password.V1.t
@@ -162,14 +144,10 @@ module Account : sig
       end
 
       module Response : Empty.JSON
-
-      val needs_auth : bool
     end
 
     module Email_request_token : sig
       module Query : Empty.QUERY
-
-      val path : string
 
       module Request : sig
         type%accessor t = {
@@ -188,14 +166,10 @@ module Account : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
 
     module Msisdn_request_token : sig
       module Query : Empty.QUERY
-
-      val path : string
 
       module Request : sig
         type%accessor t = {
@@ -215,15 +189,11 @@ module Account : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
   end
 
   module Deactivate : sig
     module Query : Empty.QUERY
-
-    val path : string
 
     module Request : sig
       type%accessor t = {
@@ -239,8 +209,6 @@ module Account : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Third_party_id : sig
@@ -252,8 +220,6 @@ module Account : sig
 
     module Get : sig
       module Query : Empty.QUERY
-
-      val path : string
 
       module Response : sig
         module Third_party_identifier : sig
@@ -271,14 +237,10 @@ module Account : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
 
     module Post : sig
       module Query : Empty.QUERY
-
-      val path : string
 
       module Request : sig
         module Three_pid_creds : sig
@@ -300,14 +262,10 @@ module Account : sig
       end
 
       module Response : Empty.JSON
-
-      val needs_auth : bool
     end
 
     module Delete : sig
       module Query : Empty.QUERY
-
-      val path : string
 
       module Request : sig
         type%accessor t = {
@@ -324,14 +282,10 @@ module Account : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
 
     module Email_request_token : sig
       module Query : Empty.QUERY
-
-      val path : string
 
       module Request : sig
         type%accessor t = {
@@ -350,14 +304,10 @@ module Account : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
 
     module Msisdn_request_token : sig
       module Query : Empty.QUERY
-
-      val path : string
 
       module Request : sig
         type%accessor t = {
@@ -377,16 +327,11 @@ module Account : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
   end
 
   module Whoami : sig
     module Query : Empty.QUERY
-
-    val path : string
-
     module Request : Empty.JSON
 
     module Response : sig
@@ -394,8 +339,6 @@ module Account : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 end
 
@@ -413,8 +356,6 @@ module Banning : sig
   module Ban : sig
     module Query : Empty.QUERY
 
-    val path : string -> string
-
     module Request : sig
       type%accessor t = {reason: string option; user_id: string}
 
@@ -422,14 +363,10 @@ module Banning : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Unban : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
 
     module Request : sig
       type%accessor t = {user_id: string}
@@ -438,8 +375,6 @@ module Banning : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 end
 
@@ -482,28 +417,10 @@ module Capabilities : sig
 
   module Query : Empty.QUERY
 
-  val path : string
-
   module Response : sig
     type%accessor t = {capabilities: Capability.t list}
 
     val encoding : t encoding
-  end
-
-  val needs_auth : bool
-end
-
-module Deprecated : sig
-  module Events : sig
-    val path : string
-  end
-
-  module Initial_sync : sig
-    val path : string
-  end
-
-  module Events_events_id : sig
-    val path : string
   end
 end
 
@@ -530,31 +447,20 @@ module Devices : sig
   module List : sig
     module Query : Empty.QUERY
 
-    val path : string
-
     module Response : sig
       type%accessor t = {devices: Device.t list option}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Get : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
-
     module Response = Device
-
-    val needs_auth : bool
   end
 
   module Put : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
 
     module Request : sig
       type%accessor t = {display_name: string option}
@@ -563,14 +469,10 @@ module Devices : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Delete : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
 
     module Request : sig
       type%accessor t = {auth: Authentication.t option}
@@ -579,14 +481,10 @@ module Devices : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Delete_list : sig
     module Query : Empty.QUERY
-
-    val path : string
 
     module Request : sig
       type%accessor t = {devices: string list; auth: Authentication.t option}
@@ -595,8 +493,6 @@ module Devices : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 end
 
@@ -728,8 +624,6 @@ module Context : sig
     val args : t -> (string * string list) list
   end
 
-  val path : string -> string -> string
-
   module Response : sig
     type%accessor t = {
         start: string option
@@ -742,8 +636,6 @@ module Context : sig
 
     val encoding : t encoding
   end
-
-  val needs_auth : bool
 end
 
 module Filter : sig
@@ -812,9 +704,6 @@ module Filter : sig
 
   module Post : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
-
     module Request = Filter
 
     module Response : sig
@@ -822,25 +711,16 @@ module Filter : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Get : sig
     module Query : Empty.QUERY
-
-    val path : string -> string -> string
-
     module Response = Filter
-
-    val needs_auth : bool
   end
 end
 
 module Fully_read : sig
   module Query : Empty.QUERY
-
-  val path : string -> string
 
   module Request : sig
     type%accessor t = {
@@ -853,29 +733,21 @@ module Fully_read : sig
   end
 
   module Response : Empty.JSON
-
-  val needs_auth : bool
 end
 
 module Joined : sig
   module Query : Empty.QUERY
-
-  val path : string
 
   module Response : sig
     type%accessor t = {joined: string list}
 
     val encoding : t encoding
   end
-
-  val needs_auth : bool
 end
 
 module Joining : sig
   module Invite : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
 
     module Request : sig
       type%accessor t = {user_id: string}
@@ -884,14 +756,10 @@ module Joining : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Invite_thirdparty : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
 
     module Request : sig
       type%accessor t = {id_server: string; medium: string; address: string}
@@ -900,14 +768,10 @@ module Joining : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Join_with_id : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
 
     module Request : sig
       type%accessor t = {third_party_signed: unit option}
@@ -920,8 +784,6 @@ module Joining : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Join : sig
@@ -931,8 +793,6 @@ module Joining : sig
       val args : t -> (string * string list) list
     end
 
-    val path : string -> string
-
     module Request : sig
       type%accessor t = {third_party_signed: unit option}
 
@@ -944,8 +804,6 @@ module Joining : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 end
 
@@ -1037,8 +895,6 @@ module Keys : sig
   module Upload : sig
     module Query : Empty.QUERY
 
-    val path : string
-
     module Request : sig
       module Device_keys : sig
         type%accessor t = {
@@ -1071,14 +927,10 @@ module Keys : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Query : sig
     module Query : Empty.QUERY
-
-    val path : string
 
     module Request : sig
       type%accessor t = {
@@ -1117,14 +969,10 @@ module Keys : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Claim : sig
     module Query : Empty.QUERY
-
-    val path : string
 
     module Request : sig
       type%accessor t = {
@@ -1143,8 +991,6 @@ module Keys : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Changes : sig
@@ -1154,42 +1000,27 @@ module Keys : sig
       val args : t -> (string * string list) list
     end
 
-    val path : string
-
     module Response : sig
       type%accessor t = {changed: string list option; left: string list option}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 end
 
 module Leaving : sig
   module Leave : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
-
     module Request : Empty.JSON
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Forget : sig
-    val path : string -> string
-
     module Request : Empty.JSON
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Kick : sig
-    val path : string -> string
-
     module Request : sig
       type%accessor t = {reason: string option; user_id: string}
 
@@ -1197,15 +1028,11 @@ module Leaving : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 end
 
 module Well_known : sig
   module Query : Empty.QUERY
-
-  val path : string
 
   module Response : sig
     type%accessor t = {homeserver: string; identity_server: string option}
@@ -1213,8 +1040,6 @@ module Well_known : sig
     val encoding : t encoding
     val pp : Format.formatter -> t -> unit
   end
-
-  val needs_auth : bool
 end
 
 module Login : sig
@@ -1227,9 +1052,6 @@ module Login : sig
       val encoding : t encoding
       val pp : t Fmt.t
     end
-
-    val path : string
-    val needs_auth : bool
   end
 
   module Post : sig
@@ -1258,9 +1080,6 @@ module Login : sig
       val encoding : t encoding
       val pp : t Fmt.t
     end
-
-    val path : string
-    val needs_auth : bool
   end
 end
 
@@ -1269,18 +1088,12 @@ module Logout : sig
     module Query : Empty.QUERY
     module Request : Empty.JSON
     module Response : Empty.JSON
-
-    val path : string
-    val needs_auth : bool
   end
 
   module Logout_all : sig
     module Query : Empty.QUERY
     module Request : Empty.JSON
     module Response : Empty.JSON
-
-    val path : string
-    val needs_auth : bool
   end
 end
 
@@ -1300,8 +1113,6 @@ module Media : sig
       end
     end
 
-    val path : string
-
     module Request : sig
       type%accessor t = {file: string}
 
@@ -1313,8 +1124,6 @@ module Media : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Download : sig
@@ -1324,25 +1133,16 @@ module Media : sig
       val args : t -> (string * string list) list
     end
 
-    val path : string -> string -> string
-
     module Response : sig
       type%accessor t = {file: string}
 
       val of_string : string -> t
     end
-
-    val needs_auth : bool
   end
 
   module Download_filename : sig
     module Response = Download.Response
-
-    val needs_auth : bool
-
     module Query = Download.Query
-
-    val path : string -> string -> string -> string
   end
 
   module Thumbnail : sig
@@ -1361,15 +1161,11 @@ module Media : sig
       val args : t -> (string * string list) list
     end
 
-    val path : string -> string -> string
-
     module Response : sig
       type%accessor t = {thumbnail: string}
 
       val of_string : string -> t
     end
-
-    val needs_auth : bool
   end
 
   module Preview : sig
@@ -1379,29 +1175,21 @@ module Media : sig
       val args : t -> (string * string list) list
     end
 
-    val path : string
-
     module Response : sig
       type%accessor t = {infos: (string * Repr.value) list}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Config : sig
     module Query : Empty.QUERY
-
-    val path : string
 
     module Response : sig
       type%accessor t = {upload_size: int option}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 end
 
@@ -1415,8 +1203,6 @@ module Notifications : sig
 
     val args : t -> (string * string list) list
   end
-
-  val path : string
 
   module Response : sig
     module Notification : sig
@@ -1439,14 +1225,10 @@ module Notifications : sig
 
     val encoding : t encoding
   end
-
-  val needs_auth : bool
 end
 
 module Open_id : sig
   module Query : Empty.QUERY
-
-  val path : string -> string
 
   module Response : sig
     type%accessor t = {
@@ -1458,15 +1240,11 @@ module Open_id : sig
 
     val encoding : t encoding
   end
-
-  val needs_auth : bool
 end
 
 module Presence : sig
   module Put : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
 
     module Request : sig
       type%accessor t = {
@@ -1478,14 +1256,10 @@ module Presence : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Get : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
 
     module Response : sig
       type%accessor t = {
@@ -1498,8 +1272,6 @@ module Presence : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 end
 
@@ -1514,8 +1286,6 @@ module Preview : sig
     val args : t -> (string * string list) list
   end
 
-  val path : string
-
   module Response : sig
     type%accessor t = {
         start: string option
@@ -1525,8 +1295,6 @@ module Preview : sig
 
     val encoding : t encoding
   end
-
-  val needs_auth : bool
 end
 
 module Profile : sig
@@ -1534,8 +1302,6 @@ module Profile : sig
     module Set : sig
       module Query : Empty.QUERY
 
-      val path : string -> string
-
       module Request : sig
         type%accessor t = {displayname: string option}
 
@@ -1543,22 +1309,16 @@ module Profile : sig
       end
 
       module Response : Empty.JSON
-
-      val needs_auth : bool
     end
 
     module Get : sig
       module Query : Empty.QUERY
-
-      val path : string -> string
 
       module Response : sig
         type%accessor t = {displayname: string option}
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
   end
 
@@ -1566,8 +1326,6 @@ module Profile : sig
     module Set : sig
       module Query : Empty.QUERY
 
-      val path : string -> string
-
       module Request : sig
         type%accessor t = {avatar_url: string option}
 
@@ -1575,37 +1333,27 @@ module Profile : sig
       end
 
       module Response : Empty.JSON
-
-      val needs_auth : bool
     end
 
     module Get : sig
       module Query : Empty.QUERY
-
-      val path : string -> string
 
       module Response : sig
         type%accessor t = {avatar_url: string option}
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
   end
 
   module Get : sig
     module Query : Empty.QUERY
 
-    val path : string -> string
-
     module Response : sig
       type%accessor t = {displayname: string option; avatar_url: string option}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 end
 
@@ -1616,8 +1364,6 @@ module Push_rules : sig
 
   module Get_all : sig
     module Query : Empty.QUERY
-
-    val path : string
 
     module Response : sig
       type%accessor t = {
@@ -1630,33 +1376,22 @@ module Push_rules : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Get : sig
     module Query : Empty.QUERY
-
-    val path : string -> Kind.t -> string -> string
 
     module Response : sig
       type%accessor t = {push_rules: Push_rule.t}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Delete : sig
     module Query : Empty.QUERY
-
-    val path : string -> Kind.t -> string -> string
-
     module Request : Empty.JSON
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Put : sig
@@ -1665,8 +1400,6 @@ module Push_rules : sig
 
       val args : t -> (string * string list) list
     end
-
-    val path : string -> Kind.t -> string -> string
 
     module Request : sig
       module Action : sig
@@ -1685,29 +1418,21 @@ module Push_rules : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Get_enabled : sig
     module Query : Empty.QUERY
 
-    val path : string -> Kind.t -> string -> string
-
     module Response : sig
       type%accessor t = {enabled: bool}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Set_enabled : sig
     module Query : Empty.QUERY
 
-    val path : string -> Kind.t -> string -> string
-
     module Request : sig
       type%accessor t = {enabled: bool}
 
@@ -1715,28 +1440,20 @@ module Push_rules : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Get_actions : sig
     module Query : Empty.QUERY
-
-    val path : string -> Kind.t -> string -> string
 
     module Response : sig
       type%accessor t = {actions: string list}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Set_actions : sig
     module Query : Empty.QUERY
-
-    val path : string -> Kind.t -> string -> string
 
     module Request : sig
       type%accessor t = {actions: string list}
@@ -1745,8 +1462,6 @@ module Push_rules : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 end
 
@@ -1775,21 +1490,15 @@ module Pushers : sig
   module Get : sig
     module Query : Empty.QUERY
 
-    val path : string
-
     module Response : sig
       type%accessor t = {pushers: Pusher.t list option}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Set : sig
     module Query : Empty.QUERY
-
-    val path : string
 
     module Request : sig
       type%accessor t = {pusher: Pusher.t; append: bool option}
@@ -1798,20 +1507,13 @@ module Pushers : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 end
 
 module Receipt : sig
   module Query : Empty.QUERY
-
-  val path : string -> string -> string -> string
-
   module Request : Empty.JSON
   module Response : Empty.JSON
-
-  val needs_auth : bool
 end
 
 module Register : sig
@@ -1851,9 +1553,6 @@ module Register : sig
 
       val encoding : t encoding
     end
-
-    val path : string
-    val needs_auth : bool
   end
 
   module Available : sig
@@ -1870,9 +1569,6 @@ module Register : sig
 
       val encoding : t encoding
     end
-
-    val path : string
-    val needs_auth : bool
   end
 
   module Email_request_token : sig
@@ -1899,9 +1595,6 @@ module Register : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
-    val path : string
   end
 
   module Msisdn_request_token : sig
@@ -1931,16 +1624,11 @@ module Register : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
-    val path : string
   end
 end
 
 module Report : sig
   module Query : Empty.QUERY
-
-  val path : string -> string -> string
 
   module Request : sig
     type%accessor t = {score: int; reason: string}
@@ -1949,28 +1637,18 @@ module Report : sig
   end
 
   module Response : Empty.JSON
-
-  val needs_auth : bool
 end
 
 module Room_event : sig
   module Get : sig
     module Event : sig
       module Query : Empty.QUERY
-
-      val path : string -> string -> string
-
       module Request : Empty.JSON
       module Response = Events.Room_event
-
-      val needs_auth : bool
     end
 
     module State_key : sig
       module Query : Empty.QUERY
-
-      val path : string -> string -> string -> string
-
       module Request : Empty.JSON
 
       module Response : sig
@@ -1978,15 +1656,10 @@ module Room_event : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
 
     module State : sig
       module Query : Empty.QUERY
-
-      val path : string -> string
-
       module Request : Empty.JSON
 
       module Response : sig
@@ -1994,8 +1667,6 @@ module Room_event : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
 
     module Members : sig
@@ -2009,8 +1680,6 @@ module Room_event : sig
         val args : t -> (string * string list) list
       end
 
-      val path : string -> string
-
       module Request : Empty.JSON
 
       module Response : sig
@@ -2018,15 +1687,10 @@ module Room_event : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
 
     module Joined_members : sig
       module Query : Empty.QUERY
-
-      val path : string -> string
-
       module Request : Empty.JSON
 
       module Response : sig
@@ -2043,16 +1707,12 @@ module Room_event : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
   end
 
   module Put : sig
     module State_event : sig
       module Query = Empty.Query
-
-      val path : string -> string -> string -> string
 
       module Request : sig
         type%accessor t = {event: Events.Event_content.t}
@@ -2065,14 +1725,10 @@ module Room_event : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
 
     module Message_event : sig
       module Query = Empty.Query
-
-      val path : string -> string -> string -> string
 
       module Request : sig
         type%accessor t = {event: Events.Event_content.Message.t}
@@ -2085,8 +1741,6 @@ module Room_event : sig
 
         val encoding : t encoding
       end
-
-      val needs_auth : bool
     end
   end
 end
@@ -2100,8 +1754,6 @@ module Room : sig
 
   module Create : sig
     module Query : Empty.QUERY
-
-    val path : string
 
     module Request : sig
       module Invite_3pid : sig
@@ -2140,14 +1792,10 @@ module Room : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Create_alias : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
 
     module Request : sig
       type%accessor t = {room_id: string}
@@ -2156,15 +1804,10 @@ module Room : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Resolve_alias : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
-
     module Request : Empty.JSON
 
     module Response : sig
@@ -2172,19 +1815,12 @@ module Room : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Delete_alias : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
-
     module Request : Empty.JSON
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 end
 
@@ -2192,21 +1828,15 @@ module Room_listing : sig
   module Get_visibility : sig
     module Query : Empty.QUERY
 
-    val path : string -> string
-
     module Response : sig
       type%accessor t = {visibility: Room.Visibility.t}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Set_visibility : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
 
     module Request : sig
       type%accessor t = {visibility: Room.Visibility.t option}
@@ -2215,8 +1845,6 @@ module Room_listing : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Get_public_rooms : sig
@@ -2229,8 +1857,6 @@ module Room_listing : sig
 
       val args : t -> (string * string list) list
     end
-
-    val path : string
 
     module Response : sig
       module Public_rooms_chunk : sig
@@ -2259,8 +1885,6 @@ module Room_listing : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Filter_public_rooms : sig
@@ -2269,8 +1893,6 @@ module Room_listing : sig
 
       val args : t -> (string * string list) list
     end
-
-    val path : string
 
     module Request : sig
       module Filter : sig
@@ -2291,8 +1913,6 @@ module Room_listing : sig
     end
 
     module Response = Get_public_rooms.Response
-
-    val needs_auth : bool
   end
 end
 
@@ -2370,8 +1990,6 @@ module Search : sig
 
     val args : t -> (string * string list) list
   end
-
-  val path : string
 
   module Request : sig
     module Criteria : sig
@@ -2503,14 +2121,10 @@ module Search : sig
 
     val encoding : t encoding
   end
-
-  val needs_auth : bool
 end
 
 module Send_to_device : sig
   module Query : Empty.QUERY
-
-  val path : string -> string -> string
 
   module Request : sig
     type%accessor t = {
@@ -2521,8 +2135,6 @@ module Send_to_device : sig
   end
 
   module Response : Empty.JSON
-
-  val needs_auth : bool
 end
 
 module Session_data : sig
@@ -2546,11 +2158,7 @@ module Sso : sig
     val args : t -> (string * string list) list
   end
 
-  val path : string
-
   module Response : Empty.JSON
-
-  val needs_auth : bool
 end
 
 module Sync : sig
@@ -2588,16 +2196,11 @@ module Sync : sig
     val encoding : t encoding
     val pp : t Fmt.t
   end
-
-  val path : string
-  val needs_auth : bool
 end
 
 module Tag : sig
   module Get : sig
     module Query : Empty.QUERY
-
-    val path : string -> string -> string
 
     module Response : sig
       module Tag : sig
@@ -2610,14 +2213,10 @@ module Tag : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Put : sig
     module Query : Empty.QUERY
-
-    val path : string -> string -> string -> string
 
     module Request : sig
       type%accessor t = {order: float option}
@@ -2626,19 +2225,12 @@ module Tag : sig
     end
 
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 
   module Delete : sig
     module Query : Empty.QUERY
-
-    val path : string -> string -> string -> string
-
     module Request : Empty.JSON
     module Response : Empty.JSON
-
-    val needs_auth : bool
   end
 end
 
@@ -2695,25 +2287,16 @@ module Third_party_network : sig
   module Protocols : sig
     module Query : Empty.QUERY
 
-    val path : string
-
     module Response : sig
       type%accessor t = {protocols: (string * Protocol.t) list}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Get_protocol : sig
     module Query : Empty.QUERY
-
-    val path : string -> string
-
     module Response = Protocol
-
-    val needs_auth : bool
   end
 
   module Get_location : sig
@@ -2723,15 +2306,11 @@ module Third_party_network : sig
       val args : t -> (string * string list) list
     end
 
-    val path : string -> string
-
     module Response : sig
       type%accessor t = {locations: Location.t list}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Get_user : sig
@@ -2741,15 +2320,11 @@ module Third_party_network : sig
       val args : t -> (string * string list) list
     end
 
-    val path : string -> string
-
     module Response : sig
       type%accessor t = {users: User.t list}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module Location_from_alias : sig
@@ -2759,15 +2334,11 @@ module Third_party_network : sig
       val args : t -> (string * string list) list
     end
 
-    val path : string
-
     module Response : sig
       type%accessor t = {locations: Location.t list}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 
   module User_from_user_id : sig
@@ -2777,22 +2348,16 @@ module Third_party_network : sig
       val args : t -> (string * string list) list
     end
 
-    val path : string
-
     module Response : sig
       type%accessor t = {users: User.t list}
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 end
 
 module Typing : sig
   module Query : Empty.QUERY
-
-  val path : string -> string -> string
 
   module Request : sig
     type%accessor t = {typing: bool; timeout: int option}
@@ -2801,14 +2366,10 @@ module Typing : sig
   end
 
   module Response : Empty.JSON
-
-  val needs_auth : bool
 end
 
 module Upgrade : sig
   module Query : Empty.QUERY
-
-  val path : string -> string
 
   module Request : sig
     type%accessor t = {new_version: string}
@@ -2821,15 +2382,11 @@ module Upgrade : sig
 
     val encoding : t encoding
   end
-
-  val needs_auth : bool
 end
 
 module User_directory : sig
   module Search : sig
     module Query : Empty.QUERY
-
-    val path : string
 
     module Request : sig
       type%accessor t = {search_term: string; limited: int option}
@@ -2852,15 +2409,11 @@ module User_directory : sig
 
       val encoding : t encoding
     end
-
-    val needs_auth : bool
   end
 end
 
 module Versions : sig
   module Query : Empty.QUERY
-
-  val path : string
 
   module Response : sig
     type%accessor t = {
@@ -2870,14 +2423,10 @@ module Versions : sig
 
     val encoding : t encoding
   end
-
-  val needs_auth : bool
 end
 
 module Voip : sig
   module Query : Empty.QUERY
-
-  val path : string
 
   module Response : sig
     type%accessor t = {
@@ -2889,14 +2438,10 @@ module Voip : sig
 
     val encoding : t encoding
   end
-
-  val needs_auth : bool
 end
 
 module Whois : sig
   module Query : Empty.QUERY
-
-  val path : string -> string
 
   module Response : sig
     module Device_info : sig
@@ -2928,6 +2473,4 @@ module Whois : sig
 
     val encoding : t encoding
   end
-
-  val needs_auth : bool
 end

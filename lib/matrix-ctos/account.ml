@@ -45,8 +45,6 @@ module Email_request_token = struct
       let with_tuple = obj2 (req "sid" string) (opt "submit_url" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
 end
 
 module Msisdn_request_token = struct
@@ -108,15 +106,11 @@ module Msisdn_request_token = struct
       let with_tuple = obj2 (req "sid" string) (opt "submit_url" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
 end
 
 module Password = struct
   module Post = struct
     module Query = Empty.Query
-
-    let path = "/_matrix/client/r0/account/password"
 
     module Request = struct
       type t = {auth: Authentication.Password.V1.t; new_password: string}
@@ -135,27 +129,14 @@ module Password = struct
     end
 
     module Response = Empty.Json
-
-    let needs_auth = true
   end
 
-  module Email_request_token = struct
-    include Email_request_token
-
-    let path = "/_matrix/client/r0/account/password/email/requestToken"
-  end
-
-  module Msisdn_request_token = struct
-    include Msisdn_request_token
-
-    let path = "/_matrix/client/r0/account/password/msisdn/requestToken"
-  end
+  module Email_request_token = struct include Email_request_token end
+  module Msisdn_request_token = struct include Msisdn_request_token end
 end
 
 module Deactivate = struct
   module Query = Empty.Query
-
-  let path = "/_matrix/client/r0/account/deactivate"
 
   module Request = struct
     type t = {auth: Authentication.Password.V1.t; id_server: string option}
@@ -185,8 +166,6 @@ module Deactivate = struct
         obj1 (req "id_server_unbind_result" Unbind_result.encoding) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Third_party_id = struct
@@ -198,8 +177,6 @@ module Third_party_id = struct
 
   module Get = struct
     module Query = Empty.Query
-
-    let path = "/_matrix/client/r0/account/3pid"
 
     module Response = struct
       module Third_party_identifier = struct
@@ -235,14 +212,10 @@ module Third_party_id = struct
           obj1 (req "threepids" (list Third_party_identifier.encoding)) in
         conv to_tuple of_tuple with_tuple
     end
-
-    let needs_auth = true
   end
 
   module Post = struct
     module Query = Empty.Query
-
-    let path = "/_matrix/client/r0/account/3pid"
 
     module Request = struct
       module Three_pid_creds = struct
@@ -277,14 +250,10 @@ module Third_party_id = struct
     end
 
     module Response = Empty.Json
-
-    let needs_auth = true
   end
 
   module Delete = struct
     module Query = Empty.Query
-
-    let path = "/_matrix/client/r0/account/3pid/delete"
 
     module Request = struct
       type t = {id_server: string option; medium: Medium.t; address: string}
@@ -314,28 +283,14 @@ module Third_party_id = struct
           obj1 (req "id_server_unbind_result" Unbind_result.encoding) in
         conv to_tuple of_tuple with_tuple
     end
-
-    let needs_auth = true
   end
 
-  module Email_request_token = struct
-    include Email_request_token
-
-    let path = "/_matrix/client/r0/account/3pid/email/requestToken"
-  end
-
-  module Msisdn_request_token = struct
-    include Msisdn_request_token
-
-    let path = "/_matrix/client/r0/account/3pid/msisdn/requestToken"
-  end
+  module Email_request_token = struct include Email_request_token end
+  module Msisdn_request_token = struct include Msisdn_request_token end
 end
 
 module Whoami = struct
   module Query = Empty.Query
-
-  let path = "/_matrix/client/r0/account/whoami"
-
   module Request = Empty.Json
 
   module Response = struct
@@ -349,6 +304,4 @@ module Whoami = struct
       let with_tuple = obj1 (req "user_id" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end

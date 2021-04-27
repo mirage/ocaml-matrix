@@ -28,5 +28,3 @@ module Response = struct
         (req "pdus" (list Pdu.encoding)) in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = true

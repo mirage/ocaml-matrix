@@ -66,8 +66,6 @@ module Direct_query = struct
   *)
 
   module Response = Server_key
-
-  let needs_auth = false
 end
 
 module Indirect_query = struct
@@ -99,8 +97,6 @@ module Indirect_query = struct
       let with_tuple = obj1 (req "server_keys" (list Server_key.encoding)) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
 end
 
 module Indirect_batch_query = struct
@@ -145,6 +141,4 @@ module Indirect_batch_query = struct
       let with_tuple = obj1 (req "server_keys" (list Server_key.encoding)) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
 end

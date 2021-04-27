@@ -28,8 +28,6 @@ module State = struct
           (req "pdus" (list Events.State_event.encoding)) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module State_ids = struct
@@ -55,8 +53,6 @@ module State_ids = struct
       in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Event = struct
@@ -79,6 +75,4 @@ module Event = struct
           (req "pdus" (list Pdu.encoding)) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end

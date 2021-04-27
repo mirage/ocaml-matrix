@@ -5,8 +5,6 @@ module Display_name = struct
   module Set = struct
     module Query = Empty.Query
 
-    let path user_id = "_matrix/client/r0/profile/" ^ user_id ^ "/displayname"
-
     module Request = struct
       type t = {displayname: string option} [@@deriving accessor]
 
@@ -20,14 +18,10 @@ module Display_name = struct
     end
 
     module Response = Empty.Json
-
-    let needs_auth = true
   end
 
   module Get = struct
     module Query = Empty.Query
-
-    let path user_id = "_matrix/client/r0/profile/" ^ user_id ^ "/displayname"
 
     module Response = struct
       type t = {displayname: string option} [@@deriving accessor]
@@ -40,8 +34,6 @@ module Display_name = struct
         let with_tuple = obj1 (opt "displayname" string) in
         conv to_tuple of_tuple with_tuple
     end
-
-    let needs_auth = false
   end
 end
 
@@ -49,8 +41,6 @@ module Avatar_url = struct
   module Set = struct
     module Query = Empty.Query
 
-    let path user_id = "_matrix/client/r0/profile/" ^ user_id ^ "/avatar_url"
-
     module Request = struct
       type t = {avatar_url: string option} [@@deriving accessor]
 
@@ -64,14 +54,10 @@ module Avatar_url = struct
     end
 
     module Response = Empty.Json
-
-    let needs_auth = true
   end
 
   module Get = struct
     module Query = Empty.Query
-
-    let path user_id = "_matrix/client/r0/profile/" ^ user_id ^ "/avatar_url"
 
     module Response = struct
       type t = {avatar_url: string option} [@@deriving accessor]
@@ -84,15 +70,11 @@ module Avatar_url = struct
         let with_tuple = obj1 (opt "avatar_url" string) in
         conv to_tuple of_tuple with_tuple
     end
-
-    let needs_auth = false
   end
 end
 
 module Get = struct
   module Query = Empty.Query
-
-  let path user_id = "_matrix/client/r0/profile/" ^ user_id
 
   module Response = struct
     type t = {displayname: string option; avatar_url: string option}
@@ -107,6 +89,4 @@ module Get = struct
         obj2 (opt "displayname" string) (opt "avatar_url" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
 end

@@ -2,8 +2,6 @@ open Json_encoding
 open Matrix_common
 module Query = Empty.Query
 
-let path user_id = "_matrix/client/r0/admin/whois/" ^ user_id
-
 module Response = struct
   module Device_info = struct
     module Session_info = struct
@@ -66,5 +64,3 @@ module Response = struct
     in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = true

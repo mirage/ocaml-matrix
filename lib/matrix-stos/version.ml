@@ -19,5 +19,3 @@ module Response = struct
     in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = false

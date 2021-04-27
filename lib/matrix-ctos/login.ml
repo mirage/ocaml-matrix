@@ -4,8 +4,6 @@ open Matrix_common
 module Get = struct
   module Query = Empty.Query
 
-  let path = "/_matrix/client/r0/login"
-
   module Response = struct
     type t = {types: string list option} [@@deriving accessor]
 
@@ -20,14 +18,10 @@ module Get = struct
     let pp ppf t =
       Fmt.(pf ppf "{ types: %a }" Dump.(option (list string)) t.types)
   end
-
-  let needs_auth = false
 end
 
 module Post = struct
   module Query = Empty.Query
-
-  let path = "/_matrix/client/r0/login"
 
   module Request = struct
     type t = {
@@ -98,6 +92,4 @@ module Post = struct
           Dump.(option Well_known.Response.pp)
           t.well_known)
   end
-
-  let needs_auth = false
 end

@@ -36,8 +36,6 @@ end
 module List = struct
   module Query = Empty.Query
 
-  let path = "/_matrix/client/r0/devices"
-
   module Response = struct
     type t = {devices: Device.t list option} [@@deriving accessor]
 
@@ -49,24 +47,12 @@ module List = struct
       let with_tuple = obj1 (opt "devices" (list Device.encoding)) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
-module Get = struct
-  module Query = Empty.Query
-
-  let path device_id = "/_matrix/client/r0/devices/" ^ device_id
-
-  module Response = Device
-
-  let needs_auth = true
-end
+module Get = struct module Query = Empty.Query module Response = Device end
 
 module Put = struct
   module Query = Empty.Query
-
-  let path device_id = "/_matrix/client/r0/devices/" ^ device_id
 
   module Request = struct
     type t = {display_name: string option} [@@deriving accessor]
@@ -81,14 +67,10 @@ module Put = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end
 
 module Delete = struct
   module Query = Empty.Query
-
-  let path device_id = "/_matrix/client/r0/devices/" ^ device_id
 
   module Request = struct
     type t = {auth: Authentication.t option} [@@deriving accessor]
@@ -103,14 +85,10 @@ module Delete = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end
 
 module Delete_list = struct
   module Query = Empty.Query
-
-  let path = "/_matrix/client/r0/delete_devices"
 
   module Request = struct
     type t = {devices: string list; auth: Authentication.t option}
@@ -128,6 +106,4 @@ module Delete_list = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end

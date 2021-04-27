@@ -15,8 +15,6 @@ end
 module Get_all = struct
   module Query = Empty.Query
 
-  let path = "/_matrix/client/r0/pushrules/"
-
   module Response = struct
     type t = {
         content: Push_rule.t list option
@@ -46,20 +44,10 @@ module Get_all = struct
         (* Not really in the documentation, seems to be a feature to be *) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Get = struct
   module Query = Empty.Query
-
-  let path scope kind rule_id =
-    "_matrix/client/r0/pushrules/"
-    ^ scope
-    ^ "/"
-    ^ Kind.to_string kind
-    ^ "/"
-    ^ rule_id
 
   module Response = struct
     type t = {push_rules: Push_rule.t} [@@deriving accessor]
@@ -72,25 +60,12 @@ module Get = struct
       let with_tuple = Push_rule.encoding in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Delete = struct
   module Query = Empty.Query
-
-  let path scope kind rule_id =
-    "_matrix/client/r0/pushrules/"
-    ^ scope
-    ^ "/"
-    ^ Kind.to_string kind
-    ^ "/"
-    ^ rule_id
-
   module Request = Empty.Json
   module Response = Empty.Json
-
-  let needs_auth = true
 end
 
 module Put = struct
@@ -108,14 +83,6 @@ module Put = struct
       in
       l
   end
-
-  let path scope kind rule_id =
-    "_matrix/client/r0/pushrules/"
-    ^ scope
-    ^ "/"
-    ^ Kind.to_string kind
-    ^ "/"
-    ^ rule_id
 
   module Request = struct
     module Action = struct
@@ -150,23 +117,11 @@ module Put = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end
 
 module Get_enabled = struct
   module Query = Empty.Query
 
-  let path scope kind rule_id =
-    "_matrix/client/r0/pushrules/"
-    ^ scope
-    ^ "/"
-    ^ Kind.to_string kind
-    ^ "/"
-    ^ rule_id
-    ^ "/"
-    ^ "enabled"
-
   module Response = struct
     type t = {enabled: bool} [@@deriving accessor]
 
@@ -178,23 +133,11 @@ module Get_enabled = struct
       let with_tuple = obj1 (req "enabled" bool) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Set_enabled = struct
   module Query = Empty.Query
 
-  let path scope kind rule_id =
-    "_matrix/client/r0/pushrules/"
-    ^ scope
-    ^ "/"
-    ^ Kind.to_string kind
-    ^ "/"
-    ^ rule_id
-    ^ "/"
-    ^ "enabled"
-
   module Request = struct
     type t = {enabled: bool} [@@deriving accessor]
 
@@ -208,22 +151,10 @@ module Set_enabled = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end
 
 module Get_actions = struct
   module Query = Empty.Query
-
-  let path scope kind rule_id =
-    "_matrix/client/r0/pushrules/"
-    ^ scope
-    ^ "/"
-    ^ Kind.to_string kind
-    ^ "/"
-    ^ rule_id
-    ^ "/"
-    ^ "actions"
 
   module Response = struct
     type t = {actions: string list} [@@deriving accessor]
@@ -236,22 +167,10 @@ module Get_actions = struct
       let with_tuple = obj1 (req "actions" (list string)) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Set_actions = struct
   module Query = Empty.Query
-
-  let path scope kind rule_id =
-    "_matrix/client/r0/pushrules/"
-    ^ scope
-    ^ "/"
-    ^ Kind.to_string kind
-    ^ "/"
-    ^ rule_id
-    ^ "/"
-    ^ "actions"
 
   module Request = struct
     type t = {actions: string list} [@@deriving accessor]
@@ -266,6 +185,4 @@ module Set_actions = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end

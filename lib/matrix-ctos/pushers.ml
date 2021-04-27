@@ -68,8 +68,6 @@ end
 module Get = struct
   module Query = Empty.Query
 
-  let path = "/_matrix/client/r0/pushers"
-
   module Response = struct
     type t = {pushers: Pusher.t list option} [@@deriving accessor]
 
@@ -81,14 +79,10 @@ module Get = struct
       let with_tuple = obj1 (opt "pushers" (list Pusher.encoding)) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Set = struct
   module Query = Empty.Query
-
-  let path = "/_matrix/client/r0/pushers"
 
   module Request = struct
     type t = {pusher: Pusher.t; append: bool option} [@@deriving accessor]
@@ -103,6 +97,4 @@ module Set = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end

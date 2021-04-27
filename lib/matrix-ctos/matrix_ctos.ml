@@ -5,7 +5,6 @@ module Authentication = Authentication
 module Banning = Banning
 module Capabilities = Capabilities
 module Context = Context
-module Deprecated = Deprecated
 module Device_lists = Device_lists
 module Devices = Devices
 module Encrypted_file = Encrypted_file

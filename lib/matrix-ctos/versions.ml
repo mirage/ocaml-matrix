@@ -2,8 +2,6 @@ open Json_encoding
 open Matrix_common
 module Query = Empty.Query
 
-let path = "/_matrix/client/versions"
-
 module Response = struct
   type t = {
       versions: string list
@@ -21,5 +19,3 @@ module Response = struct
     in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = false

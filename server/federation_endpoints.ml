@@ -108,7 +108,7 @@ module Listing = struct
             construct Response.encoding response |> Ezjsonm.value_to_string
           in
           Lwt.return (`OK, response, None) in
-      needs_auth, f
+      false, f
 
     let post =
       (* needs rework so it actually filters the public rooms *)
@@ -210,7 +210,7 @@ module Listing = struct
             construct Response.encoding response |> Ezjsonm.value_to_string
           in
           Lwt.return (`OK, response, None) in
-      needs_auth, f
+      true, f
   end
 end
 
@@ -229,7 +229,7 @@ module Join = struct
       let response =
         construct Response.encoding response |> Ezjsonm.value_to_string in
       (`OK, response, None) |> Lwt.return in
-    needs_auth, f
+    true, f
 
   let put_v1 = placeholder
 
@@ -293,5 +293,5 @@ module Join = struct
               construct Response.encoding response |> Ezjsonm.value_to_string
             in
             Lwt.return (`OK, response, None))) in
-    needs_auth, f
+    true, f
 end

@@ -17,5 +17,3 @@ module Response = struct
 
   let pp ppf t = Fmt.(pf ppf "{ server: %a }" Dump.(option string) t.server)
 end
-
-let needs_auth = false

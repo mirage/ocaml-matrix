@@ -10,8 +10,6 @@ module Query = struct
     | Some next_batch -> ["next_batch", [next_batch]]
 end
 
-let path = "/_matrix/client/r0/search"
-
 module Request = struct
   module Criteria = struct
     module Key = struct
@@ -313,5 +311,3 @@ module Response = struct
     in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = true

@@ -6,8 +6,4 @@ module Query = struct
   let args t = ["redirect_url", [t.redirect_url]]
 end
 
-let path = "/_matrix/client/r0/login/sso"
-
 module Response = Empty.Json
-
-let needs_auth = false

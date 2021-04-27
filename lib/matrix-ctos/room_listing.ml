@@ -4,8 +4,6 @@ open Matrix_common
 module Get_visibility = struct
   module Query = Empty.Query
 
-  let path room_id = "_matrix/client/r0/directory/list/room/" ^ room_id
-
   module Response = struct
     type t = {visibility: Room.Visibility.t} [@@deriving accessor]
 
@@ -17,14 +15,10 @@ module Get_visibility = struct
       let with_tuple = obj1 (req "visibility" Room.Visibility.encoding) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
 end
 
 module Set_visibility = struct
   module Query = Empty.Query
-
-  let path room_id = "_matrix/client/r0/directory/list/room/" ^ room_id
 
   module Request = struct
     type t = {visibility: Room.Visibility.t option} [@@deriving accessor]
@@ -39,8 +33,6 @@ module Set_visibility = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end
 
 module Get_public_rooms = struct
@@ -58,8 +50,6 @@ module Get_public_rooms = struct
       in
       match t.server with None -> l | Some server -> ("server", [server]) :: l
   end
-
-  let path = "/_matrix/client/r0/publicRooms"
 
   module Response = struct
     module Public_rooms_chunk = struct
@@ -148,8 +138,6 @@ module Get_public_rooms = struct
           (opt "total_room_count_estimate" int) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
 end
 
 module Filter_public_rooms = struct
@@ -159,8 +147,6 @@ module Filter_public_rooms = struct
     let args t =
       match t.server with None -> [] | Some server -> ["server", [server]]
   end
-
-  let path = "/_matrix/client/r0/publicRooms"
 
   module Request = struct
     module Filter = struct
@@ -206,6 +192,4 @@ module Filter_public_rooms = struct
   end
 
   module Response = Get_public_rooms.Response
-
-  let needs_auth = true
 end

@@ -10,8 +10,6 @@ end
 module Create = struct
   module Query = Empty.Query
 
-  let path = "/_matrix/client/r0/createRoom"
-
   module Request = struct
     module Invite_3pid = struct
       type t = {id_server: string; medium: string; addresss: string}
@@ -124,14 +122,10 @@ module Create = struct
       let with_tuple = obj1 (req "room_id" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Create_alias = struct
   module Query = Empty.Query
-
-  let path room_alias = "_matrix/client/r0/directory/room/" ^ room_alias
 
   module Request = struct
     type t = {room_id: string} [@@deriving accessor]
@@ -146,15 +140,10 @@ module Create_alias = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end
 
 module Resolve_alias = struct
   module Query = Empty.Query
-
-  let path room_alias = "_matrix/client/r0/directory/room/" ^ room_alias
-
   module Request = Empty.Json
 
   module Response = struct
@@ -170,17 +159,10 @@ module Resolve_alias = struct
         obj2 (opt "room_id" string) (opt "servers" (list string)) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Delete_alias = struct
   module Query = Empty.Query
-
-  let path room_alias = "_matrix/client/r0/directory/room/" ^ room_alias
-
   module Request = Empty.Json
   module Response = Empty.Json
-
-  let needs_auth = true
 end

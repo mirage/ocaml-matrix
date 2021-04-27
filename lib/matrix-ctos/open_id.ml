@@ -2,8 +2,6 @@ open Json_encoding
 open Matrix_common
 module Query = Empty.Query
 
-let path user_id = "_matrix/client/r0/user/" ^ user_id ^ "/openid/request_token"
-
 module Response = struct
   type t = {
       access_token: string
@@ -27,5 +25,3 @@ module Response = struct
         (req "expires_in" int) in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = true

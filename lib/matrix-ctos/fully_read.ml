@@ -2,8 +2,6 @@ open Json_encoding
 open Matrix_common
 module Query = Empty.Query
 
-let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/read_markers"
-
 module Request = struct
   type t = {
       fully_read: string option
@@ -26,5 +24,3 @@ module Request = struct
 end
 
 module Response = Empty.Json
-
-let needs_auth = true

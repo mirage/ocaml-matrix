@@ -2,8 +2,6 @@ open Json_encoding
 open Matrix_common
 module Query = Empty.Query
 
-let path = "/.well-known/matrix/client"
-
 module Response = struct
   type t = {homeserver: string; identity_server: string option}
   [@@deriving accessor]
@@ -25,5 +23,3 @@ module Response = struct
         Dump.(option string)
         t.identity_server)
 end
-
-let needs_auth = false

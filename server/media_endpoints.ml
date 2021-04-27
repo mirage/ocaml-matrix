@@ -55,10 +55,10 @@ let upload =
             construct Response.encoding response |> Ezjsonm.value_to_string
           in
           Lwt.return (`OK, response, None)) in
-  needs_auth, f
+  true, f
 
 let download =
-  let open Media.Download in
+  (* let open Media.Download in *)
   let f (((), _server_name), media_id) _ _ _ =
     Store.get store Key.(v "media" / "files" / media_id) >>= function
     | Error _ ->
@@ -67,11 +67,11 @@ let download =
         , error "M_UNKNOWN" "Internal storage failure"
         , None )
     | Ok media -> Lwt.return (`OK, media, None) in
-  needs_auth, f
+  false, f
 
 let download_filename =
   (* It's kind of ambiguous what this endpoint should do *)
-  let open Media.Download_filename in
+  (* let open Media.Download_filename in *)
   let f ((((), _server_name), media_id), _filename) _ _ _ =
     Store.get store Key.(v "media" / "files" / media_id) >>= function
     | Error _ ->
@@ -80,10 +80,10 @@ let download_filename =
         , error "M_UNKNOWN" "Internal storage failure"
         , None )
     | Ok media -> Lwt.return (`OK, media, None) in
-  needs_auth, f
+  false, f
 
 let thumbnail =
-  let open Media.Thumbnail in
+  (* let open Media.Thumbnail in *)
   let f (((), _server_name), media_id) _ _ _ =
     (* Totally a shameful placeholder *)
     Store.get store Key.(v "media" / "files" / media_id) >>= function
@@ -93,7 +93,7 @@ let thumbnail =
         , error "M_UNKNOWN" "Internal storage failure"
         , None )
     | Ok media -> Lwt.return (`OK, media, None) in
-  needs_auth, f
+  false, f
 
 let config =
   let open Media.Config in
@@ -102,4 +102,4 @@ let config =
     let response =
       construct Response.encoding response |> Ezjsonm.value_to_string in
     Lwt.return (`OK, response, None) in
-  needs_auth, f
+  true, f

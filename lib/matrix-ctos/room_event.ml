@@ -4,22 +4,12 @@ open Matrix_common
 module Get = struct
   module Event = struct
     module Query = Empty.Query
-
-    let path room_id event_id =
-      "_matrix/client/r0/rooms/" ^ room_id ^ "/event/" ^ event_id
-
     module Request = Empty.Json
     module Response = Events.Room_event
-
-    let needs_auth = true
   end
 
   module State_key = struct
     module Query = Empty.Query
-
-    let path room_id event_type state_key =
-      "_matrix/client/r0/rooms/" ^ room_id ^ "/state/" ^ event_type ^ state_key
-
     module Request = Empty.Json
 
     module Response = struct
@@ -27,15 +17,10 @@ module Get = struct
 
       let encoding = any
     end
-
-    let needs_auth = true
   end
 
   module State = struct
     module Query = Empty.Query
-
-    let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/state"
-
     module Request = Empty.Json
 
     module Response = struct
@@ -49,8 +34,6 @@ module Get = struct
         let with_tuple = list Events.State_event.encoding in
         conv to_tuple of_tuple with_tuple
     end
-
-    let needs_auth = true
   end
 
   module Members = struct
@@ -80,8 +63,6 @@ module Get = struct
           :: l
     end
 
-    let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/members"
-
     module Request = Empty.Json
 
     module Response = struct
@@ -95,15 +76,10 @@ module Get = struct
         let with_tuple = obj1 (req "chunk" (list Events.State_event.encoding)) in
         conv to_tuple of_tuple with_tuple
     end
-
-    let needs_auth = true
   end
 
   module Joined_members = struct
     module Query = Empty.Query
-
-    let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/joined_members"
-
     module Request = Empty.Json
 
     module Response = struct
@@ -131,22 +107,12 @@ module Get = struct
         let with_tuple = obj1 (opt "joined" (assoc User.encoding)) in
         conv to_tuple of_tuple with_tuple
     end
-
-    let needs_auth = true
   end
 end
 
 module Put = struct
   module State_event = struct
     module Query = Empty.Query
-
-    let path room_id event_type state_key =
-      "_matrix/client/r0/rooms/"
-      ^ room_id
-      ^ "/state/"
-      ^ event_type
-      ^ "/"
-      ^ state_key
 
     module Request = struct
       type t = {event: Events.Event_content.t} [@@deriving accessor]
@@ -171,20 +137,10 @@ module Put = struct
         let with_tuple = obj1 (req "event_id" string) in
         conv to_tuple of_tuple with_tuple
     end
-
-    let needs_auth = true
   end
 
   module Message_event = struct
     module Query = Empty.Query
-
-    let path room_id event_type txn_id =
-      "_matrix/client/r0/rooms/"
-      ^ room_id
-      ^ "/send/"
-      ^ event_type
-      ^ "/"
-      ^ txn_id
 
     module Request = struct
       type t = {event: Events.Event_content.Message.t} [@@deriving accessor]
@@ -209,7 +165,5 @@ module Put = struct
         let with_tuple = obj1 (req "event_id" string) in
         conv to_tuple of_tuple with_tuple
     end
-
-    let needs_auth = true
   end
 end

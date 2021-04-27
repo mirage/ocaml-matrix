@@ -4,8 +4,6 @@ open Matrix_common
 module Search = struct
   module Query = Empty.Query
 
-  let path = "/_matrix/client/r0/user_directory/search"
-
   module Request = struct
     type t = {search_term: string; limited: int option} [@@deriving accessor]
 
@@ -50,6 +48,4 @@ module Search = struct
         obj2 (req "results" (list User.encoding)) (req "limited" bool) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end

@@ -43,8 +43,8 @@ let rooter uri meth hds request =
   | _ -> (
     try
       match Routing.parse path meth Routes.routes with
-      | Some (need_auth, response) ->
-        if need_auth then (
+      | Some (needs_auth, response) ->
+        if needs_auth then (
           (is_logged auth_token >>= function
            | Error _ ->
              Lwt.return

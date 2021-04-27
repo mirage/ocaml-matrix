@@ -12,9 +12,6 @@ module Query = struct
       ["limit", [limit]]
 end
 
-let path room_id event_id =
-  "_matrix/client/r0/rooms/" ^ room_id ^ "/context/" ^ event_id
-
 module Response = struct
   type t = {
       start: string option
@@ -40,5 +37,3 @@ module Response = struct
         (opt "state" (list Events.State_event.encoding)) in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = true

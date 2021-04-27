@@ -17,8 +17,6 @@ module Register = struct
       | Some kind -> ["kind", [Kind.to_string kind]]
   end
 
-  let path = "/_matrix/client/r0/register"
-
   module Request = struct
     type t = {
         auth: Authentication.t option
@@ -96,8 +94,6 @@ module Register = struct
           (req "home_server" string) (opt "device_id" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
 end
 
 module Available = struct
@@ -106,8 +102,6 @@ module Available = struct
 
     let args t = ["username", [t.username]]
   end
-
-  let path = "/_matrix/client/r0/register/available"
 
   module Request = Empty.Json
 
@@ -122,8 +116,6 @@ module Available = struct
       let with_tuple = obj1 (req "available" bool) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
 end
 
 module Email_request_token = struct
@@ -167,9 +159,6 @@ module Email_request_token = struct
       in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
-  let path = "/_matrix/client/r0/register/email/requestToken"
 end
 
 module Msisdn_request_token = struct
@@ -240,7 +229,4 @@ module Msisdn_request_token = struct
           (opt "msisdn" string) (opt "intl_fmt" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
-  let path = "/_matrix/client/r0/register/msisdn/requestToken"
 end

@@ -69,8 +69,6 @@ module Query = struct
         t.timeout)
 end
 
-let path = "/_matrix/client/r0/sync"
-
 module Response = struct
   type t = {
       next_batch: string
@@ -140,5 +138,3 @@ module Response = struct
      Device_lists.pp t.device_lists
      Dump.(list (pair string int)) t.device_one_time_keys_count *)
 end
-
-let needs_auth = true

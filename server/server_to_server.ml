@@ -24,7 +24,7 @@ let rooter uri meth _hds request =
   | _ -> (
     try
       match Routing.parse path meth Federation_routes.routes with
-      | Some (_need_auth, response) ->
+      | Some (_needs_auth, response) ->
         response request query_args None >>= fun (status, body, body_type) ->
         Logs.info (fun m ->
             m "%s '%s' : %a"

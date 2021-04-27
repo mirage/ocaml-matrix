@@ -23,8 +23,6 @@ module Query = struct
     l
 end
 
-let path = "/_matrix/client/r0/notifications"
-
 module Response = struct
   module Notification = struct
     type t = {
@@ -69,5 +67,3 @@ module Response = struct
         (req "notifications" (list Notification.encoding)) in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = true

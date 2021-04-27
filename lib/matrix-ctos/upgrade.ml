@@ -2,8 +2,6 @@ open Json_encoding
 open Matrix_common
 module Query = Empty.Query
 
-let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/upgrade"
-
 module Request = struct
   type t = {new_version: string} [@@deriving accessor]
 
@@ -27,5 +25,3 @@ module Response = struct
     let with_tuple = obj1 (req "replacement_room" string) in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = true

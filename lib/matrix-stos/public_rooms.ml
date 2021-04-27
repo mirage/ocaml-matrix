@@ -118,8 +118,6 @@ module Get_public_rooms = struct
           (opt "total_room_count_estimate" int) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = false
 end
 
 module Filter_public_rooms = struct
@@ -169,6 +167,4 @@ module Filter_public_rooms = struct
   end
 
   module Response = Get_public_rooms.Response
-
-  let needs_auth = true
 end

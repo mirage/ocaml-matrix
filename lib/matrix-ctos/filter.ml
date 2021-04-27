@@ -177,9 +177,6 @@ end
 
 module Post = struct
   module Query = Empty.Query
-
-  let path user_id = "/_matrix/client/r0/user/" ^ user_id ^ "/filter"
-
   module Request = Filter
 
   module Response = struct
@@ -193,17 +190,6 @@ module Post = struct
       let with_tuple = obj1 (req "filter_id" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
-module Get = struct
-  module Query = Empty.Query
-
-  let path user_id filter_id =
-    "/_matrix/client/r0/user/" ^ user_id ^ "/filter/" ^ filter_id
-
-  module Response = Filter
-
-  let needs_auth = true
-end
+module Get = struct module Query = Empty.Query module Response = Filter end

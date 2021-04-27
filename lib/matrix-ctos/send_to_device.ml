@@ -2,9 +2,6 @@ open Json_encoding
 open Matrix_common
 module Query = Empty.Query
 
-let path event_type txn_id =
-  "_matrix/client/r0/sendToDevice/" ^ event_type ^ "/" ^ txn_id
-
 module Request = struct
   type t = {messages: (string * (string * Repr.value) list) list option}
   [@@deriving accessor]
@@ -19,5 +16,3 @@ module Request = struct
 end
 
 module Response = Empty.Json
-
-let needs_auth = true

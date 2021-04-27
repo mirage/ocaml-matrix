@@ -2,9 +2,6 @@ open Json_encoding
 open Matrix_common
 module Query = Empty.Query
 
-let path room_id user_id =
-  "_matrix/client/r0/rooms/" ^ room_id ^ "/typing/" ^ user_id
-
 module Request = struct
   type t = {typing: bool; timeout: int option} [@@deriving accessor]
 
@@ -18,5 +15,3 @@ module Request = struct
 end
 
 module Response = Empty.Json
-
-let needs_auth = true

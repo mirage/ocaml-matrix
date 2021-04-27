@@ -68,8 +68,6 @@ module Make_join = struct
       in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Send_join = (* à revoir avec un room_event peut-être *)
@@ -147,8 +145,6 @@ struct
         let with_tuple = obj1 (opt "room_state" Room_state.encoding) in
         conv to_tuple of_tuple with_tuple
     end
-
-    let needs_auth = true
   end
 
   module V2 = struct
@@ -208,7 +204,5 @@ struct
             (req "state" (list Events.Pdu.encoding)) in
         conv to_tuple of_tuple with_tuple
     end
-
-    let needs_auth = true
   end
 end

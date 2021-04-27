@@ -69,8 +69,6 @@ end
 
 module Query = Empty.Query
 
-let path = "/_matrix/client/r0/capabilities"
-
 module Response = struct
   type t = {capabilities: Capability.t list} [@@deriving accessor]
 
@@ -103,5 +101,3 @@ module Response = struct
     let with_tuple = obj1 (req "capabilities" (assoc any)) in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = true

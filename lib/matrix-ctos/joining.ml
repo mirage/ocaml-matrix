@@ -4,8 +4,6 @@ open Matrix_common
 module Invite = struct
   module Query = Empty.Query
 
-  let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/invite"
-
   module Request = struct
     type t = {user_id: string} [@@deriving accessor]
 
@@ -19,14 +17,10 @@ module Invite = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end
 
 module Invite_thirdparty = struct
   module Query = Empty.Query
-
-  let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/invite"
 
   module Request = struct
     type t = {id_server: string; medium: string; address: string}
@@ -44,14 +38,10 @@ module Invite_thirdparty = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end
 
 module Join_with_id = struct
   module Query = Empty.Query
-
-  let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/join"
 
   module Request = struct
     type t = {third_party_signed: unit option} [@@deriving accessor]
@@ -76,8 +66,6 @@ module Join_with_id = struct
       let with_tuple = obj1 (req "room_id" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end
 
 module Join = struct
@@ -90,8 +78,6 @@ module Join = struct
       | Some server_name -> ["server_name", server_name]
   end
 
-  let path room_id_or_alias = "_matrix/client/r0/join/" ^ room_id_or_alias
-
   module Request = struct
     type t = {third_party_signed: unit option} [@@deriving accessor]
 
@@ -115,6 +101,4 @@ module Join = struct
       let with_tuple = obj1 (req "room_id" string) in
       conv to_tuple of_tuple with_tuple
   end
-
-  let needs_auth = true
 end

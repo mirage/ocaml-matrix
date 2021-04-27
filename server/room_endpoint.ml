@@ -350,7 +350,7 @@ let create_room =
                                   |> Ezjsonm.value_to_string in
                                 Lwt.return (`OK, response, None))))))))))))))
   in
-  needs_auth, f
+  true, f
 
 module Room_alias = struct
   let put =
@@ -383,7 +383,7 @@ module Room_alias = struct
             construct Response.encoding response |> Ezjsonm.value_to_string
           in
           Lwt.return (`OK, response, None)) in
-    needs_auth, f
+    true, f
 
   let get =
     let open Room.Resolve_alias in
@@ -407,7 +407,7 @@ module Room_alias = struct
         let response =
           construct Response.encoding response |> Ezjsonm.value_to_string in
         Lwt.return (`OK, response, None) in
-    needs_auth, f
+    true, f
 
   let delete =
     let open Room.Delete_alias in
@@ -437,7 +437,7 @@ module Room_alias = struct
             construct Response.encoding response |> Ezjsonm.value_to_string
           in
           Lwt.return (`OK, response, None)) in
-    needs_auth, f
+    true, f
 end
 
 module Membership = struct
@@ -534,7 +534,7 @@ module Membership = struct
                 construct Response.encoding response |> Ezjsonm.value_to_string
               in
               Lwt.return (`OK, response, None)))) in
-    needs_auth, f
+    true, f
 
   let join =
     let open Joining.Join in
@@ -625,7 +625,7 @@ module Membership = struct
                 construct Response.encoding response |> Ezjsonm.value_to_string
               in
               Lwt.return (`OK, response, None)))) in
-    needs_auth, f
+    true, f
 
   let leave =
     let open Leaving.Leave in
@@ -716,7 +716,7 @@ module Membership = struct
                 construct Response.encoding response |> Ezjsonm.value_to_string
               in
               Lwt.return (`OK, response, None)))) in
-    needs_auth, f
+    true, f
 
   let forget =
     let open Leaving.Leave in
@@ -783,7 +783,7 @@ module Membership = struct
                 ( `Internal_server_error
                 , error "M_UNKNOWN" "Internal storage failure"
                 , None )))) in
-    needs_auth, f
+    true, f
 
   let kick =
     let open Leaving.Kick in
@@ -871,7 +871,7 @@ module Membership = struct
                 construct Response.encoding response |> Ezjsonm.value_to_string
               in
               Lwt.return (`OK, response, None)))) in
-    needs_auth, f
+    true, f
 
   let ban =
     let open Banning.Ban in
@@ -930,7 +930,7 @@ module Membership = struct
               construct Response.encoding response |> Ezjsonm.value_to_string
             in
             Lwt.return (`OK, response, None))) in
-    needs_auth, f
+    true, f
 
   let unban =
     let open Leaving.Kick in
@@ -1000,7 +1000,7 @@ module Membership = struct
                 ( `Internal_server_error
                 , error "M_UNKNOWN" "Internal storage failure"
                 , None )))) in
-    needs_auth, f
+    true, f
 end
 
 module Listing = struct
@@ -1038,7 +1038,7 @@ module Listing = struct
               ( `Internal_server_error
               , error "M_UNKNOWN" "Internal storage failure"
               , None ))) in
-    needs_auth, f
+    false, f
 
   let set_visibility =
     let open Room_listing.Set_visibility in
@@ -1102,7 +1102,7 @@ module Listing = struct
               construct Response.encoding response |> Ezjsonm.value_to_string
             in
             Lwt.return (`OK, response, None))) in
-    needs_auth, f
+    true, f
 
   let public_rooms =
     let open Room_listing.Get_public_rooms in
@@ -1198,13 +1198,13 @@ module Listing = struct
         let response =
           construct Response.encoding response |> Ezjsonm.value_to_string in
         Lwt.return (`OK, response, None) in
-    needs_auth, f
+    true, f
 end
 
 module Events = struct
   module Get = struct
     let state =
-      let open Room_event.Get.State_key in
+      (* let open Room_event.Get.State_key in *)
       (* check user rights as well as handle if room was left *)
       let f ((((), room_id), event_type), state_key) _ _ _ =
         get_state_event room_id event_type state_key >>= function
@@ -1228,7 +1228,7 @@ module Events = struct
             let event_content = Ezjsonm.get_dict event |> List.assoc "content" in
             let response = Ezjsonm.value_to_string event_content in
             Lwt.return (`OK, response, None)) in
-      needs_auth, f
+      true, f
 
     let members =
       let open Room_event.Get.Members in
@@ -1257,7 +1257,7 @@ module Events = struct
             construct Response.encoding response |> Ezjsonm.value_to_string
           in
           Lwt.return (`OK, response, None) in
-      needs_auth, f
+      true, f
   end
 
   module Put = struct
@@ -1313,7 +1313,7 @@ module Events = struct
                 construct Response.encoding response |> Ezjsonm.value_to_string
               in
               Lwt.return (`OK, response, None))) in
-      needs_auth, f
+      true, f
 
     let send_message =
       let open Room_event.Put.Message_event in
@@ -1382,7 +1382,7 @@ module Events = struct
                     construct Response.encoding response
                     |> Ezjsonm.value_to_string in
                   Lwt.return (`OK, response, None))))) in
-      needs_auth, f
+      true, f
   end
 end
 
@@ -1450,7 +1450,7 @@ let room_typing =
             construct Response.encoding response |> Ezjsonm.value_to_string
           in
           Lwt.return (`OK, response, None))) in
-  needs_auth, f
+  true, f
 
 let read_markers =
   let open Fully_read in
@@ -1489,4 +1489,4 @@ let read_markers =
         let response =
           construct Response.encoding response |> Ezjsonm.value_to_string in
         Lwt.return (`OK, response, None)) in
-  needs_auth, f
+  true, f

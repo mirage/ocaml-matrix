@@ -25,5 +25,3 @@ module Response = struct
     let with_tuple = obj1 (req "origin" (list Pdu.encoding)) in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = true

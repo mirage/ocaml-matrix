@@ -17,5 +17,3 @@ module Response = struct
       obj1 (req "auth_chain" (list Events.State_event.encoding)) in
     conv to_tuple of_tuple with_tuple
 end
-
-let needs_auth = true

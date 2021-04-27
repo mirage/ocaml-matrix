@@ -3,27 +3,15 @@ open Matrix_common
 
 module Leave = struct
   module Query = Empty.Query
-
-  let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/leave"
-
   module Request = Empty.Json
   module Response = Empty.Json
-
-  let needs_auth = true
 end
 
 module Forget = struct
-  let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/forget"
-
-  module Request = Empty.Json
-  module Response = Empty.Json
-
-  let needs_auth = true
+  module Request = Empty.Json module Response = Empty.Json
 end
 
 module Kick = struct
-  let path room_id = "_matrix/client/r0/rooms/" ^ room_id ^ "/kick"
-
   module Request = struct
     type t = {reason: string option; user_id: string} [@@deriving accessor]
 
@@ -37,6 +25,4 @@ module Kick = struct
   end
 
   module Response = Empty.Json
-
-  let needs_auth = true
 end
