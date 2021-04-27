@@ -1,3 +1,0 @@
-(executable
- (name        matrix_client)
- (libraries   matrix-ctos fmt.tty cmdliner logs logs.cli))

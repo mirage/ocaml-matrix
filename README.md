@@ -13,14 +13,12 @@ It is separated in several parts:
     done)
   - matrix_stos which is the encoding of the server to server endpoints (still
     in the beginning)
-- fake_client is a fake client used to try out the endpoint's behaviours with
-  synapse, the reference implementation
 - server is the actual server, it is full of shortcuts and heavily wrong in many
   ways. Most of it's encoded features are only working in specific situations
 
 In order to launch the server, you can use this command:
 
-```dune exec -- ocaml-server --verbosity=debug```
+```dune exec -- matrix-server --verbosity=debug```
 
 By default, even with debug verbosity, I removed irmin, git and decompress logs
 because they were generating too much noise. You can force their printing by
