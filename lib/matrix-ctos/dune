@@ -1,5 +1,6 @@
 (library
- (name        matrix_ctos)
+ (name matrix_ctos)
  (public_name matrix-ctos)
- (preprocess  (pps ppx_deriver_accessor ppx_rewriter_accessor))
- (libraries   matrix-common json_encoding))
+ (preprocess
+  (pps ppx_deriver_accessor ppx_rewriter_accessor))
+ (libraries matrix-common json_encoding))

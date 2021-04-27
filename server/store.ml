@@ -58,6 +58,10 @@ struct
     | `Contents -> `Value
     | `Node -> `Dictionary
 
+  let tree_to_kv_value = function
+    | `Contents _ -> `Value
+    | `Node _ -> `Dictionary
+
   type t = Fs_store.t
 
   type error = [ Mirage_kv.error | Fs_store.write_error ]
@@ -118,7 +122,7 @@ struct
     let k' = to_Fs_key k in
     let f () =
       Fs_store.list t k' >|=
-      List.map (fun (s, v) -> s, to_kv_value v) >>=
+      List.map (fun (s, v) -> s, Fs_store.Tree.destruct v |> tree_to_kv_value) >>=
       Lwt.return_ok
     in
     catch_error f k
@@ -135,7 +139,7 @@ struct
          (Irmin.Info.date (Fs_store.Commit.info (fst c2)))
   end)
 
-  let last_modified ?depth ?(n = 1) t key =
+  (* let last_modified ?depth ?(n = 1) t key =
     let repo = Fs_store.repo t in
     Fs_store.Head.get t >>= fun commit ->
     let heap = Heap.create ~dummy:(commit, 0) 0 in
@@ -175,12 +179,12 @@ struct
             parents
           >>= fun found -> if found then search (current :: acc) else search acc
     in
-    search []
+    search [] *)
 
   let last_modified t k =
     let k' = to_Fs_key k in
     let f () =
-      last_modified t k' >>=
+      Fs_store.last_modified t k' >>=
       (function
         | [] ->
           Lwt.return (Error (`Not_found k) |> error)
@@ -258,6 +262,10 @@ struct
     | `Contents -> `Value
     | `Node -> `Dictionary
 
+  let tree_to_kv_value = function
+    | `Contents _ -> `Value
+    | `Node _ -> `Dictionary
+
   type t = Fs_event_store.t
 
   type error = [ Mirage_kv.error | Fs_event_store.write_error ]
@@ -318,7 +326,7 @@ struct
     let k' = to_Fs_key k in
     let f () =
       Fs_event_store.list t k' >|=
-      List.map (fun (s, v) -> s, to_kv_value v) >>=
+      List.map (fun (s, v) -> s, Fs_event_store.Tree.destruct v |> tree_to_kv_value) >>=
       Lwt.return_ok
     in
     catch_error f k

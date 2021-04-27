@@ -735,4 +735,19 @@ sig
     val get_event: t -> Event.t
     val get_event_content: t -> Event_content.t
   end
+  type event =
+    [ `Event of Event.t
+    | `Room_event of Room_event.t
+    | `State_event of State_event.t
+    ]
+  module Pdu:
+  sig
+    type%accessor t =
+      { event: event
+      ; prev_events: string list
+      ; depth: int
+      }
+    val encoding: t encoding
+    val get_event: t -> event
+  end
 end

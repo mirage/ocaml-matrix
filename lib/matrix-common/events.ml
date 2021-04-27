@@ -1849,3 +1849,47 @@ struct
 
   let get_event_content t = Room_event.get_event_content t.room_event
 end
+
+type event =
+  [ `Event of Event.t
+  | `Room_event of Room_event.t
+  | `State_event of State_event.t
+  ]
+
+let encoding: event encoding =
+  union
+    [ case Event.encoding       (function `Event t       -> Some t | _ -> None) (fun t -> `Event t)
+    ; case Room_event.encoding  (function `Room_event t  -> Some t | _ -> None) (fun t -> `Room_event t)
+    ; case State_event.encoding (function `State_event t -> Some t | _ -> None) (fun t -> `State_event t)
+    ]
+
+(* Persistent data unit *)
+(* With the current implementation, we loose the fact that PDUs REQUIRES most of
+   the fields. A better alternative should be considered *)
+module Pdu =
+struct
+  type t =
+    { event: event
+    ; prev_events: string list
+    ; depth: int
+    } [@@deriving accessor]
+
+  let encoding =
+    let to_tuple t =
+      t.event, (t.prev_events, t.depth)
+    in
+    let of_tuple v =
+      let event, (prev_events, depth) = v in
+      { event; prev_events; depth }
+    in
+    let with_tuple =
+      merge_objs
+        encoding
+        (obj2
+          (req "prev_events" (list string))
+          (req "depth" int))
+    in
+    conv to_tuple of_tuple with_tuple
+
+  let get_event t = t.event
+end

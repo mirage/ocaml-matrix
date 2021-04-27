@@ -121,8 +121,8 @@ struct
       struct
         type t =
           { origin: string
-          ; auth_chain: Events.State_event.t list
-          ; state: Events.State_event.t list
+          ; auth_chain: Events.Pdu.t list
+          ; state: Events.Pdu.t list
           } [@@deriving accessor]
 
         let encoding =
@@ -136,8 +136,8 @@ struct
           let with_tuple =
             obj3
               (req "origin" string)
-              (req "auth_chain" (list Events.State_event.encoding))
-              (req "state" (list Events.State_event.encoding))
+              (req "auth_chain" (list Events.Pdu.encoding))
+              (req "state" (list Events.Pdu.encoding))
           in
           conv to_tuple of_tuple with_tuple
       end
@@ -205,8 +205,8 @@ struct
     struct
       type t =
         { origin: string
-        ; auth_chain: Events.State_event.t list
-        ; state: Events.State_event.t list
+        ; auth_chain: Events.Pdu.t list
+        ; state: Events.Pdu.t list
         } [@@deriving accessor]
 
       let encoding =
@@ -220,8 +220,8 @@ struct
         let with_tuple =
           obj3
             (req "origin" string)
-            (req "auth_chain" (list Events.State_event.encoding))
-            (req "state" (list Events.State_event.encoding))
+            (req "auth_chain" (list Events.Pdu.encoding))
+            (req "state" (list Events.Pdu.encoding))
         in
         conv to_tuple of_tuple with_tuple
     end

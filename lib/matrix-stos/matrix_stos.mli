@@ -125,8 +125,8 @@ sig
         sig
           type%accessor t =
             { origin: string
-            ; auth_chain: Events.State_event.t list
-            ; state: Events.State_event.t list
+            ; auth_chain: Events.Pdu.t list
+            ; state: Events.Pdu.t list
             }
           val encoding: t encoding
         end
@@ -156,8 +156,8 @@ sig
       sig
         type%accessor t =
           { origin: string
-          ; auth_chain: Events.State_event.t list
-          ; state: Events.State_event.t list
+          ; auth_chain: Events.Pdu.t list
+          ; state: Events.Pdu.t list
           }
         val encoding: t encoding
       end

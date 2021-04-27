@@ -1,5 +1,5 @@
 open Matrix_common
 
-type t = Events.State_event.t
+type t = Events.Pdu.t
 
-let encoding = Events.State_event.encoding
+let encoding = Events.Pdu.encoding

@@ -287,6 +287,14 @@ struct
               (function
                 | Error _ -> Lwt.return (`Internal_server_error, error "M_UNKNOWN" "Internal storage failure", None)
                 | Ok state ->
+                  let f s =
+                    Events.Pdu.make
+                      ~event:(`State_event s)
+                      ~prev_events:[]
+                      ~depth:0
+                      ()
+                  in
+                  let state = List.map f state in
                   let response =
                     Response.make
                       ~origin:Const.homeserver
