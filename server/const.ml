@@ -5,7 +5,4 @@ let identity_server = "vector"
 let room_version = "4"
 let upload_size = 100 * 1024 * 1024
 
-module Capabilities =
-struct
-  let change_password = false
-end
+module Capabilities = struct let change_password = false end

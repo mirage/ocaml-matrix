@@ -1,13 +1,9 @@
 open Matrix_common
 
-module Query =
-struct
-  type t =
-    { redirect_url: string
-    } [@@deriving accessor]
+module Query = struct
+  type t = {redirect_url: string} [@@deriving accessor]
 
-  let args t =
-    ["redirect_url", [t.redirect_url]]
+  let args t = ["redirect_url", [t.redirect_url]]
 end
 
 let path = "/_matrix/client/r0/login/sso"

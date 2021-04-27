@@ -1,81 +1,54 @@
 open Json_encoding
 open Matrix_common
 
-module Get =
-struct
+module Get = struct
   module Query = Empty.Query
 
-  let path user_id room_id = "_matrix/client/r0/user/" ^ user_id ^ "/rooms/" ^ room_id ^ "/tags"
+  let path user_id room_id =
+    "_matrix/client/r0/user/" ^ user_id ^ "/rooms/" ^ room_id ^ "/tags"
 
-  module Response =
-  struct
-    module Tag =
-    struct
-      type t =
-        { order: float option
-        } [@@deriving accessor]
+  module Response = struct
+    module Tag = struct
+      type t = {order: float option} [@@deriving accessor]
 
       let encoding =
-        let to_tuple t =
-          t.order
-        in
+        let to_tuple t = t.order in
         let of_tuple v =
           let order = v in
-          { order }
-        in
-        let with_tuple =
-          obj1
-            (opt "order" float)
-        in
+          {order} in
+        let with_tuple = obj1 (opt "order" float) in
         conv to_tuple of_tuple with_tuple
     end
 
-    type t =
-      { tags: (string * Tag.t) list
-      } [@@deriving accessor]
+    type t = {tags: (string * Tag.t) list} [@@deriving accessor]
 
     let encoding =
-      let to_tuple t =
-        t.tags
-      in
+      let to_tuple t = t.tags in
       let of_tuple v =
         let tags = v in
-        { tags }
-      in
-      let with_tuple =
-        obj1
-          (req "tags" (assoc Tag.encoding))
-      in
+        {tags} in
+      let with_tuple = obj1 (req "tags" (assoc Tag.encoding)) in
       conv to_tuple of_tuple with_tuple
   end
 
   let needs_auth = true
 end
 
-module Put =
-struct
+module Put = struct
   module Query = Empty.Query
 
-  let path user_id room_id tag = "_matrix/client/r0/user/" ^ user_id ^ "/rooms/" ^ room_id ^ "/tags/" ^ tag
+  let path user_id room_id tag =
+    "_matrix/client/r0/user/" ^ user_id ^ "/rooms/" ^ room_id ^ "/tags/" ^ tag
 
-  module Request =
-  struct
-    type t =
-      { order: float option
-      } [@@deriving accessor]
+  module Request = struct
+    type t = {order: float option} [@@deriving accessor]
 
     let encoding =
-      let to_tuple t =
-        t.order
-      in
+      let to_tuple t = t.order in
       let of_tuple v =
         let order = v in
-        { order }
-      in
-      let with_tuple =
-        obj1
-          (opt "order" float)
-      in
+        {order} in
+      let with_tuple = obj1 (opt "order" float) in
       conv to_tuple of_tuple with_tuple
   end
 
@@ -84,14 +57,13 @@ struct
   let needs_auth = true
 end
 
-module Delete =
-struct
+module Delete = struct
   module Query = Empty.Query
 
-  let path user_id room_id tag = "_matrix/client/r0/user/" ^ user_id ^ "/rooms/" ^ room_id ^ "/tags/" ^ tag
+  let path user_id room_id tag =
+    "_matrix/client/r0/user/" ^ user_id ^ "/rooms/" ^ room_id ^ "/tags/" ^ tag
 
   module Request = Empty.Json
-
   module Response = Empty.Json
 
   let needs_auth = true
