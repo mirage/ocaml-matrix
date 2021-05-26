@@ -10,7 +10,9 @@ let main () =
   (* let keys = get_server_keys () in
      let _key = List.hd @@ Matrix_stos.Key.Server_key.get_verify_keys keys in *)
   let rooms = public_rooms "ed25519:foo_bar" in
-  let room_id = Matrix_stos.Public_rooms.Get_public_rooms.Response.(get_chunk rooms |> List.hd |> Public_rooms_chunk.get_room_id) in
+  let room_id =
+    Matrix_stos.Public_rooms.Get_public_rooms.Response.(
+      get_chunk rooms |> List.hd |> Public_rooms_chunk.get_room_id) in
   let _ = join_room "ed25519:foo_bar" room_id in
   ()
 

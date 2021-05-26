@@ -568,14 +568,14 @@ let destruct e v =
 
 (** Ugly and not tail-recursive, should be fixed asap *)
 let rec canonize = function
-  | `O l -> (
+  | `O l ->
     let sorted = List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2) l in
     let cleaned =
       List.filter_map
         (fun (k, v) -> Option.map (fun v -> k, v) (canonize v))
         sorted in
     (* match cleaned with [] -> None | l -> Some (`O l)) *)
-    Some (`O cleaned))
+    Some (`O cleaned)
   | `A l ->
     (* match List.filter_map canonize l with [] -> None | l -> Some (`A l)) *)
     Some (`A (List.filter_map canonize l))

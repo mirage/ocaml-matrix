@@ -50,7 +50,15 @@ let get
     ; let headers = make_headers ?header needs_auth in
       Client.get ~headers uri >>= process response_encoding
 
-let post ?(make_headers = make_headers) ?header path args value request_encoding response_encoding needs_auth =
+let post
+    ?(make_headers = make_headers)
+    ?header
+    path
+    args
+    value
+    request_encoding
+    response_encoding
+    needs_auth =
   Fmt.(pf stdout "Request type: %a\n%!" (styled `Magenta string) "Post")
   ; let uri = make_uri path args in
     Fmt.(pf stdout "Reaching query: %a\n%!" Uri.pp uri)
@@ -60,7 +68,15 @@ let post ?(make_headers = make_headers) ?header path args value request_encoding
         let headers = make_headers ?header needs_auth in
         Client.post ~headers ~body uri >>= process response_encoding
 
-let put ?(make_headers = make_headers) ?header path args value request_encoding response_encoding needs_auth =
+let put
+    ?(make_headers = make_headers)
+    ?header
+    path
+    args
+    value
+    request_encoding
+    response_encoding
+    needs_auth =
   Fmt.(pf stdout "Request type: %a\n%!" (styled `Magenta string) "Post")
   ; let uri = make_uri path args in
     Fmt.(pf stdout "Reaching query: %a\n%!" Uri.pp uri)

@@ -32,16 +32,17 @@ module Key : sig
   end
 
   module Indirect_query : sig
-    module Query :
-      sig
-        type%accessor t = { minimum_valid_until_ts : int option }
-        val args : t -> (string * string list) list
-      end
-    module Response :
-      sig
-        type%accessor t = { server_keys : Server_key.t list; }
-        val encoding : t encoding
-      end
+    module Query : sig
+      type%accessor t = {minimum_valid_until_ts: int option}
+
+      val args : t -> (string * string list) list
+    end
+
+    module Response : sig
+      type%accessor t = {server_keys: Server_key.t list}
+
+      val encoding : t encoding
+    end
   end
 end
 
@@ -179,7 +180,6 @@ module Joining_rooms : sig
 
     module V2 : sig
       module Query : Empty.QUERY
-
       module Request = Matrix_common.Events.Pdu
 
       module Response : sig
@@ -197,63 +197,70 @@ end
 
 module Federation_request : sig
   type%accessor 'a t = {
-    meth : string;
-    uri : string;
-    origin : string;
-    destination : string;
-    content : 'a option;
+      meth: string
+    ; uri: string
+    ; origin: string
+    ; destination: string
+    ; content: 'a option
   }
+
   val encoding : 'a encoding -> 'a t encoding
 end
 
 module Signatures : sig
-  val encoding : (string * (string * Mirage_crypto_ec.Ed25519.priv) list) list -> 'a encoding -> 'a encoding
+  val encoding :
+       (string * (string * Mirage_crypto_ec.Ed25519.priv) list) list
+    -> 'a encoding
+    -> 'a encoding
 end
 
-module Retrieve :
-sig
-  module State :
-    sig
-      module Query :
-        sig
-          type%accessor t = { event_id : string; }
-          val args : t -> (string * string list) list
-        end
-      module Response :
-        sig
-         type%accessor t = {
-            auth_chain : Events.State_event.t list;
-            pdus : Events.State_event.t list;
-          }
-          val encoding : t encoding
-        end
+module Retrieve : sig
+  module State : sig
+    module Query : sig
+      type%accessor t = {event_id: string}
+
+      val args : t -> (string * string list) list
     end
-  module State_ids :
-    sig
-      module Query :
-        sig
-          type%accessor t = { event_id : string; }
-          val args : t -> (string * string list) list
-        end
-      val path : string -> string
-      module Response :
-        sig
-          type%accessor t = { auth_chain_ids : string list; pdus_ids : string list; }
-          val encoding : t encoding
-        end
+
+    module Response : sig
+      type%accessor t = {
+          auth_chain: Events.State_event.t list
+        ; pdus: Events.State_event.t list
+      }
+
+      val encoding : t encoding
     end
-  module Event :
-    sig
-      module Query = Matrix_common.Empty.Query
-      val path : string -> string
-      module Response :
-        sig
-          type%accessor t = {
-            origin : string;
-            origin_server_ts : int;
-            pdus : Pdu.t list;
-          }
-          val encoding : t encoding
-        end
+  end
+
+  module State_ids : sig
+    module Query : sig
+      type%accessor t = {event_id: string}
+
+      val args : t -> (string * string list) list
     end
+
+    val path : string -> string
+
+    module Response : sig
+      type%accessor t = {auth_chain_ids: string list; pdus_ids: string list}
+
+      val encoding : t encoding
+    end
+  end
+
+  module Event : sig
+    module Query = Matrix_common.Empty.Query
+
+    val path : string -> string
+
+    module Response : sig
+      type%accessor t = {
+          origin: string
+        ; origin_server_ts: int
+        ; pdus: Pdu.t list
+      }
+
+      val encoding : t encoding
+    end
+  end
 end

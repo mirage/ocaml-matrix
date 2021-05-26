@@ -26,9 +26,7 @@ let v1 =
 let v2 = paths ["send_join", send_join_v2]
 
 let direct_keys =
-  node
-    ~variable:(meths [`GET, Federation_endpoints.Keys.Server.get_direct])
-    ()
+  node ~variable:(meths [`GET, Federation_endpoints.Keys.Server.get_direct]) ()
 
 let indirect_keys =
   node

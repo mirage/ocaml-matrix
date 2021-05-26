@@ -1650,16 +1650,24 @@ module Room_event = struct
 
   let encoding =
     let to_tuple t =
-      t.event, (t.event_id, t.sender, t.origin, t.origin_server_ts, t.unsigned, t.room_id)
-    in
+      ( t.event
+      , ( t.event_id
+        , t.sender
+        , t.origin
+        , t.origin_server_ts
+        , t.unsigned
+        , t.room_id ) ) in
     let of_tuple v =
-      let event, (event_id, sender, origin, origin_server_ts, unsigned, room_id) = v in
-      {event; event_id; sender; origin; origin_server_ts; unsigned; room_id} in
+      let event, (event_id, sender, origin, origin_server_ts, unsigned, room_id)
+          =
+        v in
+      {event; event_id; sender; origin; origin_server_ts; unsigned; room_id}
+    in
     let with_tuple =
       merge_objs Event.encoding
         (obj6 (opt "event_id" string) (opt "sender" string)
-          (opt "origin" string)
-          (opt "origin_server_ts" int)
+           (opt "origin" string)
+           (opt "origin_server_ts" int)
            (opt "unsigned" Unsigned.encoding)
            (opt "room_id" string)) in
     conv to_tuple of_tuple with_tuple
