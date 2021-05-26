@@ -3,7 +3,7 @@ open Matrix_common
 module Query = Empty.Query
 
 module Request = struct
-  type t = {messages: (string * (string * Repr.value) list) list option}
+  type t = {messages: (string * (string * Ezjsonm.value) list) list option}
   [@@deriving accessor]
 
   let encoding =

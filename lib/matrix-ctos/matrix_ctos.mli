@@ -6,7 +6,7 @@ module Account_data : sig
     module Query : Empty.QUERY
 
     module Request : sig
-      type%accessor t = {data: Repr.value}
+      type%accessor t = {data: Ezjsonm.value}
 
       val encoding : t encoding
     end
@@ -18,7 +18,7 @@ module Account_data : sig
     module Query : Empty.QUERY
 
     module Response : sig
-      type%accessor t = {data: Repr.value}
+      type%accessor t = {data: Ezjsonm.value}
 
       val encoding : t encoding
     end
@@ -402,7 +402,7 @@ module Capabilities : sig
     end
 
     module Custom : sig
-      type%accessor t = {name: string; content: Repr.value}
+      type%accessor t = {name: string; content: Ezjsonm.value}
 
       val encoding : t encoding
     end
@@ -909,7 +909,7 @@ module Keys : sig
       end
 
       module Keys_format : sig
-        type t = Key of string | Object_key of Repr.value
+        type t = Key of string | Object_key of Ezjsonm.value
 
         val encoding : t encoding
       end
@@ -963,7 +963,7 @@ module Keys : sig
       end
 
       type%accessor t = {
-          failures: (string * Repr.value) list option
+          failures: (string * Ezjsonm.value) list option
         ; device_keys: (string * (string * Device_keys.t) list) list option
       }
 
@@ -985,7 +985,7 @@ module Keys : sig
 
     module Response : sig
       type%accessor t = {
-          failures: (string * Repr.value) list
+          failures: (string * Ezjsonm.value) list
         ; one_time_keys: (string * (string * string) list) list (* to correct *)
       }
 
@@ -1098,7 +1098,7 @@ module Logout : sig
 end
 
 module Media : sig
-  val raw : Repr.value encoding
+  val raw : Ezjsonm.value encoding
 
   module Upload : sig
     module Query : sig
@@ -1176,7 +1176,7 @@ module Media : sig
     end
 
     module Response : sig
-      type%accessor t = {infos: (string * Repr.value) list}
+      type%accessor t = {infos: (string * Ezjsonm.value) list}
 
       val encoding : t encoding
     end
@@ -1652,7 +1652,7 @@ module Room_event : sig
       module Request : Empty.JSON
 
       module Response : sig
-        type t = Repr.value
+        type t = Ezjsonm.value
 
         val encoding : t encoding
       end
@@ -2128,7 +2128,7 @@ module Send_to_device : sig
 
   module Request : sig
     type%accessor t = {
-        messages: (string * (string * Repr.value) list) list option
+        messages: (string * (string * Ezjsonm.value) list) list option
     }
 
     val encoding : t encoding
@@ -2190,7 +2190,7 @@ module Sync : sig
       ; to_device: Events.State_event.t list option
       ; device_lists: Device_lists.t option
       ; device_one_time_keys_count: (string * int) list option
-      ; groups: Repr.value option (* Not on the documentation*)
+      ; groups: Ezjsonm.value option (* Not on the documentation*)
     }
 
     val encoding : t encoding

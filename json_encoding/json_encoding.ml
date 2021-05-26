@@ -46,19 +46,6 @@ exception Unexpected_field of string
 exception Bad_schema of exn
 exception Cannot_destruct of (Path.path * exn)
 
-module Repr = struct
-  type value =
-    [ `O of (string * value) list
-    | `A of value list
-    | `Bool of bool
-    | `Float of float
-    | `String of string
-    | `Null ]
-
-  let view v = v
-  let repr v = v
-end
-
 let unexpected kind expected =
   let kind =
     match kind with
@@ -72,7 +59,10 @@ let unexpected kind expected =
     | `Bool _ -> "boolean" in
   Cannot_destruct ([], Unexpected (kind, expected))
 
-type 't repr_agnostic_custom = {write: 't -> Repr.value; read: Repr.value -> 't}
+type 't repr_agnostic_custom = {
+    write: 't -> Ezjsonm.value
+  ; read: Ezjsonm.value -> 't
+}
 
 type _ encoding =
   | Null : unit encoding
@@ -108,13 +98,12 @@ and 't case =
       -> 't case
 
 let construct enc v =
-  let rec construct : type t. t encoding -> t -> Repr.value = function
-    | Null -> fun () -> Repr.repr `Null
-    | Empty -> fun () -> Repr.repr (`O [])
-    | Ignore -> fun () -> Repr.repr (`O [])
-    | Option t -> (
-      function None -> Repr.repr `Null | Some v -> construct t v)
-    | Constant str -> fun () -> Repr.repr (`String str)
+  let rec construct : type t. t encoding -> t -> Ezjsonm.value = function
+    | Null -> fun () -> `Null
+    | Empty -> fun () -> `O []
+    | Ignore -> fun () -> `O []
+    | Option t -> ( function None -> `Null | Some v -> construct t v)
+    | Constant str -> fun () -> `String str
     | Int {minimum; maximum} ->
       let err = "Json_encoding.construct: int out of range" in
       fun int ->
@@ -122,9 +111,9 @@ let construct enc v =
           (Option.is_some minimum && int < Option.get minimum)
           || (Option.is_some maximum && int > Option.get maximum)
         then invalid_arg err
-        ; Repr.repr (`Float (float_of_int int))
-    | Bool -> fun (b : t) -> Repr.repr (`Bool b)
-    | String -> fun s -> Repr.repr (`String s)
+        ; `Float (float_of_int int)
+    | Bool -> fun (b : t) -> `Bool b
+    | String -> fun s -> `String s
     | Float {minimum; maximum} ->
       let err = "Json_encoding.construct: float out of range" in
       fun float ->
@@ -132,28 +121,28 @@ let construct enc v =
           (Option.is_some minimum && float < Option.get minimum)
           || (Option.is_some maximum && float > Option.get maximum)
         then invalid_arg err
-        ; Repr.repr (`Float float)
+        ; `Float float
     | Custom {write; _} -> fun (j : t) -> write j
     | Conv (ffrom, _, t) -> fun v -> construct t (ffrom v)
     | Array t ->
       let w v = construct t v in
-      fun arr -> Repr.repr (`A (Array.to_list (Array.map w arr)))
+      fun arr -> `A (Array.to_list (Array.map w arr))
     | Obj (Req {name= n; encoding= t}) ->
       let w v = construct t v in
-      fun v -> Repr.repr (`O [n, w v])
+      fun v -> `O [n, w v]
     | Obj (Dft {name= n; encoding= t; default= d}) ->
       let w v = construct t v in
-      fun v -> Repr.repr (`O (if v <> d then [n, w v] else []))
+      fun v -> `O (if v <> d then [n, w v] else [])
     | Obj (Opt {name= n; encoding= t}) -> (
       let w v = construct t v in
-      function None -> Repr.repr (`O []) | Some v -> Repr.repr (`O [n, w v]))
+      function None -> `O [] | Some v -> `O [n, w v])
     | Objs (o1, o2) -> (
       let w1 v = construct o1 v in
       let w2 v = construct o2 v in
       function
       | v1, v2 -> (
-        match Repr.view (w1 v1), Repr.view (w2 v2) with
-        | `O l1, `O l2 -> Repr.repr (`O (l1 @ l2))
+        match w1 v1, w2 v2 with
+        | `O l1, `O l2 -> `O (l1 @ l2)
         | `Null, `Null | _ ->
           invalid_arg "Json_encoding.construct: consequence of bad merge_objs"))
     | Union cases ->
@@ -177,34 +166,33 @@ let construct enc v =
           | None -> invalid_arg "RIP") in
       function
       | k, v -> (
-        match Repr.view (w k), Repr.view (wv k v) with
-        | `O l1, `O l2 -> Repr.repr (`O (l1 @ l2))
+        match w k, wv k v with
+        | `O l1, `O l2 -> `O (l1 @ l2)
         | _ ->
           invalid_arg "Json_encoding.construct: consequence of bad merge_objs"))
   in
   construct enc v
 
-let rec destruct : type t. t encoding -> Repr.value -> t = function
+let rec destruct : type t. t encoding -> Ezjsonm.value -> t = function
   | Null -> (
-    fun v ->
-      match Repr.view v with `Null -> () | k -> raise (unexpected k "null"))
+    fun v -> match v with `Null -> () | k -> raise (unexpected k "null"))
   | Empty -> (
     fun v ->
-      match Repr.view v with
+      match v with
       | `O [] -> ()
       | `O [(f, _)] -> raise (Cannot_destruct ([], Unexpected_field f))
       | k -> raise @@ unexpected k "an empty object")
-  | Ignore -> ( fun v -> match Repr.view v with _ -> ())
+  | Ignore -> ( fun v -> match v with _ -> ())
   | Option t -> (
-    fun v -> match Repr.view v with `Null -> None | _ -> Some (destruct t v))
+    fun v -> match v with `Null -> None | _ -> Some (destruct t v))
   | Constant str -> (
     fun v ->
-      match Repr.view v with
+      match v with
       | `String s when s = str -> ()
       | x -> raise @@ unexpected x str)
   | Int {minimum; maximum} -> (
     fun v ->
-      match Repr.view v with
+      match v with
       | `Float v ->
         let rest, v = modf v in
         (if rest <> 0. then
@@ -221,17 +209,12 @@ let rec destruct : type t. t encoding -> Repr.value -> t = function
       | k -> raise (unexpected k "number"))
   | Bool -> (
     fun v ->
-      match Repr.view v with
-      | `Bool b -> (b : t)
-      | k -> raise (unexpected k "boolean"))
+      match v with `Bool b -> (b : t) | k -> raise (unexpected k "boolean"))
   | String -> (
-    fun v ->
-      match Repr.view v with
-      | `String s -> s
-      | k -> raise (unexpected k "string"))
+    fun v -> match v with `String s -> s | k -> raise (unexpected k "string"))
   | Float {minimum; maximum} -> (
     fun v ->
-      match Repr.view v with
+      match v with
       | `Float f ->
         if
           (Option.is_some minimum && f < Option.get minimum)
@@ -245,7 +228,7 @@ let rec destruct : type t. t encoding -> Repr.value -> t = function
   | Conv (_, fto, t) -> fun v -> fto (destruct t v)
   | Array t -> (
     fun v ->
-      match Repr.view v with
+      match v with
       | `O [] -> [||]
       | `A cells ->
         Array.mapi
@@ -258,7 +241,7 @@ let rec destruct : type t. t encoding -> Repr.value -> t = function
   | Obj _ as t -> (
     let d = destruct_obj t in
     fun v ->
-      match Repr.view v with
+      match v with
       | `O fields -> (
         let r, rest, _ign = d fields in
         match rest with
@@ -268,7 +251,7 @@ let rec destruct : type t. t encoding -> Repr.value -> t = function
   | Objs _ as t -> (
     let d = destruct_obj t in
     fun v ->
-      match Repr.view v with
+      match v with
       | `O fields -> (
         let r, rest, _ign = d fields in
         match rest with
@@ -286,7 +269,7 @@ let rec destruct : type t. t encoding -> Repr.value -> t = function
   | Cond (t, cases) -> (
     let d = destruct_obj t in
     fun v ->
-      match Repr.view v with
+      match v with
       | `O fields -> (
         let r, rest, _ign = d fields in
         match List.assoc_opt r cases with
@@ -302,8 +285,8 @@ let rec destruct : type t. t encoding -> Repr.value -> t = function
 and destruct_obj :
     type t.
        t encoding
-    -> (string * Repr.value) list
-    -> t * (string * Repr.value) list * bool =
+    -> (string * Ezjsonm.value) list
+    -> t * (string * Ezjsonm.value) list * bool =
  fun t ->
   let rec assoc acc n = function
     | [] -> raise Not_found
@@ -499,7 +482,7 @@ let assoc t =
         with Cannot_destruct (p, exn) ->
           raise (Cannot_destruct (`Field n :: p, exn)) in
       List.map (fun (n, v) -> n, destruct n t v) l
-    | #Repr.value as k -> raise (unexpected k "asssociative object") in
+    | #Ezjsonm.value as k -> raise (unexpected k "asssociative object") in
   Custom {read; write}
 
 let option : type t. t encoding -> t option encoding = fun t -> Option t
@@ -582,3 +565,20 @@ let destruct e v =
   with e ->
     Logs.err (fun m -> m "Json exception: %a" print_error e)
     ; raise e
+
+(** Ugly and not tail-recursive, should be fixed asap *)
+let rec canonize = function
+  | `O l -> (
+    let sorted = List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2) l in
+    let cleaned =
+      List.filter_map
+        (fun (k, v) -> Option.map (fun v -> k, v) (canonize v))
+        sorted in
+    (* match cleaned with [] -> None | l -> Some (`O l)) *)
+    Some (`O cleaned))
+  | `A l ->
+    (* match List.filter_map canonize l with [] -> None | l -> Some (`A l)) *)
+    Some (`A (List.filter_map canonize l))
+  | v -> Some v
+
+let canonize v = match canonize v with Some v -> v | None -> `Null

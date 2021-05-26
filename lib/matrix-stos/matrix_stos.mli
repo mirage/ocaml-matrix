@@ -1,6 +1,50 @@
 open Json_encoding
 open Matrix_common
 
+module Key : sig
+  module Server_key : sig
+    module Verify_key : sig
+      type%accessor t = {key: string}
+
+      val encoding : t encoding
+    end
+
+    module Old_verify_key : sig
+      type%accessor t = {key: string; expired_ts: int}
+
+      val encoding : t encoding
+    end
+
+    type%accessor t = {
+        server_name: string
+      ; verify_keys: (string * Verify_key.t) list
+      ; old_verify_keys: (string * Old_verify_key.t) list option
+      ; signatures: (string * (string * string) list) list option
+      ; valid_until_ts: int option
+    }
+
+    val encoding : t encoding
+  end
+
+  module Direct_query : sig
+    module Query = Empty.Query
+    module Response = Server_key
+  end
+
+  module Indirect_query : sig
+    module Query :
+      sig
+        type%accessor t = { minimum_valid_until_ts : int option }
+        val args : t -> (string * string list) list
+      end
+    module Response :
+      sig
+        type%accessor t = { server_keys : Server_key.t list; }
+        val encoding : t encoding
+      end
+  end
+end
+
 module Public_rooms : sig
   module Get_public_rooms : sig
     module Query : sig
@@ -136,18 +180,7 @@ module Joining_rooms : sig
     module V2 : sig
       module Query : Empty.QUERY
 
-      module Request : sig
-        type%accessor t = {
-            sender: string
-          ; origin: string
-          ; origin_server_ts: int
-          ; event_type: string
-          ; state_key: string
-          ; content: Events.Event_content.Member.t
-        }
-
-        val encoding : t encoding
-      end
+      module Request = Matrix_common.Events.Pdu
 
       module Response : sig
         type%accessor t = {
@@ -160,4 +193,67 @@ module Joining_rooms : sig
       end
     end
   end
+end
+
+module Federation_request : sig
+  type%accessor 'a t = {
+    meth : string;
+    uri : string;
+    origin : string;
+    destination : string;
+    content : 'a option;
+  }
+  val encoding : 'a encoding -> 'a t encoding
+end
+
+module Signatures : sig
+  val encoding : (string * (string * Mirage_crypto_ec.Ed25519.priv) list) list -> 'a encoding -> 'a encoding
+end
+
+module Retrieve :
+sig
+  module State :
+    sig
+      module Query :
+        sig
+          type%accessor t = { event_id : string; }
+          val args : t -> (string * string list) list
+        end
+      module Response :
+        sig
+         type%accessor t = {
+            auth_chain : Events.State_event.t list;
+            pdus : Events.State_event.t list;
+          }
+          val encoding : t encoding
+        end
+    end
+  module State_ids :
+    sig
+      module Query :
+        sig
+          type%accessor t = { event_id : string; }
+          val args : t -> (string * string list) list
+        end
+      val path : string -> string
+      module Response :
+        sig
+          type%accessor t = { auth_chain_ids : string list; pdus_ids : string list; }
+          val encoding : t encoding
+        end
+    end
+  module Event :
+    sig
+      module Query = Matrix_common.Empty.Query
+      val path : string -> string
+      module Response :
+        sig
+          type%accessor t = {
+            origin : string;
+            origin_server_ts : int;
+            pdus : Pdu.t list;
+          }
+          val encoding : t encoding
+        end
+    end
 end

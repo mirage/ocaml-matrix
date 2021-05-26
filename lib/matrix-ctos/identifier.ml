@@ -47,9 +47,9 @@ type t = User of User.t | Thirdparty of Thirdparty.t | Phone of Phone.t
 let encoding =
   let to_tuple t =
     let get_type = function
-      | User _ -> "m.presence"
-      | Thirdparty _ -> "m.push_rules"
-      | Phone _ -> "m.typing" in
+      | User _ -> "m.id.user"
+      | Thirdparty _ -> "m.id.thirdparty"
+      | Phone _ -> "m.id.phone" in
     get_type t, t in
   let of_tuple v =
     let _, t = v in

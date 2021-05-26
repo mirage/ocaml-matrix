@@ -1,7 +1,5 @@
 open Routing
 
-(* /make_join/!1bb1ff19-a1c5-4796-a19a-5435a5e2d2d5:ocaml-matrix/@gwen:my.domain.name *)
-
 let public_rooms =
   meths
     [
@@ -26,5 +24,18 @@ let v1 =
     ]
 
 let v2 = paths ["send_join", send_join_v2]
-let matrix = paths ["federation", paths ["v1", v1; "v2", v2]]
+
+let direct_keys =
+  node
+    ~variable:(meths [`GET, Federation_endpoints.Keys.Server.get_direct])
+    ()
+
+let indirect_keys =
+  node
+    ~meths:[`POST, Federation_endpoints.Keys.Server.get_all_indirect]
+    ~variable:(variable (meths [`GET, Endpoint.placeholder]))
+    ()
+
+let key = paths ["v2", paths ["server", direct_keys; "query", indirect_keys]]
+let matrix = paths ["federation", paths ["v1", v1; "v2", v2]; "key", key]
 let routes : unit t = paths ["", paths ["_matrix", matrix]]

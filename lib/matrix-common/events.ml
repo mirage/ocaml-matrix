@@ -1241,7 +1241,7 @@ module Event_content = struct
   end
 
   module Custom = struct
-    type t = {content: Repr.value} [@@deriving accessor]
+    type t = {content: Ezjsonm.value} [@@deriving accessor]
 
     let encoding =
       let to_tuple t = t.content in
@@ -1641,6 +1641,7 @@ module Room_event = struct
       event: Event.t
     ; event_id: string option
     ; sender: string option
+    ; origin: string option
     ; origin_server_ts: int option
     ; unsigned: Unsigned.t option
     ; room_id: string option
@@ -1649,15 +1650,16 @@ module Room_event = struct
 
   let encoding =
     let to_tuple t =
-      t.event, (t.event_id, t.sender, t.origin_server_ts, t.unsigned, t.room_id)
+      t.event, (t.event_id, t.sender, t.origin, t.origin_server_ts, t.unsigned, t.room_id)
     in
     let of_tuple v =
-      let event, (event_id, sender, origin_server_ts, unsigned, room_id) = v in
-      {event; event_id; sender; origin_server_ts; unsigned; room_id} in
+      let event, (event_id, sender, origin, origin_server_ts, unsigned, room_id) = v in
+      {event; event_id; sender; origin; origin_server_ts; unsigned; room_id} in
     let with_tuple =
       merge_objs Event.encoding
-        (obj5 (opt "event_id" string) (opt "sender" string)
-           (opt "origin_server_ts" int)
+        (obj6 (opt "event_id" string) (opt "sender" string)
+          (opt "origin" string)
+          (opt "origin_server_ts" int)
            (opt "unsigned" Unsigned.encoding)
            (opt "room_id" string)) in
     conv to_tuple of_tuple with_tuple

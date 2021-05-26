@@ -30,7 +30,7 @@ module Upload = struct
     end
 
     module Keys_format = struct
-      type t = Key of string | Object_key of Repr.value
+      type t = Key of string | Object_key of Ezjsonm.value
 
       let encoding =
         union
@@ -137,7 +137,7 @@ module Query = struct
     end
 
     type t = {
-        failures: (string * Repr.value) list option
+        failures: (string * Ezjsonm.value) list option
       ; device_keys: (string * (string * Device_keys.t) list) list option
     }
     [@@deriving accessor]
@@ -178,7 +178,7 @@ module Claim = struct
 
   module Response = struct
     type t = {
-        failures: (string * Repr.value) list
+        failures: (string * Ezjsonm.value) list
       ; one_time_keys: (string * (string * string) list) list (* to correct *)
     }
     [@@deriving accessor]

@@ -82,8 +82,8 @@ let encoding =
   let to_tuple t =
     let get_type = function
       | Dummy _ -> Some "m.login.dummy"
-      | Password _ -> Some "m.login.token"
-      | Token _ -> Some "m.login.password"
+      | Password _ -> Some "m.login.password"
+      | Token _ -> Some "m.login.token"
       | Empty _ -> None in
     get_type t, t in
   let of_tuple v =
@@ -97,14 +97,14 @@ let encoding =
         , case Dummy.encoding
             (function Dummy t -> Some t | _ -> None)
             (fun t -> Dummy t) )
-      ; ( Some "m.login.token"
-        , case Token.encoding
-            (function Token t -> Some t | _ -> None)
-            (fun t -> Token t) )
       ; ( Some "m.login.password"
         , case Password.encoding
             (function Password t -> Some t | _ -> None)
             (fun t -> Password t) )
+      ; ( Some "m.login.token"
+        , case Token.encoding
+            (function Token t -> Some t | _ -> None)
+            (fun t -> Token t) )
       ; ( None
         , case Empty.encoding
             (function Empty t -> Some t | _ -> None)

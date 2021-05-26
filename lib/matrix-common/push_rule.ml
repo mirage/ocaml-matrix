@@ -2,7 +2,7 @@ open Json_encoding
 
 module Action = struct
   module Tweak = struct
-    type t = {tweak: string; value: Repr.value option} [@@deriving accessor]
+    type t = {tweak: string; value: Ezjsonm.value option} [@@deriving accessor]
 
     let encoding =
       let to_tuple t = t.tweak, t.value in

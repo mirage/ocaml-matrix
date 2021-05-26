@@ -26,7 +26,7 @@ end
 module Push_rule : sig
   module Action : sig
     module Tweak : sig
-      type%accessor t = {tweak: string; value: Repr.value option}
+      type%accessor t = {tweak: string; value: Ezjsonm.value option}
 
       val encoding : t encoding
     end
@@ -711,7 +711,7 @@ module Events : sig
     end
 
     module Custom : sig
-      type%accessor t = {content: Repr.value}
+      type%accessor t = {content: Ezjsonm.value}
 
       val encoding : t encoding
     end
@@ -775,6 +775,7 @@ module Events : sig
         event: Event.t
       ; event_id: string option
       ; sender: string option
+      ; origin: string option
       ; origin_server_ts: int option
       ; unsigned: Unsigned.t option
       ; room_id: string option

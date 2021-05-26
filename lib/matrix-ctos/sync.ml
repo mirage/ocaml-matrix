@@ -78,7 +78,7 @@ module Response = struct
     ; to_device: Events.State_event.t list option
     ; device_lists: Device_lists.t option
     ; device_one_time_keys_count: (string * int) list option
-    ; groups: Repr.value option (* Not on the documentation*)
+    ; groups: Ezjsonm.value option (* Not on the documentation*)
   }
   [@@deriving accessor]
 

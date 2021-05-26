@@ -1,8 +1,10 @@
 open Cmdliner
 
 let main () =
-  ignore
-    (Lwt_main.run (Lwt.join [Client_to_server.server; Server_to_server.server]))
+  Logs.debug (fun m -> m "Server launched%!")
+  ; ignore
+      (Lwt_main.run
+         (Lwt.join [Client_to_server.server; Server_to_server.server]))
 
 let setup level full total log_file =
   (* let style_renderer = `None in *)

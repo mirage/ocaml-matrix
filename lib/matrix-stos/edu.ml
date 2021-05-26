@@ -1,6 +1,6 @@
 open Json_encoding
 
-type t = {edu_type: string; content: Repr.value} [@@deriving accessor]
+type t = {edu_type: string; content: Ezjsonm.value} [@@deriving accessor]
 
 let encoding =
   let to_tuple t = t.edu_type, t.content in

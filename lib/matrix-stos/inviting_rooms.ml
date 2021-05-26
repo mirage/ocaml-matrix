@@ -9,7 +9,7 @@ module V1 = struct
 
   module Request = struct
     module Unsigned = struct
-      type t = {whatever: Repr.value} [@@deriving accessor]
+      type t = {whatever: Ezjsonm.value} [@@deriving accessor]
 
       let encoding =
         let to_tuple t = t.whatever in

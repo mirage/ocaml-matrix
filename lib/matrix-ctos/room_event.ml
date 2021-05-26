@@ -13,7 +13,7 @@ module Get = struct
     module Request = Empty.Json
 
     module Response = struct
-      type t = Repr.value
+      type t = Ezjsonm.value
 
       let encoding = any
     end

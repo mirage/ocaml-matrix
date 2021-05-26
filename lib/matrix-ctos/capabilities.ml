@@ -36,7 +36,7 @@ module Capability = struct
   end
 
   module Custom = struct
-    type t = {name: string; content: Repr.value} [@@deriving accessor]
+    type t = {name: string; content: Ezjsonm.value} [@@deriving accessor]
 
     let encoding =
       let to_tuple t = t.content in

@@ -4,4 +4,4 @@
  (public_name matrix-server)
  (package matrix-server)
  (libraries matrix_ctos matrix_stos irmin-unix irmin-fs mirage-kv fmt.tty
-   cmdliner logs logs.cli logs.fmt astring uuidm bheap))
+   cmdliner logs logs.cli logs.fmt astring uuidm bheap base64))

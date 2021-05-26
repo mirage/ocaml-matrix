@@ -3,4 +3,4 @@
  (public_name matrix-stos)
  (preprocess
   (pps ppx_deriver_accessor ppx_rewriter_accessor))
- (libraries matrix-common json_encoding))
+ (libraries matrix-common json_encoding mirage-crypto-ec x509))

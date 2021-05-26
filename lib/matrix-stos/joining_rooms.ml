@@ -153,37 +153,7 @@ struct
     let path room_id event_id =
       "/_matrix/federation/v2/send_join/" ^ room_id ^ "/" ^ event_id
 
-    module Request = struct
-      type t = {
-          sender: string
-        ; origin: string
-        ; origin_server_ts: int
-        ; event_type: string
-        ; state_key: string
-        ; content: Events.Event_content.Member.t
-      }
-      [@@deriving accessor]
-
-      let encoding =
-        let to_tuple t =
-          ( t.sender
-          , t.origin
-          , t.origin_server_ts
-          , t.event_type
-          , t.state_key
-          , t.content ) in
-        let of_tuple v =
-          let sender, origin, origin_server_ts, event_type, state_key, content =
-            v in
-          {sender; origin; origin_server_ts; event_type; state_key; content}
-        in
-        let with_tuple =
-          obj6 (req "sender" string) (req "origin" string)
-            (req "origin_server_ts" int)
-            (req "type" string) (req "state_key" string)
-            (req "content" Events.Event_content.Member.encoding) in
-        conv to_tuple of_tuple with_tuple
-    end
+    module Request = Matrix_common.Events.Pdu
 
     module Response = struct
       type t = {

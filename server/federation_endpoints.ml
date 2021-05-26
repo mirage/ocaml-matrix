@@ -7,6 +7,70 @@ open Room_helpers
 
 let placeholder = placeholder
 
+module Keys = struct
+  module Server = struct
+    let read_key file =
+      let i = open_in file in
+      let len = in_channel_length i in
+      let bytes = Bytes.create len in
+      really_input i bytes 0 len;
+      Fmt.pr "%s" (Bytes.to_string bytes);
+      match Rresult.R.error_msg_to_invalid_arg (X509.Private_key.decode_pem (Cstruct.of_bytes bytes)) with
+      | `ED25519 key -> key, Mirage_crypto_ec.Ed25519.pub_of_priv key
+      | _ -> raise @@ Invalid_argument "Not an ED25519 key"
+
+    let get_direct =
+      let open Matrix_stos.Key.Direct_query in
+      let f ((), _) _ _ _ =
+        let priv_key, pub_key = read_key "/home/gwenaelle/.ssh/ed25519key.pem" in
+        match Base64.encode ~pad:false (Cstruct.to_string @@ Mirage_crypto_ec.Ed25519.pub_to_cstruct pub_key) with
+        | Ok base64_key ->
+          let response =
+            Response.make ~server_name:Const.homeserver
+              ~verify_keys:["ed25519:foo_bar", Response.Verify_key.make ~key:base64_key ()]
+              ~old_verify_keys:[]
+              ~valid_until_ts:((time () + 60) * 1000) () in
+          let response =
+            construct
+              (Matrix_stos.Signatures.encoding [Const.homeserver, ["ed25519:foo_bar", priv_key]] Response.encoding)
+              response
+            |> Ezjsonm.value_to_string in
+          Lwt.return (`OK, response, None)
+        | Error _ ->
+          Lwt.return
+            ( `Internal_server_error
+            , error "M_UNKNOWN" "Internal base64 error"
+            , None ) in
+      false, f
+
+      let get_all_indirect =
+        let open Matrix_stos.Key.Indirect_query in
+        let f () _ _ _ =
+          let priv_key, pub_key = read_key "/home/gwenaelle/.ssh/ed25519key.pem" in
+          match Base64.encode ~pad:false (Cstruct.to_string @@ Mirage_crypto_ec.Ed25519.pub_to_cstruct pub_key) with
+          | Ok base64_key ->
+            let key =
+              Matrix_stos.Key.Server_key.make ~server_name:Const.homeserver
+              ~verify_keys:["ed25519:foo_bar", Matrix_stos.Key.Server_key.Verify_key.make ~key:base64_key ()]
+              ~old_verify_keys:[]
+              ~valid_until_ts:((time () + 60) * 1000) () in
+            let response =
+              Response.make ~server_keys:[key] () in
+            let response =
+              construct
+                (Matrix_stos.Signatures.encoding [Const.homeserver, ["ed25519:foo_bar", priv_key]] Response.encoding)
+                response
+              |> Ezjsonm.value_to_string in
+            Lwt.return (`OK, response, None)
+          | Error _ ->
+            Lwt.return
+              ( `Internal_server_error
+              , error "M_UNKNOWN" "Internal base64 error"
+              , None ) in
+        false, f
+    end
+end
+
 module Listing = struct
   module Public_rooms = struct
     let get =
@@ -92,18 +156,20 @@ module Listing = struct
                       with
                       | Public ->
                         let room_summary =
-                          Response.Public_rooms_chunk.make ?aliases:(Some [])
+                          Response.Public_rooms_chunk.make ~aliases:[]
                             ?canonical_alias:None ?name:room_name
                             ~num_joined_members:room_members ~room_id
                             ?topic:room_topic ~world_readable:false
                             ~guest_can_join:false ?avatar_url:None
-                            ?federate:(Some false) () in
+                            ~federate:false () in
                         Lwt.return_some room_summary
                       | _ -> Lwt.return_none)
                     | _ -> Lwt.return_none))))
             rooms
           >>= fun rooms ->
-          let response = Response.make ~chunk:rooms () in
+          let response =
+            Response.make ~chunk:rooms
+              ~total_room_count_estimate:(List.length rooms) () in
           let response =
             construct Response.encoding response |> Ezjsonm.value_to_string
           in

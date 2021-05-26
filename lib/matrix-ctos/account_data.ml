@@ -5,7 +5,7 @@ module Put = struct
   module Query = Empty.Query
 
   module Request = struct
-    type t = {data: Repr.value} [@@deriving accessor]
+    type t = {data: Ezjsonm.value} [@@deriving accessor]
 
     let encoding =
       let to_tuple t = t.data in
@@ -23,7 +23,7 @@ module Get = struct
   module Query = Empty.Query
 
   module Response = struct
-    type t = {data: Repr.value} [@@deriving accessor]
+    type t = {data: Ezjsonm.value} [@@deriving accessor]
 
     let encoding =
       let to_tuple t = t.data in

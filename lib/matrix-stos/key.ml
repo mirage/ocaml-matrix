@@ -30,7 +30,8 @@ module Server_key = struct
       server_name: string
     ; verify_keys: (string * Verify_key.t) list
     ; old_verify_keys: (string * Old_verify_key.t) list option
-    ; signatures: string list option (* there is work to do here *)
+    ; signatures: (string * (string * string) list) list option
+          (* there is work to do here *)
     ; valid_until_ts: int option
   }
   [@@deriving accessor]
@@ -52,20 +53,13 @@ module Server_key = struct
       obj5 (req "server_name" string)
         (req "verify_keys" (assoc Verify_key.encoding))
         (opt "old_verify_keys" (assoc Old_verify_key.encoding))
-        (opt "signatures" (list string))
+        (opt "signatures" (assoc (assoc string)))
         (opt "valid_until_ts" int) in
     conv to_tuple of_tuple with_tuple
 end
 
 module Direct_query = struct
-  module Query = Empty.Query
-
-  let path key_id = "/_matrix/key/v2/server/" ^ key_id
-  (* The use of key id is deprecated, servers should ask for all the keys
-     * instead
-  *)
-
-  module Response = Server_key
+  module Query = Empty.Query module Response = Server_key
 end
 
 module Indirect_query = struct
@@ -79,12 +73,6 @@ module Indirect_query = struct
         let minimum_valid_until_ts = Int.to_string minimum_valid_until_ts in
         ["minimum_valid_until_ts", [minimum_valid_until_ts]]
   end
-
-  let path server_name key_id =
-    "/_matrix/key/v2/query/" ^ server_name ^ "/" ^ key_id
-  (* The use of key id is deprecated, servers should ask for all the keys
-     * instead
-  *)
 
   module Response = struct
     type t = {server_keys: Server_key.t list} [@@deriving accessor]
@@ -101,8 +89,6 @@ end
 
 module Indirect_batch_query = struct
   module Query = Empty.Query
-
-  let path = "/_matrix/key/v2/query"
 
   module Request = struct
     module Query_criteria = struct

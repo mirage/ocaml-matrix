@@ -113,7 +113,7 @@ module Preview = struct
   end
 
   module Response = struct
-    type t = {infos: (string * Repr.value) list} [@@deriving accessor]
+    type t = {infos: (string * Ezjsonm.value) list} [@@deriving accessor]
 
     let encoding =
       let to_tuple t = t.infos in
