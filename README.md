@@ -23,3 +23,14 @@ In order to launch the server, you can use this command:
 By default, even with debug verbosity, I removed irmin, git and decompress logs
 because they were generating too much noise. You can force their printing by
 using the `-f` flag.
+
+## CI client
+This new part of the project which will be most likely separated in another
+project in a close future is supposed to be a client for the ocaml CI:
+
+It's goal is to be launched by the OCaml CI once a commit has been pushed to
+the project: It will then connect to our matrix server as a pre-registered
+client.
+
+It then fetches all the room he is currently in and notices them that a new
+commit was pushed with a message before disconnecting itself.

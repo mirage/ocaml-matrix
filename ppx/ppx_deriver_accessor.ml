@@ -1,3 +1,25 @@
+(** This ppx deriver will generate a set of usefull functions for our types:
+    For records, it will generate 3 types of functions:
+    - A make function which will allow to create an instance of the record,
+      using the fields name as labeled arguments.
+    - A get function for every fields which will return it's corresponding field
+      value. The name of the function will be of the format "get_*" where `*` is
+      the field's name.
+    - A set function for every fields which will return a new record with it's
+      updated field. The name of the function will be of the format "set_*"
+      where `*` is the field's name.
+    e.g.:
+    `type t = {foo: string; bar: int} [@@deriving accessor]`
+    will generate the following 5 functions:
+    {[
+      let make ~foo ~bar () = {foo; bar}
+      let get_foo t = t.foo
+      let set_foo t v = {t with foo = v }
+      let get_bar = t.bar
+      let set_bar = {t with bar = v }
+    ]}
+*)
+
 open Ppxlib
 open Ast_builder.Default
 

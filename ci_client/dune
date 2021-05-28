@@ -1,0 +1,7 @@
+(executable
+ (modes byte exe)
+ (name matrix_ci_client)
+ (public_name matrix_ci_client)
+ (package matrix-ci-client)
+ (libraries matrix_ctos fmt.tty logs logs.cli logs.fmt lwt cohttp cohttp-lwt
+   cohttp-lwt-unix uuidm))
