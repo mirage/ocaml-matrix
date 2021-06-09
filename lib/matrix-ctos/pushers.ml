@@ -15,46 +15,46 @@ module Pusher = struct
   end
 
   type t = {
-      pushkey: string
-    ; kind: string
-    ; app_id: string
-    ; app_display_name: string
-    ; device_display_name: string
-    ; profile_tag: string option
-    ; lang: string
-    ; data: Pusher_data.t
+    pushkey: string;
+    kind: string;
+    app_id: string;
+    app_display_name: string;
+    device_display_name: string;
+    profile_tag: string option;
+    lang: string;
+    data: Pusher_data.t;
   }
   [@@deriving accessor]
 
   let encoding =
     let to_tuple t =
-      ( t.pushkey
-      , t.kind
-      , t.app_id
-      , t.app_display_name
-      , t.device_display_name
-      , t.profile_tag
-      , t.lang
-      , t.data ) in
+      ( t.pushkey,
+        t.kind,
+        t.app_id,
+        t.app_display_name,
+        t.device_display_name,
+        t.profile_tag,
+        t.lang,
+        t.data ) in
     let of_tuple v =
-      let ( pushkey
-          , kind
-          , app_id
-          , app_display_name
-          , device_display_name
-          , profile_tag
-          , lang
-          , data ) =
+      let ( pushkey,
+            kind,
+            app_id,
+            app_display_name,
+            device_display_name,
+            profile_tag,
+            lang,
+            data ) =
         v in
       {
-        pushkey
-      ; kind
-      ; app_id
-      ; app_display_name
-      ; device_display_name
-      ; profile_tag
-      ; lang
-      ; data
+        pushkey;
+        kind;
+        app_id;
+        app_display_name;
+        device_display_name;
+        profile_tag;
+        lang;
+        data;
       } in
     let with_tuple =
       obj8 (req "pushkey" string) (req "kind" string) (req "app_id" string)

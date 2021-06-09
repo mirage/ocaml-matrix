@@ -38,22 +38,22 @@ module Push_rule : sig
 
   module Push_condition : sig
     type%accessor t = {
-        kind: string
-      ; key: string option
-      ; pattern: string option
-      ; is: string option
+      kind: string;
+      key: string option;
+      pattern: string option;
+      is: string option;
     }
 
     val encoding : t encoding
   end
 
   type%accessor t = {
-      actions: Action.t list
-    ; default: bool
-    ; enabled: bool
-    ; rule_id: string
-    ; conditions: Push_condition.t list option
-    ; pattern: string option
+    actions: Action.t list;
+    default: bool;
+    enabled: bool;
+    rule_id: string;
+    conditions: Push_condition.t list option;
+    pattern: string option;
   }
 
   val encoding : t encoding
@@ -63,22 +63,22 @@ module Message : sig
   module Encrypted_file : sig
     module Jwk : sig
       type%accessor t = {
-          kty: string
-        ; key_ops: string list
-        ; alg: string
-        ; k: string
-        ; ext: bool
+        kty: string;
+        key_ops: string list;
+        alg: string;
+        k: string;
+        ext: bool;
       }
 
       val encoding : t encoding
     end
 
     type%accessor t = {
-        url: string
-      ; key: Jwk.t
-      ; iv: string
-      ; hashes: (string * string) list
-      ; v: string
+      url: string;
+      key: Jwk.t;
+      iv: string;
+      hashes: (string * string) list;
+      v: string;
     }
 
     val encoding : t encoding
@@ -86,10 +86,10 @@ module Message : sig
 
   module Thumbnail : sig
     type%accessor t = {
-        h: int option
-      ; w: int option
-      ; mimetype: string option
-      ; size: int option
+      h: int option;
+      w: int option;
+      mimetype: string option;
+      size: int option;
     }
 
     val encoding : t encoding
@@ -97,13 +97,13 @@ module Message : sig
 
   module Image : sig
     type%accessor t = {
-        h: int option
-      ; w: int option
-      ; mimetype: string option
-      ; size: int option
-      ; thumbnail_url: string option
-      ; thumbnail_file: Encrypted_file.t option
-      ; thumbnail_info: Thumbnail.t option
+      h: int option;
+      w: int option;
+      mimetype: string option;
+      size: int option;
+      thumbnail_url: string option;
+      thumbnail_file: Encrypted_file.t option;
+      thumbnail_info: Thumbnail.t option;
     }
 
     val encoding : t encoding
@@ -111,14 +111,14 @@ module Message : sig
 
   module Video : sig
     type%accessor t = {
-        duration: int option
-      ; h: int option
-      ; w: int option
-      ; mimetype: string option
-      ; size: int option
-      ; thumbnail_url: string option
-      ; thumbnail_file: Encrypted_file.t option
-      ; thumbnail_info: Thumbnail.t option
+      duration: int option;
+      h: int option;
+      w: int option;
+      mimetype: string option;
+      size: int option;
+      thumbnail_url: string option;
+      thumbnail_file: Encrypted_file.t option;
+      thumbnail_info: Thumbnail.t option;
     }
 
     val encoding : t encoding
@@ -126,9 +126,9 @@ module Message : sig
 
   module Location : sig
     type%accessor t = {
-        thumbnail_url: string option
-      ; thumbnail_file: Encrypted_file.t option
-      ; thumbnail_info: Thumbnail.t option
+      thumbnail_url: string option;
+      thumbnail_file: Encrypted_file.t option;
+      thumbnail_info: Thumbnail.t option;
     }
 
     val encoding : t encoding
@@ -136,11 +136,11 @@ module Message : sig
 
   module File : sig
     type%accessor t = {
-        mimetype: string option
-      ; size: int option
-      ; thumbnail_url: string option
-      ; thumbnail_file: Encrypted_file.t option
-      ; thumbnail_info: Thumbnail.t option
+      mimetype: string option;
+      size: int option;
+      thumbnail_url: string option;
+      thumbnail_file: Encrypted_file.t option;
+      thumbnail_info: Thumbnail.t option;
     }
 
     val encoding : t encoding
@@ -148,9 +148,9 @@ module Message : sig
 
   module Audio : sig
     type%accessor t = {
-        mimetype: string option
-      ; duration: int option
-      ; size: int option
+      mimetype: string option;
+      duration: int option;
+      size: int option;
     }
 
     val encoding : t encoding
@@ -174,8 +174,8 @@ module Events : sig
 
     module Canonical_alias : sig
       type%accessor t = {
-          alias: string option option
-        ; alt_aliases: string list option
+        alias: string option option;
+        alt_aliases: string list option;
       }
 
       val encoding : t encoding
@@ -189,10 +189,10 @@ module Events : sig
       end
 
       type%accessor t = {
-          creator: string
-        ; federate: bool option
-        ; room_version: string option
-        ; predecessor: Previous_room.t option
+        creator: string;
+        federate: bool option;
+        room_version: string option;
+        predecessor: Previous_room.t option;
       }
 
       val encoding : t encoding
@@ -220,12 +220,12 @@ module Events : sig
       end
 
       type%accessor t = {
-          avatar_url: string option option
-        ; displayname: string option option
-        ; membership: Membership.t
-        ; is_direct: bool option
-        ; reason: string option
-        ; third_party_invite: Third_party_invite.t option
+        avatar_url: string option option;
+        displayname: string option option;
+        membership: Membership.t;
+        is_direct: bool option;
+        reason: string option;
+        third_party_invite: Third_party_invite.t option;
       }
 
       val encoding : t encoding
@@ -239,16 +239,16 @@ module Events : sig
       end
 
       type%accessor t = {
-          ban: int option
-        ; events: (string * int) list option
-        ; events_default: int option
-        ; invite: int option
-        ; kick: int option
-        ; redact: int option
-        ; state_default: int option
-        ; users: (string * int) list option
-        ; users_default: int option
-        ; notifications: Notifications.t option
+        ban: int option;
+        events: (string * int) list option;
+        events_default: int option;
+        invite: int option;
+        kick: int option;
+        redact: int option;
+        state_default: int option;
+        users: (string * int) list option;
+        users_default: int option;
+        notifications: Notifications.t option;
       }
 
       val encoding : t encoding
@@ -270,10 +270,10 @@ module Events : sig
       end
 
       type%accessor t = {
-          display_name: string
-        ; key_validity_url: string
-        ; public_key: string
-        ; public_keys: Public_key.t list option
+        display_name: string;
+        key_validity_url: string;
+        public_key: string;
+        public_keys: Public_key.t list option;
       }
 
       val encoding : t encoding
@@ -293,9 +293,9 @@ module Events : sig
 
     module Server_acl : sig
       type%accessor t = {
-          allow_ip_literals: bool option
-        ; allow: string list option
-        ; deny: string list option
+        allow_ip_literals: bool option;
+        allow: string list option;
+        deny: string list option;
       }
 
       val encoding : t encoding
@@ -309,9 +309,9 @@ module Events : sig
 
     module Encryption : sig
       type%accessor t = {
-          algorithm: string
-        ; rotation_period_ms: int option
-        ; rotation_period_msgs: int option
+        algorithm: string;
+        rotation_period_ms: int option;
+        rotation_period_msgs: int option;
       }
 
       val encoding : t encoding
@@ -337,11 +337,11 @@ module Events : sig
       end
 
       type%accessor t = {
-          algorithm: Algorithm.t
-        ; cyphertext: Cyphertext.t
-        ; sender_key: string
-        ; device_id: string option
-        ; session_id: string option
+        algorithm: Algorithm.t;
+        cyphertext: Cyphertext.t;
+        sender_key: string;
+        device_id: string option;
+        session_id: string option;
       }
 
       val encoding : t encoding
@@ -350,9 +350,9 @@ module Events : sig
     module Message : sig
       module Text : sig
         type%accessor t = {
-            body: string
-          ; format: string option
-          ; formatted_body: string option
+          body: string;
+          format: string option;
+          formatted_body: string option;
         }
 
         val encoding : t encoding
@@ -360,9 +360,9 @@ module Events : sig
 
       module Emote : sig
         type%accessor t = {
-            body: string
-          ; format: string option
-          ; formatted_body: string option
+          body: string;
+          format: string option;
+          formatted_body: string option;
         }
 
         val encoding : t encoding
@@ -377,23 +377,23 @@ module Events : sig
       module Image : sig
         module Info : sig
           type%accessor t = {
-              h: int option
-            ; w: int option
-            ; mimetype: string option
-            ; size: int option
-            ; thumbnail_url: string option
-            ; thumbnail_file: Message.Encrypted_file.t option
-            ; thumbnail_info: Message.Thumbnail.t option
+            h: int option;
+            w: int option;
+            mimetype: string option;
+            size: int option;
+            thumbnail_url: string option;
+            thumbnail_file: Message.Encrypted_file.t option;
+            thumbnail_info: Message.Thumbnail.t option;
           }
 
           val encoding : t encoding
         end
 
         type%accessor t = {
-            body: string
-          ; info: Message.Image.t option
-          ; url: string
-          ; file: Message.Encrypted_file.t option
+          body: string;
+          info: Message.Image.t option;
+          url: string;
+          file: Message.Encrypted_file.t option;
         }
 
         val encoding : t encoding
@@ -401,11 +401,11 @@ module Events : sig
 
       module File : sig
         type%accessor t = {
-            body: string
-          ; filename: string option
-          ; info: Message.File.t option
-          ; url: string
-          ; file: Message.Encrypted_file.t option
+          body: string;
+          filename: string option;
+          info: Message.File.t option;
+          url: string;
+          file: Message.Encrypted_file.t option;
         }
 
         val encoding : t encoding
@@ -413,10 +413,10 @@ module Events : sig
 
       module Audio : sig
         type%accessor t = {
-            body: string
-          ; info: Message.Audio.t option
-          ; url: string
-          ; file: Message.Encrypted_file.t option
+          body: string;
+          info: Message.Audio.t option;
+          url: string;
+          file: Message.Encrypted_file.t option;
         }
 
         val encoding : t encoding
@@ -424,9 +424,9 @@ module Events : sig
 
       module Location : sig
         type%accessor t = {
-            body: string
-          ; info: Message.Location.t option
-          ; geo_uri: string
+          body: string;
+          info: Message.Location.t option;
+          geo_uri: string;
         }
 
         val encoding : t encoding
@@ -434,10 +434,10 @@ module Events : sig
 
       module Video : sig
         type%accessor t = {
-            body: string
-          ; info: Message.Video.t option
-          ; url: string
-          ; file: Message.Encrypted_file.t option
+          body: string;
+          info: Message.Video.t option;
+          url: string;
+          file: Message.Encrypted_file.t option;
         }
 
         val encoding : t encoding
@@ -451,10 +451,10 @@ module Events : sig
 
       module Server_notice : sig
         type%accessor t = {
-            body: string
-          ; server_notice_type: string
-          ; admin_contact: string option
-          ; limit_type: string option
+          body: string;
+          server_notice_type: string;
+          admin_contact: string option;
+          limit_type: string option;
         }
 
         val encoding : t encoding
@@ -508,10 +508,10 @@ module Events : sig
         end
 
         type%accessor t = {
-            call_id: string
-          ; offer: Offer.t
-          ; version: int
-          ; lifetime: int
+          call_id: string;
+          offer: Offer.t;
+          version: int;
+          lifetime: int;
         }
 
         val encoding : t encoding
@@ -520,18 +520,18 @@ module Events : sig
       module Candidates : sig
         module Candidate : sig
           type%accessor t = {
-              sdpMid: string
-            ; sdpMLineIndex: int
-            ; candidate: string
+            sdpMid: string;
+            sdpMLineIndex: int;
+            candidate: string;
           }
 
           val encoding : t encoding
         end
 
         type%accessor t = {
-            call_id: string
-          ; candidates: Candidate.t list
-          ; version: int
+          call_id: string;
+          candidates: Candidate.t list;
+          version: int;
         }
 
         val encoding : t encoding
@@ -557,9 +557,9 @@ module Events : sig
         end
 
         type%accessor t = {
-            call_id: string
-          ; version: int
-          ; reason: Reason.t option
+          call_id: string;
+          version: int;
+          reason: Reason.t option;
         }
 
         val encoding : t encoding
@@ -574,12 +574,12 @@ module Events : sig
       end
 
       type%accessor t = {
-          avatar_url: string option
-        ; displayname: string option
-        ; last_active_ago: int option
-        ; presence: Presence.t
-        ; currently_active: bool option
-        ; status_msg: string option
+        avatar_url: string option;
+        displayname: string option;
+        last_active_ago: int option;
+        presence: Presence.t;
+        currently_active: bool option;
+        status_msg: string option;
       }
 
       val encoding : t encoding
@@ -587,11 +587,11 @@ module Events : sig
 
     module Push_rules : sig
       type%accessor t = {
-          content: Push_rule.t list option
-        ; override: Push_rule.t list option
-        ; room: Push_rule.t list option
-        ; sender: Push_rule.t list option
-        ; underride: Push_rule.t list option
+        content: Push_rule.t list option;
+        override: Push_rule.t list option;
+        room: Push_rule.t list option;
+        sender: Push_rule.t list option;
+        underride: Push_rule.t list option;
       }
 
       val encoding : t encoding
@@ -653,10 +653,10 @@ module Events : sig
 
     module Room_key : sig
       type%accessor t = {
-          algorithm: string
-        ; room_id: string
-        ; session_id: string
-        ; session_key: string
+        algorithm: string;
+        room_id: string;
+        session_id: string;
+        session_key: string;
       }
 
       val encoding : t encoding
@@ -665,10 +665,10 @@ module Events : sig
     module Room_key_request : sig
       module Request_key_info : sig
         type%accessor t = {
-            algorithm: string
-          ; room_id: string
-          ; sender_key: string
-          ; session_key: string
+          algorithm: string;
+          room_id: string;
+          sender_key: string;
+          session_key: string;
         }
 
         val encoding : t encoding
@@ -681,10 +681,10 @@ module Events : sig
       end
 
       type%accessor t = {
-          body: Request_key_info.t
-        ; action: Action.t
-        ; requesting_device_id: string
-        ; request_id: string
+        body: Request_key_info.t;
+        action: Action.t;
+        requesting_device_id: string;
+        request_id: string;
       }
 
       val encoding : t encoding
@@ -692,13 +692,13 @@ module Events : sig
 
     module Forwarded_room_key : sig
       type%accessor t = {
-          algorithm: string
-        ; room_id: string
-        ; sender_key: string
-        ; session_id: string
-        ; session_key: string
-        ; sender_claimed_ed25519_key: string
-        ; forwarding_curve25519_key_chain: string list
+        algorithm: string;
+        room_id: string;
+        sender_key: string;
+        session_id: string;
+        session_key: string;
+        sender_claimed_ed25519_key: string;
+        forwarding_curve25519_key_chain: string list;
       }
 
       val encoding : t encoding
@@ -763,22 +763,22 @@ module Events : sig
   module Room_event : sig
     module Unsigned : sig
       type%accessor t = {
-          age: int option
-        ; redacted_because: Event.t option
-        ; transaction_id: string option
+        age: int option;
+        redacted_because: Event.t option;
+        transaction_id: string option;
       }
 
       val encoding : t encoding
     end
 
     type%accessor t = {
-        event: Event.t
-      ; event_id: string option
-      ; sender: string option
-      ; origin: string option
-      ; origin_server_ts: int option
-      ; unsigned: Unsigned.t option
-      ; room_id: string option
+      event: Event.t;
+      event_id: string option;
+      sender: string option;
+      origin: string option;
+      origin_server_ts: int option;
+      unsigned: Unsigned.t option;
+      room_id: string option;
     }
 
     val encoding : t encoding

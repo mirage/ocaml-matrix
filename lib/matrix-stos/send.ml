@@ -6,10 +6,10 @@ let path txn_id = "/_matrix/federation/v1/send/" ^ txn_id
 
 module Request = struct
   type t = {
-      origin: string
-    ; origin_server_ts: int
-    ; pdus: Pdu.t list
-    ; edus: Edu.t list option
+    origin: string;
+    origin_server_ts: int;
+    pdus: Pdu.t list;
+    edus: Edu.t list option;
   }
   [@@deriving accessor]
 

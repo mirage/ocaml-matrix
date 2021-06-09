@@ -3,9 +3,9 @@ open Matrix_common
 
 module Room_summary = struct
   type t = {
-      heroes: string list option
-    ; joined_member_count: int option
-    ; invited_member_count: int option
+    heroes: string list option;
+    joined_member_count: int option;
+    invited_member_count: int option;
   }
   [@@deriving accessor]
 
@@ -24,9 +24,9 @@ end
 
 module Timeline = struct
   type t = {
-      events: Events.Room_event.t list option
-    ; limited: bool option
-    ; prev_batch: string option
+    events: Events.Room_event.t list option;
+    limited: bool option;
+    prev_batch: string option;
   }
   [@@deriving accessor]
 
@@ -58,30 +58,30 @@ module Joined_room = struct
   end
 
   type t = {
-      summary: Room_summary.t option
-    ; state: Events.State_event.t list option
-    ; timeline: Timeline.t option
-    ; ephemeral: Events.Event.t list option
-    ; account_data: Events.Event.t list option
-    ; unread_notifications: Unread_notifications.t option
+    summary: Room_summary.t option;
+    state: Events.State_event.t list option;
+    timeline: Timeline.t option;
+    ephemeral: Events.Event.t list option;
+    account_data: Events.Event.t list option;
+    unread_notifications: Unread_notifications.t option;
   }
   [@@deriving accessor]
 
   let encoding =
     let to_tuple t =
-      ( t.summary
-      , t.state
-      , t.timeline
-      , t.ephemeral
-      , t.account_data
-      , t.unread_notifications ) in
+      ( t.summary,
+        t.state,
+        t.timeline,
+        t.ephemeral,
+        t.account_data,
+        t.unread_notifications ) in
     let of_tuple v =
-      let ( summary
-          , state
-          , timeline
-          , ephemeral
-          , account_data
-          , unread_notifications ) =
+      let ( summary,
+            state,
+            timeline,
+            ephemeral,
+            account_data,
+            unread_notifications ) =
         v in
       {summary; state; timeline; ephemeral; account_data; unread_notifications}
     in
@@ -114,9 +114,9 @@ end
 
 module Left_room = struct
   type t = {
-      state: Events.State_event.t list option
-    ; timeline: Timeline.t option
-    ; account_data: Events.Room_event.t list option
+    state: Events.State_event.t list option;
+    timeline: Timeline.t option;
+    account_data: Events.Room_event.t list option;
   }
   [@@deriving accessor]
 
@@ -135,9 +135,9 @@ module Left_room = struct
 end
 
 type t = {
-    join: (string * Joined_room.t) list
-  ; invite: (string * Invited_room.t) list
-  ; leave: (string * Left_room.t) list
+  join: (string * Joined_room.t) list;
+  invite: (string * Invited_room.t) list;
+  leave: (string * Left_room.t) list;
 }
 [@@deriving accessor]
 

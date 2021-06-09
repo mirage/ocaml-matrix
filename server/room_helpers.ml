@@ -71,7 +71,7 @@ let get_room_ephemeral room_id _since =
         Events.Event.make
           ~event_content:
             (Typing (Events.Event_content.Typing.make ~users_id:users ()))
-          ()
+          ();
       ]
 
 let get_room_state room_id since =
@@ -122,9 +122,9 @@ let get_rooms_membership user_id since =
             match Events.State_event.get_event_content event with
             | Events.Event_content.Member event ->
               Lwt.return_some
-                ( room_id
-                , Events.Event_content.Member.get_membership event
-                , changed )
+                ( room_id,
+                  Events.Event_content.Member.get_membership event,
+                  changed )
             | _ -> Lwt.return_none)))
       rooms
     >>= fun rooms ->
@@ -167,8 +167,8 @@ let get_rooms user_id since =
               update :=
                 !update
                 || List.length state_events + List.length message_events
-                   (* + (List.length ephemeral_events) *) <> 0
-              ; Lwt.return_some (room_id, room))))
+                   (* + (List.length ephemeral_events) *) <> 0;
+              Lwt.return_some (room_id, room))))
       j
     >>= fun joined ->
     Lwt_list.filter_map_p
@@ -178,8 +178,8 @@ let get_rooms user_id since =
         | Error _ -> Lwt.return_none
         | Ok events ->
           let room = Rooms.Invited_room.make ?invite_state:(Some events) () in
-          update := !update || List.length events <> 0
-          ; Lwt.return_some (room_id, room))
+          update := !update || List.length events <> 0;
+          Lwt.return_some (room_id, room))
       i
     >>= fun invited ->
     Lwt_list.filter_map_p
@@ -189,7 +189,7 @@ let get_rooms user_id since =
         | Error _ -> Lwt.return_none
         | Ok events ->
           let room = Rooms.Left_room.make ?state:(Some events) () in
-          update := !update || List.length events <> 0
-          ; Lwt.return_some (room_id, room))
+          update := !update || List.length events <> 0;
+          Lwt.return_some (room_id, room))
       l
     >>= fun leaved -> Lwt.return_ok (joined, invited, leaved, !update)

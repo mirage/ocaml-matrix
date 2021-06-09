@@ -60,8 +60,8 @@ let unexpected kind expected =
   Cannot_destruct ([], Unexpected (kind, expected))
 
 type 't repr_agnostic_custom = {
-    write: 't -> Ezjsonm.value
-  ; read: Ezjsonm.value -> 't
+  write: 't -> Ezjsonm.value;
+  read: Ezjsonm.value -> 't;
 }
 
 type _ encoding =
@@ -91,9 +91,9 @@ and _ field =
 
 and 't case =
   | Case : {
-        encoding: 'a encoding
-      ; proj: 't -> 'a option
-      ; inj: 'a -> 't
+      encoding: 'a encoding;
+      proj: 't -> 'a option;
+      inj: 'a -> 't;
     }
       -> 't case
 
@@ -110,8 +110,8 @@ let construct enc v =
         if
           (Option.is_some minimum && int < Option.get minimum)
           || (Option.is_some maximum && int > Option.get maximum)
-        then invalid_arg err
-        ; `Float (float_of_int int)
+        then invalid_arg err;
+        `Float (float_of_int int)
     | Bool -> fun (b : t) -> `Bool b
     | String -> fun s -> `String s
     | Float {minimum; maximum} ->
@@ -120,8 +120,8 @@ let construct enc v =
         if
           (Option.is_some minimum && float < Option.get minimum)
           || (Option.is_some maximum && float > Option.get maximum)
-        then invalid_arg err
-        ; `Float float
+        then invalid_arg err;
+        `Float float
     | Custom {write; _} -> fun (j : t) -> write j
     | Conv (ffrom, _, t) -> fun v -> construct t (ffrom v)
     | Array t ->
@@ -197,15 +197,14 @@ let rec destruct : type t. t encoding -> Ezjsonm.value -> t = function
         let rest, v = modf v in
         (if rest <> 0. then
          let exn = Failure "int cannot have a fractional part" in
-         raise (Cannot_destruct ([], exn)))
-        ; (if
-           (Option.is_some minimum && v < (Option.get minimum |> float_of_int))
-           || Option.is_some maximum
-              && v > (Option.get maximum |> float_of_int)
-          then
-           let exn = Failure "int out of range" in
-           raise (Cannot_destruct ([], exn)))
-          ; int_of_float v
+         raise (Cannot_destruct ([], exn)));
+        (if
+         (Option.is_some minimum && v < (Option.get minimum |> float_of_int))
+         || (Option.is_some maximum && v > (Option.get maximum |> float_of_int))
+        then
+         let exn = Failure "int out of range" in
+         raise (Cannot_destruct ([], exn)));
+        int_of_float v
       | k -> raise (unexpected k "number"))
   | Bool -> (
     fun v ->
@@ -277,16 +276,16 @@ let rec destruct : type t. t encoding -> Ezjsonm.value -> t = function
         | None ->
           raise
             (Cannot_destruct
-               ( []
-               , No_case_matched [Invalid_argument "to do: Cond destruct error"]
+               ( [],
+                 No_case_matched [Invalid_argument "to do: Cond destruct error"]
                )))
       | k -> raise @@ unexpected k "object")
 
 and destruct_obj :
     type t.
-       t encoding
-    -> (string * Ezjsonm.value) list
-    -> t * (string * Ezjsonm.value) list * bool =
+    t encoding ->
+    (string * Ezjsonm.value) list ->
+    t * (string * Ezjsonm.value) list * bool =
  fun t ->
   let rec assoc acc n = function
     | [] -> raise Not_found
@@ -356,8 +355,8 @@ and destruct_obj :
       | None ->
         raise
           (Cannot_destruct
-             ( []
-             , No_case_matched [Invalid_argument "to do: Cond destruct error"]
+             ( [],
+               No_case_matched [Invalid_argument "to do: Cond destruct error"]
              )))
   | _ -> invalid_arg "Json_encoding.destruct: consequence of bad merge_objs"
 
@@ -399,8 +398,8 @@ let obj6 f1 f2 f3 f4 f5 f6 =
     (fun (a, b, c, d, e, f) -> a, (b, (c, (d, (e, f)))))
     (fun (a, (b, (c, (d, (e, f))))) -> a, b, c, d, e, f)
     (Objs
-       ( Obj f1
-       , Objs (Obj f2, Objs (Obj f3, Objs (Obj f4, Objs (Obj f5, Obj f6)))) ))
+       ( Obj f1,
+         Objs (Obj f2, Objs (Obj f3, Objs (Obj f4, Objs (Obj f5, Obj f6)))) ))
 
 let obj7 f1 f2 f3 f4 f5 f6 f7 =
   conv
@@ -447,31 +446,31 @@ let string_enum cases =
   List.iter
     (fun (s, c) ->
       if Hashtbl.mem mcases s then
-        invalid_arg "Json_encoding.string_enum: duplicate case"
-      ; Hashtbl.add mcases s c
-      ; Hashtbl.add rcases c s)
-    cases
-  ; conv
-      (fun v ->
-        try Hashtbl.find rcases v
-        with Not_found ->
-          invalid_arg
-            (Fmt.str
-               "Json_encoding.construct: consequence of non exhaustive \
-                Json_encoding.string_enum. Strings are: %s"
-               cases_str))
-      (fun s ->
-        try Hashtbl.find mcases s
-        with Not_found ->
-          let rec orpat ppf = function
-            | [] -> assert false
-            | [(last, _)] -> Fmt.pf ppf "%S" last
-            | [(prev, _); (last, _)] -> Fmt.pf ppf "%S or %S" prev last
-            | (prev, _) :: rem -> Fmt.pf ppf "%S , %a" prev orpat rem in
-          let unexpected = Fmt.str "string value %S" s in
-          let expected = Fmt.str "%a" orpat cases in
-          raise (Cannot_destruct ([], Unexpected (unexpected, expected))))
-      string
+        invalid_arg "Json_encoding.string_enum: duplicate case";
+      Hashtbl.add mcases s c;
+      Hashtbl.add rcases c s)
+    cases;
+  conv
+    (fun v ->
+      try Hashtbl.find rcases v
+      with Not_found ->
+        invalid_arg
+          (Fmt.str
+             "Json_encoding.construct: consequence of non exhaustive \
+              Json_encoding.string_enum. Strings are: %s"
+             cases_str))
+    (fun s ->
+      try Hashtbl.find mcases s
+      with Not_found ->
+        let rec orpat ppf = function
+          | [] -> assert false
+          | [(last, _)] -> Fmt.pf ppf "%S" last
+          | [(prev, _); (last, _)] -> Fmt.pf ppf "%S or %S" prev last
+          | (prev, _) :: rem -> Fmt.pf ppf "%S , %a" prev orpat rem in
+        let unexpected = Fmt.str "string value %S" s in
+        let expected = Fmt.str "%a" orpat cases in
+        raise (Cannot_destruct ([], Unexpected (unexpected, expected))))
+    string
 
 let assoc t =
   let write l = `O (List.map (fun (n, v) -> n, construct t v) l) in
@@ -563,8 +562,8 @@ let rec print_error ppf = function
 let destruct e v =
   try destruct e v
   with e ->
-    Logs.err (fun m -> m "Json exception: %a" print_error e)
-    ; raise e
+    Logs.err (fun m -> m "Json exception: %a" print_error e);
+    raise e
 
 (** Ugly and not tail-recursive, should be fixed asap *)
 let rec canonize = function

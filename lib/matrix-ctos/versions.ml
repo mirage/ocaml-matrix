@@ -4,8 +4,8 @@ module Query = Empty.Query
 
 module Response = struct
   type t = {
-      versions: string list
-    ; unstable_features: (string * bool) list option
+    versions: string list;
+    unstable_features: (string * bool) list option;
   }
   [@@deriving accessor]
 

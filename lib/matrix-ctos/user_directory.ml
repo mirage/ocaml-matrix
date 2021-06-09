@@ -19,9 +19,9 @@ module Search = struct
   module Response = struct
     module User = struct
       type t = {
-          user_id: string
-        ; display_name: string option
-        ; avatar_url: string option
+        user_id: string;
+        display_name: string option;
+        avatar_url: string option;
       }
       [@@deriving accessor]
 

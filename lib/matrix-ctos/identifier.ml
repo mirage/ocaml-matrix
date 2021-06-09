@@ -58,18 +58,18 @@ let encoding =
     cond
       (obj1 (req "type" string))
       [
-        ( "m.id.user"
-        , case User.encoding
+        ( "m.id.user",
+          case User.encoding
             (function User t -> Some t | _ -> None)
-            (fun t -> User t) )
-      ; ( "m.id.thirdparty"
-        , case Thirdparty.encoding
+            (fun t -> User t) );
+        ( "m.id.thirdparty",
+          case Thirdparty.encoding
             (function Thirdparty t -> Some t | _ -> None)
-            (fun t -> Thirdparty t) )
-      ; ( "m.id.phone"
-        , case Phone.encoding
+            (fun t -> Thirdparty t) );
+        ( "m.id.phone",
+          case Phone.encoding
             (function Phone t -> Some t | _ -> None)
-            (fun t -> Phone t) )
+            (fun t -> Phone t) );
       ] in
   conv to_tuple of_tuple with_tuple
 

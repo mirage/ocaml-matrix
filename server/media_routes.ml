@@ -17,10 +17,10 @@ let config = meths [`GET, Media_endpoints.config]
 let routes : unit t =
   paths
     [
-      ( "r0"
-      , paths
+      ( "r0",
+        paths
           [
-            "upload", upload; "download", download; "thumbnail", thumbnail
-          ; "preview_url", preview_url; "config", config
-          ] )
+            "upload", upload; "download", download; "thumbnail", thumbnail;
+            "preview_url", preview_url; "config", config;
+          ] );
     ]

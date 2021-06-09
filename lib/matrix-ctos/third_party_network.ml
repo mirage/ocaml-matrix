@@ -16,10 +16,10 @@ module Protocol = struct
 
   module Instance = struct
     type t = {
-        desc: string
-      ; icon: string option
-      ; fields: (string * string) list
-      ; network_id: string
+      desc: string;
+      icon: string option;
+      fields: (string * string) list;
+      network_id: string;
     }
     [@@deriving accessor]
 
@@ -36,11 +36,11 @@ module Protocol = struct
   end
 
   type t = {
-      user_fields: string list
-    ; location_fields: string list
-    ; icon: string
-    ; field_types: (string * Field_type.t) list
-    ; instances: Instance.t list
+    user_fields: string list;
+    location_fields: string list;
+    icon: string;
+    field_types: (string * Field_type.t) list;
+    instances: Instance.t list;
   }
   [@@deriving accessor]
 

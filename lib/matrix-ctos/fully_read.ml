@@ -4,10 +4,10 @@ module Query = Empty.Query
 
 module Request = struct
   type t = {
-      fully_read: string option
-          (* supposed to be required by the documentation but apparently can be null with Element *)
-    ; read: string option
-    ; hidden: bool option (* not in the documentation *)
+    fully_read: string option;
+    (* supposed to be required by the documentation but apparently can be null with Element *)
+    read: string option;
+    hidden: bool option; (* not in the documentation *)
   }
   [@@deriving accessor]
 

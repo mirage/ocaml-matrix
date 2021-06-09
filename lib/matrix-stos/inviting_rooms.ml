@@ -21,32 +21,32 @@ module V1 = struct
     end
 
     type t = {
-        sender: string
-      ; origin: string
-      ; origin_server_ts: int
-      ; event_type: string
-      ; state_key: string
-      ; unsigned: Unsigned.t option
+      sender: string;
+      origin: string;
+      origin_server_ts: int;
+      event_type: string;
+      state_key: string;
+      unsigned: Unsigned.t option;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.sender
-        , t.origin
-        , t.origin_server_ts
-        , t.event_type
-        , t.state_key
-        , ()
-        , t.unsigned ) in
+        ( t.sender,
+          t.origin,
+          t.origin_server_ts,
+          t.event_type,
+          t.state_key,
+          (),
+          t.unsigned ) in
       let of_tuple v =
-        let ( sender
-            , origin
-            , origin_server_ts
-            , event_type
-            , state_key
-            , ()
-            , unsigned ) =
+        let ( sender,
+              origin,
+              origin_server_ts,
+              event_type,
+              state_key,
+              (),
+              unsigned ) =
           v in
         {sender; origin; origin_server_ts; event_type; state_key; unsigned}
       in

@@ -1,11 +1,10 @@
 (executable
  (modes byte exe)
- (name matrix_client)
- (public_name matrix-client)
- (package matrix-client)
+ (name matrix_ci_client)
+ (public_name matrix-ci-client)
+ (package matrix-ci-client)
  (libraries
   matrix-ctos
-  matrix-stos
   fmt.tty
   logs
   logs.cli

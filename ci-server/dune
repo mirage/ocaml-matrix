@@ -1,8 +1,8 @@
 (executable
  (modes byte exe)
- (name matrix_server)
- (public_name matrix-server)
- (package matrix-server)
+ (name matrix_ci_server)
+ (public_name matrix-ci-server)
+ (package matrix-ci-server)
  (libraries
   matrix-ctos
   matrix-stos

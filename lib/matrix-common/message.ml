@@ -3,11 +3,11 @@ open Json_encoding
 module Encrypted_file = struct
   module Jwk = struct
     type t = {
-        kty: string
-      ; key_ops: string list
-      ; alg: string
-      ; k: string
-      ; ext: bool
+      kty: string;
+      key_ops: string list;
+      alg: string;
+      k: string;
+      ext: bool;
     }
     [@@deriving accessor]
 
@@ -24,11 +24,11 @@ module Encrypted_file = struct
   end
 
   type t = {
-      url: string
-    ; key: Jwk.t
-    ; iv: string
-    ; hashes: (string * string) list
-    ; v: string
+    url: string;
+    key: Jwk.t;
+    iv: string;
+    hashes: (string * string) list;
+    v: string;
   }
   [@@deriving accessor]
 
@@ -46,10 +46,10 @@ end
 
 module Thumbnail = struct
   type t = {
-      h: int option
-    ; w: int option
-    ; mimetype: string option
-    ; size: int option
+    h: int option;
+    w: int option;
+    mimetype: string option;
+    size: int option;
   }
   [@@deriving accessor]
 
@@ -66,25 +66,25 @@ end
 
 module Image = struct
   type t = {
-      h: int option
-    ; w: int option
-    ; mimetype: string option
-    ; size: int option
-    ; thumbnail_url: string option
-    ; thumbnail_file: Encrypted_file.t option
-    ; thumbnail_info: Thumbnail.t option
+    h: int option;
+    w: int option;
+    mimetype: string option;
+    size: int option;
+    thumbnail_url: string option;
+    thumbnail_file: Encrypted_file.t option;
+    thumbnail_info: Thumbnail.t option;
   }
   [@@deriving accessor]
 
   let encoding =
     let to_tuple t =
-      ( t.h
-      , t.w
-      , t.mimetype
-      , t.size
-      , t.thumbnail_url
-      , t.thumbnail_file
-      , t.thumbnail_info ) in
+      ( t.h,
+        t.w,
+        t.mimetype,
+        t.size,
+        t.thumbnail_url,
+        t.thumbnail_file,
+        t.thumbnail_info ) in
     let of_tuple v =
       let h, w, mimetype, size, thumbnail_url, thumbnail_file, thumbnail_info =
         v in
@@ -100,46 +100,46 @@ end
 
 module Video = struct
   type t = {
-      duration: int option
-    ; h: int option
-    ; w: int option
-    ; mimetype: string option
-    ; size: int option
-    ; thumbnail_url: string option
-    ; thumbnail_file: Encrypted_file.t option
-    ; thumbnail_info: Thumbnail.t option
+    duration: int option;
+    h: int option;
+    w: int option;
+    mimetype: string option;
+    size: int option;
+    thumbnail_url: string option;
+    thumbnail_file: Encrypted_file.t option;
+    thumbnail_info: Thumbnail.t option;
   }
   [@@deriving accessor]
 
   let encoding =
     let to_tuple t =
-      ( t.duration
-      , t.h
-      , t.w
-      , t.mimetype
-      , t.size
-      , t.thumbnail_url
-      , t.thumbnail_file
-      , t.thumbnail_info ) in
+      ( t.duration,
+        t.h,
+        t.w,
+        t.mimetype,
+        t.size,
+        t.thumbnail_url,
+        t.thumbnail_file,
+        t.thumbnail_info ) in
     let of_tuple v =
-      let ( duration
-          , h
-          , w
-          , mimetype
-          , size
-          , thumbnail_url
-          , thumbnail_file
-          , thumbnail_info ) =
+      let ( duration,
+            h,
+            w,
+            mimetype,
+            size,
+            thumbnail_url,
+            thumbnail_file,
+            thumbnail_info ) =
         v in
       {
-        duration
-      ; h
-      ; w
-      ; mimetype
-      ; size
-      ; thumbnail_url
-      ; thumbnail_file
-      ; thumbnail_info
+        duration;
+        h;
+        w;
+        mimetype;
+        size;
+        thumbnail_url;
+        thumbnail_file;
+        thumbnail_info;
       } in
     let with_tuple =
       obj8 (opt "duration" int) (opt "h" int) (opt "w" int)
@@ -152,9 +152,9 @@ end
 
 module Location = struct
   type t = {
-      thumbnail_url: string option
-    ; thumbnail_file: Encrypted_file.t option
-    ; thumbnail_info: Thumbnail.t option
+    thumbnail_url: string option;
+    thumbnail_file: Encrypted_file.t option;
+    thumbnail_info: Thumbnail.t option;
   }
   [@@deriving accessor]
 
@@ -173,11 +173,11 @@ end
 
 module File = struct
   type t = {
-      mimetype: string option
-    ; size: int option
-    ; thumbnail_url: string option
-    ; thumbnail_file: Encrypted_file.t option
-    ; thumbnail_info: Thumbnail.t option
+    mimetype: string option;
+    size: int option;
+    thumbnail_url: string option;
+    thumbnail_file: Encrypted_file.t option;
+    thumbnail_info: Thumbnail.t option;
   }
   [@@deriving accessor]
 

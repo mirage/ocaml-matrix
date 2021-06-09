@@ -18,61 +18,61 @@ module Request = struct
       let encoding =
         string_enum
           [
-            "content_body", Content_body; "content_name", Content_name
-          ; "content_topic", Content_topic
+            "content_body", Content_body; "content_name", Content_name;
+            "content_topic", Content_topic;
           ]
     end
 
     module Filter = struct
       type t = {
-          limit: int option
-        ; not_senders: string list option
-        ; not_types: string list option
-        ; senders: string list option
-        ; types: string list option
-        ; lazy_load_members: bool option
-        ; include_redundant_members: bool option
-        ; not_rooms: string list option
-        ; rooms: string list option
-        ; contains_url: bool option
+        limit: int option;
+        not_senders: string list option;
+        not_types: string list option;
+        senders: string list option;
+        types: string list option;
+        lazy_load_members: bool option;
+        include_redundant_members: bool option;
+        not_rooms: string list option;
+        rooms: string list option;
+        contains_url: bool option;
       }
       [@@deriving accessor]
 
       let encoding =
         let to_tuple t =
-          ( t.limit
-          , t.not_senders
-          , t.not_types
-          , t.senders
-          , t.types
-          , t.lazy_load_members
-          , t.include_redundant_members
-          , t.not_rooms
-          , t.rooms
-          , t.contains_url ) in
+          ( t.limit,
+            t.not_senders,
+            t.not_types,
+            t.senders,
+            t.types,
+            t.lazy_load_members,
+            t.include_redundant_members,
+            t.not_rooms,
+            t.rooms,
+            t.contains_url ) in
         let of_tuple v =
-          let ( limit
-              , not_senders
-              , not_types
-              , senders
-              , types
-              , lazy_load_members
-              , include_redundant_members
-              , not_rooms
-              , rooms
-              , contains_url ) =
+          let ( limit,
+                not_senders,
+                not_types,
+                senders,
+                types,
+                lazy_load_members,
+                include_redundant_members,
+                not_rooms,
+                rooms,
+                contains_url ) =
             v in
           {
-            limit
-          ; not_senders
-          ; not_types
-          ; senders
-          ; types
-          ; lazy_load_members
-          ; include_redundant_members
-          ; not_rooms
-          ; rooms
-          ; contains_url
+            limit;
+            not_senders;
+            not_types;
+            senders;
+            types;
+            lazy_load_members;
+            include_redundant_members;
+            not_rooms;
+            rooms;
+            contains_url;
           } in
         let with_tuple =
           obj10 (opt "limit" int)
@@ -96,9 +96,9 @@ module Request = struct
 
     module Include_event_context = struct
       type t = {
-          before_limit: int option
-        ; after_limit: int option
-        ; include_profile: bool option
+        before_limit: int option;
+        after_limit: int option;
+        include_profile: bool option;
       }
       [@@deriving accessor]
 
@@ -132,42 +132,42 @@ module Request = struct
     end
 
     type t = {
-        search_term: string
-      ; keys: Key.t option
-      ; filter: Filter.t option
-      ; order_by: Order.t option
-      ; event_context: Include_event_context.t option
-      ; include_state: bool option
-      ; groupings: Groupings.t option
+      search_term: string;
+      keys: Key.t option;
+      filter: Filter.t option;
+      order_by: Order.t option;
+      event_context: Include_event_context.t option;
+      include_state: bool option;
+      groupings: Groupings.t option;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.search_term
-        , t.keys
-        , t.filter
-        , t.order_by
-        , t.event_context
-        , t.include_state
-        , t.groupings ) in
+        ( t.search_term,
+          t.keys,
+          t.filter,
+          t.order_by,
+          t.event_context,
+          t.include_state,
+          t.groupings ) in
       let of_tuple v =
-        let ( search_term
-            , keys
-            , filter
-            , order_by
-            , event_context
-            , include_state
-            , groupings ) =
+        let ( search_term,
+              keys,
+              filter,
+              order_by,
+              event_context,
+              include_state,
+              groupings ) =
           v in
         {
-          search_term
-        ; keys
-        ; filter
-        ; order_by
-        ; event_context
-        ; include_state
-        ; groupings
+          search_term;
+          keys;
+          filter;
+          order_by;
+          event_context;
+          include_state;
+          groupings;
         } in
       let with_tuple =
         obj7 (req "search_term" string) (opt "keys" Key.encoding)
@@ -212,11 +212,11 @@ module Response = struct
         end
 
         type t = {
-            start: string option
-          ; end_: string option
-          ; profile_info: (string * User_profile.t) list option
-          ; events_before: Events.Room_event.t list option
-          ; events_after: Events.Room_event.t list option
+          start: string option;
+          end_: string option;
+          profile_info: (string * User_profile.t) list option;
+          events_before: Events.Room_event.t list option;
+          events_after: Events.Room_event.t list option;
         }
         [@@deriving accessor]
 
@@ -236,9 +236,9 @@ module Response = struct
       end
 
       type t = {
-          rank: int option
-        ; result: Events.Room_event.t option
-        ; context: Event_context.t option
+        rank: int option;
+        result: Events.Room_event.t option;
+        context: Event_context.t option;
       }
       [@@deriving accessor]
 
@@ -256,9 +256,9 @@ module Response = struct
 
     module Group_value = struct
       type t = {
-          next_batch: string option
-        ; order: int option
-        ; results: string list option
+        next_batch: string option;
+        order: int option;
+        results: string list option;
       }
       [@@deriving accessor]
 
@@ -274,12 +274,12 @@ module Response = struct
     end
 
     type t = {
-        count: int option
-      ; highlights: string list option
-      ; results: Result.t list option
-      ; state: (string * Events.State_event.t) list option
-      ; groups: (string * (string * Group_value.t) list) list option
-      ; next_batch: string option
+      count: int option;
+      highlights: string list option;
+      results: Result.t list option;
+      state: (string * Events.State_event.t) list option;
+      groups: (string * (string * Group_value.t) list) list option;
+      next_batch: string option;
     }
     [@@deriving accessor]
 

@@ -14,32 +14,32 @@ module Make_join = struct
   module Response = struct
     module Event_template = struct
       type t = {
-          sender: string
-        ; origin: string
-        ; origin_server_ts: int
-        ; event_type: string
-        ; state_key: string
-        ; room_id: string option (* not really in documentation but w/e *)
+        sender: string;
+        origin: string;
+        origin_server_ts: int;
+        event_type: string;
+        state_key: string;
+        room_id: string option; (* not really in documentation but w/e *)
       }
       [@@deriving accessor]
 
       let encoding =
         let to_tuple t =
-          ( t.sender
-          , t.origin
-          , t.origin_server_ts
-          , t.event_type
-          , t.state_key
-          , t.room_id
-          , () ) in
+          ( t.sender,
+            t.origin,
+            t.origin_server_ts,
+            t.event_type,
+            t.state_key,
+            t.room_id,
+            () ) in
         let of_tuple v =
-          let ( sender
-              , origin
-              , origin_server_ts
-              , event_type
-              , state_key
-              , room_id
-              , () ) =
+          let ( sender,
+                origin,
+                origin_server_ts,
+                event_type,
+                state_key,
+                room_id,
+                () ) =
             v in
           {sender; origin; origin_server_ts; event_type; state_key; room_id}
         in
@@ -52,9 +52,9 @@ module Make_join = struct
     end
 
     type t = {
-        (* Not specified as 'required' in the documentation but synapse seems to want them anywy *)
-        room_version: string option
-      ; event_template: Event_template.t option
+      (* Not specified as 'required' in the documentation but synapse seems to want them anywy *)
+      room_version: string option;
+      event_template: Event_template.t option;
     }
     [@@deriving accessor]
 
@@ -80,23 +80,23 @@ struct
 
     module Request = struct
       type t = {
-          sender: string
-        ; origin: string
-        ; origin_server_ts: int
-        ; event_type: string
-        ; state_key: string
-        ; content: Events.Event_content.Member.t
+        sender: string;
+        origin: string;
+        origin_server_ts: int;
+        event_type: string;
+        state_key: string;
+        content: Events.Event_content.Member.t;
       }
       [@@deriving accessor]
 
       let encoding =
         let to_tuple t =
-          ( t.sender
-          , t.origin
-          , t.origin_server_ts
-          , t.event_type
-          , t.state_key
-          , t.content ) in
+          ( t.sender,
+            t.origin,
+            t.origin_server_ts,
+            t.event_type,
+            t.state_key,
+            t.content ) in
         let of_tuple v =
           let sender, origin, origin_server_ts, event_type, state_key, content =
             v in
@@ -113,9 +113,9 @@ struct
     module Response = struct
       module Room_state = struct
         type t = {
-            origin: string
-          ; auth_chain: Events.Pdu.t list
-          ; state: Events.Pdu.t list
+          origin: string;
+          auth_chain: Events.Pdu.t list;
+          state: Events.Pdu.t list;
         }
         [@@deriving accessor]
 
@@ -132,8 +132,8 @@ struct
       end
 
       type t = {
-          (* not sure about what the spec wants, needs experimentation to differentiate from v1 *)
-          room_state: Room_state.t option
+        (* not sure about what the spec wants, needs experimentation to differentiate from v1 *)
+        room_state: Room_state.t option;
       }
       [@@deriving accessor]
 
@@ -157,9 +157,9 @@ struct
 
     module Response = struct
       type t = {
-          origin: string
-        ; auth_chain: Events.Pdu.t list
-        ; state: Events.Pdu.t list
+        origin: string;
+        auth_chain: Events.Pdu.t list;
+        state: Events.Pdu.t list;
       }
       [@@deriving accessor]
 

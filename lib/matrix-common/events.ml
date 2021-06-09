@@ -7,8 +7,8 @@ module Event_content = struct
     let encoding =
       string_enum
         [
-          "invite", Invite; "join", Join; "knock", Knock; "leave", Leave
-        ; "ban", Ban
+          "invite", Invite; "join", Join; "knock", Knock; "leave", Leave;
+          "ban", Ban;
         ]
 
     let to_string = function
@@ -59,10 +59,10 @@ module Event_content = struct
     end
 
     type t = {
-        creator: string
-      ; federate: bool option
-      ; room_version: string option
-      ; predecessor: Previous_room.t option
+      creator: string;
+      federate: bool option;
+      room_version: string option;
+      predecessor: Previous_room.t option;
     }
     [@@deriving accessor]
 
@@ -91,8 +91,8 @@ module Event_content = struct
         let rule_encoding =
           string_enum
             [
-              "public", Public; "knock", Knock; "invite", Invite
-            ; "private", Private
+              "public", Public; "knock", Knock; "invite", Invite;
+              "private", Private;
             ] in
         obj1 (req "join_rule" rule_encoding) in
       conv to_tuple of_tuple with_tuple
@@ -101,7 +101,7 @@ module Event_content = struct
   module Member = struct
     module Third_party_invite = struct
       module Signed = struct
-        type t = {mxid: string; signature: unit (* to do *); token: string}
+        type t = {mxid: string; signature: unit; (* to do *) token: string}
         [@@deriving accessor]
 
         let encoding =
@@ -128,38 +128,38 @@ module Event_content = struct
     end
 
     type t = {
-        avatar_url: string option option
-      ; displayname: string option option
-      ; membership: Membership.t
-      ; is_direct: bool option
-      ; reason: string option
-      ; third_party_invite: Third_party_invite.t option
+      avatar_url: string option option;
+      displayname: string option option;
+      membership: Membership.t;
+      is_direct: bool option;
+      reason: string option;
+      third_party_invite: Third_party_invite.t option;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.avatar_url
-        , t.displayname
-        , t.membership
-        , t.is_direct
-        , t.reason
-        , t.third_party_invite ) in
+        ( t.avatar_url,
+          t.displayname,
+          t.membership,
+          t.is_direct,
+          t.reason,
+          t.third_party_invite ) in
       let of_tuple v =
-        let ( avatar_url
-            , displayname
-            , membership
-            , is_direct
-            , reason
-            , third_party_invite ) =
+        let ( avatar_url,
+              displayname,
+              membership,
+              is_direct,
+              reason,
+              third_party_invite ) =
           v in
         {
-          avatar_url
-        ; displayname
-        ; membership
-        ; is_direct
-        ; reason
-        ; third_party_invite
+          avatar_url;
+          displayname;
+          membership;
+          is_direct;
+          reason;
+          third_party_invite;
         } in
       let with_tuple =
         obj6
@@ -185,54 +185,54 @@ module Event_content = struct
     end
 
     type t = {
-        ban: int option
-      ; events: (string * int) list option
-      ; events_default: int option
-      ; invite: int option
-      ; kick: int option
-      ; redact: int option
-      ; state_default: int option
-      ; users: (string * int) list option
-      ; users_default: int option
-      ; notifications: Notifications.t option
+      ban: int option;
+      events: (string * int) list option;
+      events_default: int option;
+      invite: int option;
+      kick: int option;
+      redact: int option;
+      state_default: int option;
+      users: (string * int) list option;
+      users_default: int option;
+      notifications: Notifications.t option;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.ban
-        , t.events
-        , t.events_default
-        , t.invite
-        , t.kick
-        , t.redact
-        , t.state_default
-        , t.users
-        , t.users_default
-        , t.notifications ) in
+        ( t.ban,
+          t.events,
+          t.events_default,
+          t.invite,
+          t.kick,
+          t.redact,
+          t.state_default,
+          t.users,
+          t.users_default,
+          t.notifications ) in
       let of_tuple v =
-        let ( ban
-            , events
-            , events_default
-            , invite
-            , kick
-            , redact
-            , state_default
-            , users
-            , users_default
-            , notifications ) =
+        let ( ban,
+              events,
+              events_default,
+              invite,
+              kick,
+              redact,
+              state_default,
+              users,
+              users_default,
+              notifications ) =
           v in
         {
-          ban
-        ; events
-        ; events_default
-        ; invite
-        ; kick
-        ; redact
-        ; state_default
-        ; users
-        ; users_default
-        ; notifications
+          ban;
+          events;
+          events_default;
+          invite;
+          kick;
+          redact;
+          state_default;
+          users;
+          users_default;
+          notifications;
         } in
       let with_tuple =
         obj10 (opt "ban" int)
@@ -258,8 +258,8 @@ module Event_content = struct
         let rule_encoding =
           string_enum
             [
-              "invited", Invited; "joined", Joined; "shared", Shared
-            ; "world_readable", World_readable
+              "invited", Invited; "joined", Joined; "shared", Shared;
+              "world_readable", World_readable;
             ] in
         obj1 (req "history_visibility" rule_encoding) in
       conv to_tuple of_tuple with_tuple
@@ -281,10 +281,10 @@ module Event_content = struct
     end
 
     type t = {
-        display_name: string
-      ; key_validity_url: string
-      ; public_key: string
-      ; public_keys: Public_key.t list option
+      display_name: string;
+      key_validity_url: string;
+      public_key: string;
+      public_keys: Public_key.t list option;
     }
     [@@deriving accessor]
 
@@ -323,9 +323,9 @@ module Event_content = struct
 
   module Server_acl = struct
     type t = {
-        allow_ip_literals: bool option
-      ; allow: string list option
-      ; deny: string list option
+      allow_ip_literals: bool option;
+      allow: string list option;
+      deny: string list option;
     }
     [@@deriving accessor]
 
@@ -357,9 +357,9 @@ module Event_content = struct
 
   module Encryption = struct
     type t = {
-        algorithm: string
-      ; rotation_period_ms: int option
-      ; rotation_period_msgs: int option
+      algorithm: string;
+      rotation_period_ms: int option;
+      rotation_period_msgs: int option;
     }
     [@@deriving accessor]
 
@@ -383,8 +383,8 @@ module Event_content = struct
       let encoding =
         string_enum
           [
-            "m.olm.v1.curve25519-aes-sha2", Curve_sha2
-          ; "m.megolm.v1.aes-sha2", Aes_sha2
+            "m.olm.v1.curve25519-aes-sha2", Curve_sha2;
+            "m.megolm.v1.aes-sha2", Aes_sha2;
           ]
     end
 
@@ -408,20 +408,20 @@ module Event_content = struct
           [
             case string
               (function Megolm t -> Some t | _ -> None)
-              (fun t -> Megolm t)
-          ; case
+              (fun t -> Megolm t);
+            case
               (assoc Cyphertext_info.encoding)
               (function Olm t -> Some t | _ -> None)
-              (fun t -> Olm t)
+              (fun t -> Olm t);
           ]
     end
 
     type t = {
-        algorithm: Algorithm.t
-      ; cyphertext: Cyphertext.t
-      ; sender_key: string
-      ; device_id: string option
-      ; session_id: string option
+      algorithm: Algorithm.t;
+      cyphertext: Cyphertext.t;
+      sender_key: string;
+      device_id: string option;
+      session_id: string option;
     }
     [@@deriving accessor]
 
@@ -443,9 +443,9 @@ module Event_content = struct
   module Message = struct
     module Text = struct
       type t = {
-          body: string
-        ; format: string option
-        ; formatted_body: string option
+        body: string;
+        format: string option;
+        formatted_body: string option;
       }
       [@@deriving accessor]
 
@@ -462,9 +462,9 @@ module Event_content = struct
 
     module Emote = struct
       type t = {
-          body: string
-        ; format: string option
-        ; formatted_body: string option
+        body: string;
+        format: string option;
+        formatted_body: string option;
       }
       [@@deriving accessor]
 
@@ -494,42 +494,42 @@ module Event_content = struct
     module Image = struct
       module Info = struct
         type t = {
-            h: int option
-          ; w: int option
-          ; mimetype: string option
-          ; size: int option
-          ; thumbnail_url: string option
-          ; thumbnail_file: Message.Encrypted_file.t option
-          ; thumbnail_info: Message.Thumbnail.t option
+          h: int option;
+          w: int option;
+          mimetype: string option;
+          size: int option;
+          thumbnail_url: string option;
+          thumbnail_file: Message.Encrypted_file.t option;
+          thumbnail_info: Message.Thumbnail.t option;
         }
         [@@deriving accessor]
 
         let encoding =
           let to_tuple t =
-            ( t.h
-            , t.w
-            , t.mimetype
-            , t.size
-            , t.thumbnail_url
-            , t.thumbnail_file
-            , t.thumbnail_info ) in
+            ( t.h,
+              t.w,
+              t.mimetype,
+              t.size,
+              t.thumbnail_url,
+              t.thumbnail_file,
+              t.thumbnail_info ) in
           let of_tuple v =
-            let ( h
-                , w
-                , mimetype
-                , size
-                , thumbnail_url
-                , thumbnail_file
-                , thumbnail_info ) =
+            let ( h,
+                  w,
+                  mimetype,
+                  size,
+                  thumbnail_url,
+                  thumbnail_file,
+                  thumbnail_info ) =
               v in
             {
-              h
-            ; w
-            ; mimetype
-            ; size
-            ; thumbnail_url
-            ; thumbnail_file
-            ; thumbnail_info
+              h;
+              w;
+              mimetype;
+              size;
+              thumbnail_url;
+              thumbnail_file;
+              thumbnail_info;
             } in
           let with_tuple =
             obj7 (opt "h" int) (opt "w" int) (opt "mimetype" string)
@@ -541,10 +541,10 @@ module Event_content = struct
       end
 
       type t = {
-          body: string
-        ; info: Message.Image.t option
-        ; url: string
-        ; file: Message.Encrypted_file.t option
+        body: string;
+        info: Message.Image.t option;
+        url: string;
+        file: Message.Encrypted_file.t option;
       }
       [@@deriving accessor]
 
@@ -563,11 +563,11 @@ module Event_content = struct
 
     module File = struct
       type t = {
-          body: string
-        ; filename: string option
-        ; info: Message.File.t option
-        ; url: string
-        ; file: Message.Encrypted_file.t option
+        body: string;
+        filename: string option;
+        info: Message.File.t option;
+        url: string;
+        file: Message.Encrypted_file.t option;
       }
       [@@deriving accessor]
 
@@ -586,10 +586,10 @@ module Event_content = struct
 
     module Audio = struct
       type t = {
-          body: string
-        ; info: Message.Audio.t option
-        ; url: string
-        ; file: Message.Encrypted_file.t option
+        body: string;
+        info: Message.Audio.t option;
+        url: string;
+        file: Message.Encrypted_file.t option;
       }
       [@@deriving accessor]
 
@@ -624,10 +624,10 @@ module Event_content = struct
 
     module Video = struct
       type t = {
-          body: string
-        ; info: Message.Video.t option
-        ; url: string
-        ; file: Message.Encrypted_file.t option
+        body: string;
+        info: Message.Video.t option;
+        url: string;
+        file: Message.Encrypted_file.t option;
       }
       [@@deriving accessor]
 
@@ -664,10 +664,10 @@ module Event_content = struct
 
     module Server_notice = struct
       type t = {
-          body: string
-        ; server_notice_type: string
-        ; admin_contact: string option
-        ; limit_type: string option
+        body: string;
+        server_notice_type: string;
+        admin_contact: string option;
+        limit_type: string option;
       }
       [@@deriving accessor]
 
@@ -718,46 +718,46 @@ module Event_content = struct
         cond
           (obj1 (req "msgtype" string))
           [
-            ( "m.text"
-            , case Text.encoding
+            ( "m.text",
+              case Text.encoding
                 (function Text t -> Some t | _ -> None)
-                (fun t -> Text t) )
-          ; ( "m.emote"
-            , case Emote.encoding
+                (fun t -> Text t) );
+            ( "m.emote",
+              case Emote.encoding
                 (function Emote t -> Some t | _ -> None)
-                (fun t -> Emote t) )
-          ; ( "m.notice"
-            , case Notice.encoding
+                (fun t -> Emote t) );
+            ( "m.notice",
+              case Notice.encoding
                 (function Notice t -> Some t | _ -> None)
-                (fun t -> Notice t) )
-          ; ( "m.image"
-            , case Image.encoding
+                (fun t -> Notice t) );
+            ( "m.image",
+              case Image.encoding
                 (function Image t -> Some t | _ -> None)
-                (fun t -> Image t) )
-          ; ( "m.file"
-            , case File.encoding
+                (fun t -> Image t) );
+            ( "m.file",
+              case File.encoding
                 (function File t -> Some t | _ -> None)
-                (fun t -> File t) )
-          ; ( "m.audio"
-            , case Audio.encoding
+                (fun t -> File t) );
+            ( "m.audio",
+              case Audio.encoding
                 (function Audio t -> Some t | _ -> None)
-                (fun t -> Audio t) )
-          ; ( "m.location"
-            , case Location.encoding
+                (fun t -> Audio t) );
+            ( "m.location",
+              case Location.encoding
                 (function Location t -> Some t | _ -> None)
-                (fun t -> Location t) )
-          ; ( "m.video"
-            , case Video.encoding
+                (fun t -> Location t) );
+            ( "m.video",
+              case Video.encoding
                 (function Video t -> Some t | _ -> None)
-                (fun t -> Video t) )
-          ; ( "m.sticker"
-            , case Sticker.encoding
+                (fun t -> Video t) );
+            ( "m.sticker",
+              case Sticker.encoding
                 (function Sticker t -> Some t | _ -> None)
-                (fun t -> Sticker t) )
-          ; ( "m.server_notice"
-            , case Server_notice.encoding
+                (fun t -> Sticker t) );
+            ( "m.server_notice",
+              case Server_notice.encoding
                 (function Server_notice t -> Some t | _ -> None)
-                (fun t -> Server_notice t) )
+                (fun t -> Server_notice t) );
           ] in
       conv to_tuple of_tuple with_tuple
   end
@@ -935,38 +935,38 @@ module Event_content = struct
     end
 
     type t = {
-        avatar_url: string option
-      ; displayname: string option
-      ; last_active_ago: int option
-      ; presence: Presence.t
-      ; currently_active: bool option
-      ; status_msg: string option
+      avatar_url: string option;
+      displayname: string option;
+      last_active_ago: int option;
+      presence: Presence.t;
+      currently_active: bool option;
+      status_msg: string option;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.avatar_url
-        , t.displayname
-        , t.last_active_ago
-        , t.presence
-        , t.currently_active
-        , t.status_msg ) in
+        ( t.avatar_url,
+          t.displayname,
+          t.last_active_ago,
+          t.presence,
+          t.currently_active,
+          t.status_msg ) in
       let of_tuple v =
-        let ( avatar_url
-            , displayname
-            , last_active_ago
-            , presence
-            , currently_active
-            , status_msg ) =
+        let ( avatar_url,
+              displayname,
+              last_active_ago,
+              presence,
+              currently_active,
+              status_msg ) =
           v in
         {
-          avatar_url
-        ; displayname
-        ; last_active_ago
-        ; presence
-        ; currently_active
-        ; status_msg
+          avatar_url;
+          displayname;
+          last_active_ago;
+          presence;
+          currently_active;
+          status_msg;
         } in
       let with_tuple =
         obj6 (opt "avatar_url" string) (opt "displayname" string)
@@ -979,11 +979,11 @@ module Event_content = struct
 
   module Push_rules = struct
     type t = {
-        content: Push_rule.t list option
-      ; override: Push_rule.t list option
-      ; room: Push_rule.t list option
-      ; sender: Push_rule.t list option
-      ; underride: Push_rule.t list option
+      content: Push_rule.t list option;
+      override: Push_rule.t list option;
+      room: Push_rule.t list option;
+      sender: Push_rule.t list option;
+      underride: Push_rule.t list option;
     }
     [@@deriving accessor]
 
@@ -1118,10 +1118,10 @@ module Event_content = struct
 
   module Room_key = struct
     type t = {
-        algorithm: string
-      ; room_id: string
-      ; session_id: string
-      ; session_key: string
+      algorithm: string;
+      room_id: string;
+      session_id: string;
+      session_key: string;
     }
     [@@deriving accessor]
 
@@ -1139,10 +1139,10 @@ module Event_content = struct
   module Room_key_request = struct
     module Request_key_info = struct
       type t = {
-          algorithm: string
-        ; room_id: string
-        ; sender_key: string
-        ; session_key: string
+        algorithm: string;
+        room_id: string;
+        sender_key: string;
+        session_key: string;
       }
       [@@deriving accessor]
 
@@ -1165,10 +1165,10 @@ module Event_content = struct
     end
 
     type t = {
-        body: Request_key_info.t
-      ; action: Action.t
-      ; requesting_device_id: string
-      ; request_id: string
+      body: Request_key_info.t;
+      action: Action.t;
+      requesting_device_id: string;
+      request_id: string;
     }
     [@@deriving accessor]
 
@@ -1188,42 +1188,42 @@ module Event_content = struct
 
   module Forwarded_room_key = struct
     type t = {
-        algorithm: string
-      ; room_id: string
-      ; sender_key: string
-      ; session_id: string
-      ; session_key: string
-      ; sender_claimed_ed25519_key: string
-      ; forwarding_curve25519_key_chain: string list
+      algorithm: string;
+      room_id: string;
+      sender_key: string;
+      session_id: string;
+      session_key: string;
+      sender_claimed_ed25519_key: string;
+      forwarding_curve25519_key_chain: string list;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.algorithm
-        , t.room_id
-        , t.sender_key
-        , t.session_id
-        , t.session_key
-        , t.sender_claimed_ed25519_key
-        , t.forwarding_curve25519_key_chain ) in
+        ( t.algorithm,
+          t.room_id,
+          t.sender_key,
+          t.session_id,
+          t.session_key,
+          t.sender_claimed_ed25519_key,
+          t.forwarding_curve25519_key_chain ) in
       let of_tuple v =
-        let ( algorithm
-            , room_id
-            , sender_key
-            , session_id
-            , session_key
-            , sender_claimed_ed25519_key
-            , forwarding_curve25519_key_chain ) =
+        let ( algorithm,
+              room_id,
+              sender_key,
+              session_id,
+              session_key,
+              sender_claimed_ed25519_key,
+              forwarding_curve25519_key_chain ) =
           v in
         {
-          algorithm
-        ; room_id
-        ; sender_key
-        ; session_id
-        ; session_key
-        ; sender_claimed_ed25519_key
-        ; forwarding_curve25519_key_chain
+          algorithm;
+          room_id;
+          sender_key;
+          session_id;
+          session_key;
+          sender_claimed_ed25519_key;
+          forwarding_curve25519_key_chain;
         } in
       let with_tuple =
         obj7 (req "algorithm" string) (req "room_id" string)
@@ -1295,103 +1295,103 @@ module Event_content = struct
       [
         case Aliases.encoding
           (function Aliases t -> Some t | _ -> None)
-          (fun t -> Aliases t)
-      ; case Canonical_alias.encoding
+          (fun t -> Aliases t);
+        case Canonical_alias.encoding
           (function Canonical_alias t -> Some t | _ -> None)
-          (fun t -> Canonical_alias t)
-      ; case Create.encoding
+          (fun t -> Canonical_alias t);
+        case Create.encoding
           (function Create t -> Some t | _ -> None)
-          (fun t -> Create t)
-      ; case Join_rules.encoding
+          (fun t -> Create t);
+        case Join_rules.encoding
           (function Join_rules t -> Some t | _ -> None)
-          (fun t -> Join_rules t)
-      ; case Member.encoding
+          (fun t -> Join_rules t);
+        case Member.encoding
           (function Member t -> Some t | _ -> None)
-          (fun t -> Member t)
-      ; case Power_levels.encoding
+          (fun t -> Member t);
+        case Power_levels.encoding
           (function Power_levels t -> Some t | _ -> None)
-          (fun t -> Power_levels t)
-      ; case History_visibility.encoding
+          (fun t -> Power_levels t);
+        case History_visibility.encoding
           (function History_visibility t -> Some t | _ -> None)
-          (fun t -> History_visibility t)
-      ; case Third_party_invite.encoding
+          (fun t -> History_visibility t);
+        case Third_party_invite.encoding
           (function Third_party_invite t -> Some t | _ -> None)
-          (fun t -> Third_party_invite t)
-      ; case Guest_access.encoding
+          (fun t -> Third_party_invite t);
+        case Guest_access.encoding
           (function Guest_access t -> Some t | _ -> None)
-          (fun t -> Guest_access t)
-      ; case Server_acl.encoding
+          (fun t -> Guest_access t);
+        case Server_acl.encoding
           (function Server_acl t -> Some t | _ -> None)
-          (fun t -> Server_acl t)
-      ; case Tombstone.encoding
+          (fun t -> Server_acl t);
+        case Tombstone.encoding
           (function Tombstone t -> Some t | _ -> None)
-          (fun t -> Tombstone t)
-      ; case Encryption.encoding
+          (fun t -> Tombstone t);
+        case Encryption.encoding
           (function Encryption t -> Some t | _ -> None)
-          (fun t -> Encryption t)
-      ; case Encrypted.encoding
+          (fun t -> Encryption t);
+        case Encrypted.encoding
           (function Encrypted t -> Some t | _ -> None)
-          (fun t -> Encrypted t)
-      ; case Message.encoding
+          (fun t -> Encrypted t);
+        case Message.encoding
           (function Message t -> Some t | _ -> None)
-          (fun t -> Message t)
-      ; case Name.encoding
+          (fun t -> Message t);
+        case Name.encoding
           (function Name t -> Some t | _ -> None)
-          (fun t -> Name t)
-      ; case Topic.encoding
+          (fun t -> Name t);
+        case Topic.encoding
           (function Topic t -> Some t | _ -> None)
-          (fun t -> Topic t)
-      ; case Avatar.encoding
+          (fun t -> Topic t);
+        case Avatar.encoding
           (function Avatar t -> Some t | _ -> None)
-          (fun t -> Avatar t)
-      ; case Pinned_events.encoding
+          (fun t -> Avatar t);
+        case Pinned_events.encoding
           (function Pinned t -> Some t | _ -> None)
-          (fun t -> Pinned t)
-      ; case Call.Invite.encoding
+          (fun t -> Pinned t);
+        case Call.Invite.encoding
           (function Invite t -> Some t | _ -> None)
-          (fun t -> Invite t)
-      ; case Call.Candidates.encoding
+          (fun t -> Invite t);
+        case Call.Candidates.encoding
           (function Candidates t -> Some t | _ -> None)
-          (fun t -> Candidates t)
-      ; case Call.Answer.encoding
+          (fun t -> Candidates t);
+        case Call.Answer.encoding
           (function Answer t -> Some t | _ -> None)
-          (fun t -> Answer t)
-      ; case Call.Hangup.encoding
+          (fun t -> Answer t);
+        case Call.Hangup.encoding
           (function Hangup t -> Some t | _ -> None)
-          (fun t -> Hangup t)
-      ; case Presence.encoding
+          (fun t -> Hangup t);
+        case Presence.encoding
           (function Presence t -> Some t | _ -> None)
-          (fun t -> Presence t)
-      ; case Push_rules.encoding
+          (fun t -> Presence t);
+        case Push_rules.encoding
           (function Push_rules t -> Some t | _ -> None)
-          (fun t -> Push_rules t)
-      ; case Typing.encoding
+          (fun t -> Push_rules t);
+        case Typing.encoding
           (function Typing t -> Some t | _ -> None)
-          (fun t -> Typing t)
-      ; case Receipt.encoding
+          (fun t -> Typing t);
+        case Receipt.encoding
           (function Receipt t -> Some t | _ -> None)
-          (fun t -> Receipt t)
-      ; case Fully_read.encoding
+          (fun t -> Receipt t);
+        case Fully_read.encoding
           (function Fully_read t -> Some t | _ -> None)
-          (fun t -> Fully_read t)
-      ; case Tag.encoding
+          (fun t -> Fully_read t);
+        case Tag.encoding
           (function Tag t -> Some t | _ -> None)
-          (fun t -> Tag t)
-      ; case Direct.encoding
+          (fun t -> Tag t);
+        case Direct.encoding
           (function Direct t -> Some t | _ -> None)
-          (fun t -> Direct t)
-      ; case Room_key.encoding
+          (fun t -> Direct t);
+        case Room_key.encoding
           (function Room_key t -> Some t | _ -> None)
-          (fun t -> Room_key t)
-      ; case Room_key_request.encoding
+          (fun t -> Room_key t);
+        case Room_key_request.encoding
           (function Room_key_request t -> Some t | _ -> None)
-          (fun t -> Room_key_request t)
-      ; case Forwarded_room_key.encoding
+          (fun t -> Room_key_request t);
+        case Forwarded_room_key.encoding
           (function Forwarded_room_key t -> Some t | _ -> None)
-          (fun t -> Forwarded_room_key t)
-      ; case Dummy.encoding
+          (fun t -> Forwarded_room_key t);
+        case Dummy.encoding
           (function Dummy t -> Some t | _ -> None)
-          (fun t -> Dummy t)
+          (fun t -> Dummy t);
       ]
 end
 
@@ -1442,175 +1442,175 @@ module Event = struct
       cond
         (obj1 (req "type" string))
         [
-          ( "m.room.aliases"
-          , case
+          ( "m.room.aliases",
+            case
               (Content.content Event_content.Aliases.encoding)
               (function Event_content.Aliases t -> Some t | _ -> None)
-              (fun t -> Aliases t) )
-        ; ( "m.room.canonical_alias"
-          , case
+              (fun t -> Aliases t) );
+          ( "m.room.canonical_alias",
+            case
               (Content.content Event_content.Canonical_alias.encoding)
               (function Event_content.Canonical_alias t -> Some t | _ -> None)
-              (fun t -> Canonical_alias t) )
-        ; ( "m.room.create"
-          , case
+              (fun t -> Canonical_alias t) );
+          ( "m.room.create",
+            case
               (Content.content Event_content.Create.encoding)
               (function Event_content.Create t -> Some t | _ -> None)
-              (fun t -> Create t) )
-        ; ( "m.room.join_rules"
-          , case
+              (fun t -> Create t) );
+          ( "m.room.join_rules",
+            case
               (Content.content Event_content.Join_rules.encoding)
               (function Event_content.Join_rules t -> Some t | _ -> None)
-              (fun t -> Join_rules t) )
-        ; ( "m.room.member"
-          , case
+              (fun t -> Join_rules t) );
+          ( "m.room.member",
+            case
               (Content.content Event_content.Member.encoding)
               (function Event_content.Member t -> Some t | _ -> None)
-              (fun t -> Member t) )
-        ; ( "m.room.power_levels"
-          , case
+              (fun t -> Member t) );
+          ( "m.room.power_levels",
+            case
               (Content.content Event_content.Power_levels.encoding)
               (function Event_content.Power_levels t -> Some t | _ -> None)
-              (fun t -> Power_levels t) )
-        ; ( "m.room.history_visibility"
-          , case
+              (fun t -> Power_levels t) );
+          ( "m.room.history_visibility",
+            case
               (Content.content Event_content.History_visibility.encoding)
               (function
                 | Event_content.History_visibility t -> Some t | _ -> None)
-              (fun t -> History_visibility t) )
-        ; ( "m.room.third_party_invite"
-          , case
+              (fun t -> History_visibility t) );
+          ( "m.room.third_party_invite",
+            case
               (Content.content Event_content.Third_party_invite.encoding)
               (function
                 | Event_content.Third_party_invite t -> Some t | _ -> None)
-              (fun t -> Third_party_invite t) )
-        ; ( "m.room.guest_access"
-          , case
+              (fun t -> Third_party_invite t) );
+          ( "m.room.guest_access",
+            case
               (Content.content Event_content.Guest_access.encoding)
               (function Event_content.Guest_access t -> Some t | _ -> None)
-              (fun t -> Guest_access t) )
-        ; ( "m.room.server_acl"
-          , case
+              (fun t -> Guest_access t) );
+          ( "m.room.server_acl",
+            case
               (Content.content Event_content.Server_acl.encoding)
               (function Event_content.Server_acl t -> Some t | _ -> None)
-              (fun t -> Server_acl t) )
-        ; ( "m.room.tombstone"
-          , case
+              (fun t -> Server_acl t) );
+          ( "m.room.tombstone",
+            case
               (Content.content Event_content.Tombstone.encoding)
               (function Event_content.Tombstone t -> Some t | _ -> None)
-              (fun t -> Tombstone t) )
-        ; ( "m.room.encryption"
-          , case
+              (fun t -> Tombstone t) );
+          ( "m.room.encryption",
+            case
               (Content.content Event_content.Encryption.encoding)
               (function Event_content.Encryption t -> Some t | _ -> None)
-              (fun t -> Encryption t) )
-        ; ( "m.room.encrypted"
-          , case
+              (fun t -> Encryption t) );
+          ( "m.room.encrypted",
+            case
               (Content.content Event_content.Encrypted.encoding)
               (function Event_content.Encrypted t -> Some t | _ -> None)
-              (fun t -> Encrypted t) )
-        ; ( "m.room.message"
-          , case
+              (fun t -> Encrypted t) );
+          ( "m.room.message",
+            case
               (Content.content Event_content.Message.encoding)
               (function Event_content.Message t -> Some t | _ -> None)
-              (fun t -> Message t) )
-        ; ( "m.room.name"
-          , case
+              (fun t -> Message t) );
+          ( "m.room.name",
+            case
               (Content.content Event_content.Name.encoding)
               (function Event_content.Name t -> Some t | _ -> None)
-              (fun t -> Name t) )
-        ; ( "m.room.topic"
-          , case
+              (fun t -> Name t) );
+          ( "m.room.topic",
+            case
               (Content.content Event_content.Topic.encoding)
               (function Event_content.Topic t -> Some t | _ -> None)
-              (fun t -> Topic t) )
-        ; ( "m.room.avatar"
-          , case
+              (fun t -> Topic t) );
+          ( "m.room.avatar",
+            case
               (Content.content Event_content.Avatar.encoding)
               (function Event_content.Avatar t -> Some t | _ -> None)
-              (fun t -> Avatar t) )
-        ; ( "m.room.pinned_events"
-          , case
+              (fun t -> Avatar t) );
+          ( "m.room.pinned_events",
+            case
               (Content.content Event_content.Pinned_events.encoding)
               (function Event_content.Pinned t -> Some t | _ -> None)
-              (fun t -> Pinned t) )
-        ; ( "m.call.invite"
-          , case
+              (fun t -> Pinned t) );
+          ( "m.call.invite",
+            case
               (Content.content Event_content.Call.Invite.encoding)
               (function Event_content.Invite t -> Some t | _ -> None)
-              (fun t -> Invite t) )
-        ; ( "m.call.candidates"
-          , case
+              (fun t -> Invite t) );
+          ( "m.call.candidates",
+            case
               (Content.content Event_content.Call.Candidates.encoding)
               (function Event_content.Candidates t -> Some t | _ -> None)
-              (fun t -> Candidates t) )
-        ; ( "m.call.answer"
-          , case
+              (fun t -> Candidates t) );
+          ( "m.call.answer",
+            case
               (Content.content Event_content.Call.Answer.encoding)
               (function Event_content.Answer t -> Some t | _ -> None)
-              (fun t -> Answer t) )
-        ; ( "m.call.hangup"
-          , case
+              (fun t -> Answer t) );
+          ( "m.call.hangup",
+            case
               (Content.content Event_content.Call.Hangup.encoding)
               (function Event_content.Hangup t -> Some t | _ -> None)
-              (fun t -> Hangup t) )
-        ; ( "m.presence"
-          , case
+              (fun t -> Hangup t) );
+          ( "m.presence",
+            case
               (Content.content Event_content.Presence.encoding)
               (function Event_content.Presence t -> Some t | _ -> None)
-              (fun t -> Presence t) )
-        ; ( "m.push_rules"
-          , case
+              (fun t -> Presence t) );
+          ( "m.push_rules",
+            case
               (Content.content Event_content.Push_rules.encoding)
               (function Event_content.Push_rules t -> Some t | _ -> None)
-              (fun t -> Push_rules t) )
-        ; ( "m.typing"
-          , case
+              (fun t -> Push_rules t) );
+          ( "m.typing",
+            case
               (Content.content Event_content.Typing.encoding)
               (function Event_content.Typing t -> Some t | _ -> None)
-              (fun t -> Typing t) )
-        ; ( "m.receipt"
-          , case
+              (fun t -> Typing t) );
+          ( "m.receipt",
+            case
               (Content.content Event_content.Receipt.encoding)
               (function Event_content.Receipt t -> Some t | _ -> None)
-              (fun t -> Receipt t) )
-        ; ( "m.fully_read"
-          , case
+              (fun t -> Receipt t) );
+          ( "m.fully_read",
+            case
               (Content.content Event_content.Fully_read.encoding)
               (function Event_content.Fully_read t -> Some t | _ -> None)
-              (fun t -> Fully_read t) )
-        ; ( "m.tag"
-          , case
+              (fun t -> Fully_read t) );
+          ( "m.tag",
+            case
               (Content.content Event_content.Tag.encoding)
               (function Event_content.Tag t -> Some t | _ -> None)
-              (fun t -> Tag t) )
-        ; ( "m.direct"
-          , case
+              (fun t -> Tag t) );
+          ( "m.direct",
+            case
               (Content.content Event_content.Direct.encoding)
               (function Event_content.Direct t -> Some t | _ -> None)
-              (fun t -> Direct t) )
-        ; ( "m.room_key"
-          , case
+              (fun t -> Direct t) );
+          ( "m.room_key",
+            case
               (Content.content Event_content.Room_key.encoding)
               (function Event_content.Room_key t -> Some t | _ -> None)
-              (fun t -> Room_key t) )
-        ; ( "m.room_key_request"
-          , case
+              (fun t -> Room_key t) );
+          ( "m.room_key_request",
+            case
               (Content.content Event_content.Room_key_request.encoding)
               (function
                 | Event_content.Room_key_request t -> Some t | _ -> None)
-              (fun t -> Room_key_request t) )
-        ; ( "m.forwarded_room_key"
-          , case
+              (fun t -> Room_key_request t) );
+          ( "m.forwarded_room_key",
+            case
               (Content.content Event_content.Forwarded_room_key.encoding)
               (function
                 | Event_content.Forwarded_room_key t -> Some t | _ -> None)
-              (fun t -> Forwarded_room_key t) )
-        ; ( "m.dummy"
-          , case
+              (fun t -> Forwarded_room_key t) );
+          ( "m.dummy",
+            case
               (Content.content Event_content.Dummy.encoding)
               (function Event_content.Dummy t -> Some t | _ -> None)
-              (fun t -> Dummy t) )
+              (fun t -> Dummy t) );
         ] in
     conv to_tuple of_tuple with_tuple
 end
@@ -1619,9 +1619,9 @@ end
 module Room_event = struct
   module Unsigned = struct
     type t = {
-        age: int option
-      ; redacted_because: Event.t option
-      ; transaction_id: string option
+      age: int option;
+      redacted_because: Event.t option;
+      transaction_id: string option;
     }
     [@@deriving accessor]
 
@@ -1638,25 +1638,25 @@ module Room_event = struct
   end
 
   type t = {
-      event: Event.t
-    ; event_id: string option
-    ; sender: string option
-    ; origin: string option
-    ; origin_server_ts: int option
-    ; unsigned: Unsigned.t option
-    ; room_id: string option
+    event: Event.t;
+    event_id: string option;
+    sender: string option;
+    origin: string option;
+    origin_server_ts: int option;
+    unsigned: Unsigned.t option;
+    room_id: string option;
   }
   [@@deriving accessor]
 
   let encoding =
     let to_tuple t =
-      ( t.event
-      , ( t.event_id
-        , t.sender
-        , t.origin
-        , t.origin_server_ts
-        , t.unsigned
-        , t.room_id ) ) in
+      ( t.event,
+        ( t.event_id,
+          t.sender,
+          t.origin,
+          t.origin_server_ts,
+          t.unsigned,
+          t.room_id ) ) in
     let of_tuple v =
       let event, (event_id, sender, origin, origin_server_ts, unsigned, room_id)
           =
@@ -1702,13 +1702,13 @@ let encoding : event encoding =
     [
       case Event.encoding
         (function `Event t -> Some t | _ -> None)
-        (fun t -> `Event t)
-    ; case Room_event.encoding
+        (fun t -> `Event t);
+      case Room_event.encoding
         (function `Room_event t -> Some t | _ -> None)
-        (fun t -> `Room_event t)
-    ; case State_event.encoding
+        (fun t -> `Room_event t);
+      case State_event.encoding
         (function `State_event t -> Some t | _ -> None)
-        (fun t -> `State_event t)
+        (fun t -> `State_event t);
     ]
 
 (* Persistent data unit *)

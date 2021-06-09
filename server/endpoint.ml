@@ -45,9 +45,9 @@ let login_post =
         Store.exists store Key.(v "users" / user_id) >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok None -> Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
         | Ok (Some _) -> (
           Store.get store Key.(v "users" / user_id / "password") >>= function
@@ -67,9 +67,9 @@ let login_post =
               user_id
           | _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )))
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )))
       | _ ->
         Lwt.return (`Bad_request, error "M_UNKNOWN" "Bad identifier type", None)
       )
@@ -86,9 +86,9 @@ let logout =
       Store.remove store Key.(v "tokens" / token) >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok () ->
         let response = Response.make () in
         let response =
@@ -120,9 +120,9 @@ let register =
     | _ -> (
       match Request.get_password request with
       | None ->
-        ( `Unauthorized
-        , {|{"session": "MSoDYilSIFilglrBUmISKWQe", "flows": [{"stages": ["m.login.dummy"]}], "params": {}}|}
-        , None )
+        ( `Unauthorized,
+          {|{"session": "MSoDYilSIFilglrBUmISKWQe", "flows": [{"stages": ["m.login.dummy"]}], "params": {}}|},
+          None )
         |> Lwt.return
       | Some password -> (
         let username =
@@ -132,30 +132,30 @@ let register =
         Store.exists store Key.(v "users" / user_id) >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok (Some _) ->
           Lwt.return
-            ( `Bad_request
-            , error "M_USER_IN_USE" "Desired user ID is already taken."
-            , None )
+            ( `Bad_request,
+              error "M_USER_IN_USE" "Desired user ID is already taken.",
+              None )
         | Ok None -> (
           Store.set store Key.(v "users" / user_id / "password") password
           >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () -> (
             Store.set store Key.(v "users" / user_id / "display_name") username
             >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok () -> (
               let f token =
                 let response =
@@ -228,9 +228,9 @@ let sync =
     get_logged_user token >>= function
     | Error _ ->
       Lwt.return
-        ( `Internal_server_error
-        , error "M_UNKNOWN" "Internal storage failure"
-        , None )
+        ( `Internal_server_error,
+          error "M_UNKNOWN" "Internal storage failure",
+          None )
     | Ok None ->
       Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
       (* should not happend *)
@@ -245,16 +245,16 @@ let sync =
         Room_helpers.get_rooms user_id since >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok (joined_rooms, invited_rooms, leaved_rooms, room_update) -> (
           Helpers.get_account_data user_id since >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok (account_data, account_data_update) ->
             if room_update || account_data_update then
               let response =
@@ -297,9 +297,9 @@ module Account_data = struct
       get_logged_user token >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
         (* should not happend *)
@@ -314,17 +314,17 @@ module Account_data = struct
           Event_store.set event_store Key.(v id) data >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () -> (
             Store.set store Key.(v "users" / user_id / "data" / data_type) id
             >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok () ->
               let response = Response.make () in
               let response =
@@ -339,9 +339,9 @@ module Account_data = struct
       get_logged_user token >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
         (* should not happend *)
@@ -353,16 +353,16 @@ module Account_data = struct
           >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok data_id -> (
             Event_store.get event_store Key.(v data_id) >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok data ->
               let response = Response.make ~data () in
               let response =
@@ -380,9 +380,9 @@ module Profile = struct
         get_logged_user token >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok None ->
           Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
           (* should not happend *)
@@ -403,9 +403,9 @@ module Profile = struct
             >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok () ->
               let response = Response.make () in
               let response =
@@ -420,23 +420,23 @@ module Profile = struct
         Store.exists store Key.(v "users" / user_id) >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok None ->
           Lwt.return
-            ( `Not_found
-            , error "M_NOT_FOUND" (Fmt.str "User %s not found." user_id)
-            , None )
+            ( `Not_found,
+              error "M_NOT_FOUND" (Fmt.str "User %s not found." user_id),
+              None )
         | Ok (Some _) -> (
           (Store.get store Key.(v "users" / user_id / "display_name")
            >>= function
            | Error (`Not_found _) -> Lwt.return_ok None
            | Error _ ->
              Lwt.return_error
-               ( `Internal_server_error
-               , error "M_UNKNOWN" "Internal storage failure"
-               , None )
+               ( `Internal_server_error,
+                 error "M_UNKNOWN" "Internal storage failure",
+                 None )
            | Ok display_name -> Lwt.return_ok (Some display_name))
           >>= function
           | Error e -> Lwt.return e
@@ -456,9 +456,9 @@ module Profile = struct
         get_logged_user token >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok None ->
           Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
           (* should not happend *)
@@ -479,9 +479,9 @@ module Profile = struct
             >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok () ->
               let response = Response.make () in
               let response =
@@ -496,22 +496,22 @@ module Profile = struct
         Store.exists store Key.(v "users" / user_id) >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok None ->
           Lwt.return
-            ( `Not_found
-            , error "M_NOT_FOUND" (Fmt.str "User %s not found." user_id)
-            , None )
+            ( `Not_found,
+              error "M_NOT_FOUND" (Fmt.str "User %s not found." user_id),
+              None )
         | Ok (Some _) -> (
           (Store.get store Key.(v "users" / user_id / "avatar_url") >>= function
            | Error (`Not_found _) -> Lwt.return_ok None
            | Error _ ->
              Lwt.return_error
-               ( `Internal_server_error
-               , error "M_UNKNOWN" "Internal storage failure"
-               , None )
+               ( `Internal_server_error,
+                 error "M_UNKNOWN" "Internal storage failure",
+                 None )
            | Ok avatar_url -> Lwt.return_ok (Some avatar_url))
           >>= function
           | Error e -> Lwt.return e
@@ -530,22 +530,22 @@ module Profile = struct
       Store.exists store Key.(v "users" / user_id) >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return
-          ( `Not_found
-          , error "M_NOT_FOUND" (Fmt.str "User %s not found." user_id)
-          , None )
+          ( `Not_found,
+            error "M_NOT_FOUND" (Fmt.str "User %s not found." user_id),
+            None )
       | Ok (Some _) -> (
         (Store.get store Key.(v "users" / user_id / "display_name") >>= function
          | Error (`Not_found _) -> Lwt.return_ok None
          | Error _ ->
            Lwt.return_error
-             ( `Internal_server_error
-             , error "M_UNKNOWN" "Internal storage failure"
-             , None )
+             ( `Internal_server_error,
+               error "M_UNKNOWN" "Internal storage failure",
+               None )
          | Ok display_name -> Lwt.return_ok (Some display_name))
         >>= function
         | Error e -> Lwt.return e
@@ -554,9 +554,9 @@ module Profile = struct
            | Error (`Not_found _) -> Lwt.return_ok None
            | Error _ ->
              Lwt.return_error
-               ( `Internal_server_error
-               , error "M_UNKNOWN" "Internal storage failure"
-               , None )
+               ( `Internal_server_error,
+                 error "M_UNKNOWN" "Internal storage failure",
+                 None )
            | Ok avatar_url -> Lwt.return_ok (Some avatar_url))
           >>= function
           | Error e -> Lwt.return e
@@ -594,9 +594,9 @@ let keys_upload =
     get_logged_user token >>= function
     | Error _ ->
       Lwt.return
-        ( `Internal_server_error
-        , error "M_UNKNOWN" "Internal storage failure"
-        , None )
+        ( `Internal_server_error,
+          error "M_UNKNOWN" "Internal storage failure",
+          None )
     | Ok None ->
       Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
       (* should not happend *)
@@ -613,28 +613,26 @@ let keys_upload =
         >>= function
         | Error _ ->
           Lwt.return_error
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure" )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure" )
         | Ok () -> Lwt.return_ok () in
-      ignore (Option.map (List.map f) (Request.get_one_time_keys request))
-      ; Store.list store
-          Key.(v "users" / user_id / "one_time_keys" / "device_id")
-        >>= function
-        | Error _ ->
-          Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
-        | Ok _l ->
-          (* temporary solution, riot is going crazy with this endpoint *)
-          let response =
-            Response.make
-              ~one_time_key_counts:["signed_curve25519", 50 (* List.length l *)]
-              () in
-          let response =
-            construct Response.encoding response |> Ezjsonm.value_to_string
-          in
-          Lwt.return (`OK, response, None)) in
+      ignore (Option.map (List.map f) (Request.get_one_time_keys request));
+      Store.list store Key.(v "users" / user_id / "one_time_keys" / "device_id")
+      >>= function
+      | Error _ ->
+        Lwt.return
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
+      | Ok _l ->
+        (* temporary solution, riot is going crazy with this endpoint *)
+        let response =
+          Response.make
+            ~one_time_key_counts:["signed_curve25519", 50 (* List.length l *)]
+            () in
+        let response =
+          construct Response.encoding response |> Ezjsonm.value_to_string in
+        Lwt.return (`OK, response, None)) in
   true, f
 
 let keys_query =
@@ -643,9 +641,9 @@ let keys_query =
     get_logged_user token >>= function
     | Error _ ->
       Lwt.return
-        ( `Internal_server_error
-        , error "M_UNKNOWN" "Internal storage failure"
-        , None )
+        ( `Internal_server_error,
+          error "M_UNKNOWN" "Internal storage failure",
+          None )
     | Ok None ->
       Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
       (* should not happend *)
@@ -674,9 +672,9 @@ let capabilities =
     get_logged_user token >>= function
     | Error _ ->
       Lwt.return
-        ( `Internal_server_error
-        , error "M_UNKNOWN" "Internal storage failure"
-        , None )
+        ( `Internal_server_error,
+          error "M_UNKNOWN" "Internal storage failure",
+          None )
     | Ok None ->
       Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
       (* should not happend *)
@@ -709,9 +707,9 @@ let user_search =
     Store.list store Key.(v "users") >>= function
     | Error _ ->
       Lwt.return
-        ( `Internal_server_error
-        , error "M_UNKNOWN" "Internal storage failure"
-        , None )
+        ( `Internal_server_error,
+          error "M_UNKNOWN" "Internal storage failure",
+          None )
     | Ok user_ids ->
       let users =
         List.filter_map

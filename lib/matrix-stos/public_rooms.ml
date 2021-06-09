@@ -4,10 +4,10 @@ open Matrix_common
 module Get_public_rooms = struct
   module Query = struct
     type t = {
-        limit: int option
-      ; since: string option
-      ; include_all_networks: bool option
-      ; third_party_instance_id: string option
+      limit: int option;
+      since: string option;
+      include_all_networks: bool option;
+      third_party_instance_id: string option;
     }
     [@@deriving accessor]
 
@@ -34,55 +34,55 @@ module Get_public_rooms = struct
   module Response = struct
     module Public_rooms_chunk = struct
       type t = {
-          aliases: string list option
-        ; canonical_alias: string option
-        ; name: string option
-        ; num_joined_members: int
-        ; room_id: string
-        ; topic: string option
-        ; world_readable: bool
-        ; guest_can_join: bool
-        ; avatar_url: string option
-        ; federate: bool option
-              (* What ? I was supposed to follow the documentation ? - field present when calling synapse but not in the documentation *)
+        aliases: string list option;
+        canonical_alias: string option;
+        name: string option;
+        num_joined_members: int;
+        room_id: string;
+        topic: string option;
+        world_readable: bool;
+        guest_can_join: bool;
+        avatar_url: string option;
+        federate: bool option;
+            (* What ? I was supposed to follow the documentation ? - field present when calling synapse but not in the documentation *)
       }
       [@@deriving accessor]
 
       let encoding =
         let to_tuple t =
-          ( t.aliases
-          , t.canonical_alias
-          , t.name
-          , t.num_joined_members
-          , t.room_id
-          , t.topic
-          , t.world_readable
-          , t.guest_can_join
-          , t.avatar_url
-          , t.federate ) in
+          ( t.aliases,
+            t.canonical_alias,
+            t.name,
+            t.num_joined_members,
+            t.room_id,
+            t.topic,
+            t.world_readable,
+            t.guest_can_join,
+            t.avatar_url,
+            t.federate ) in
         let of_tuple v =
-          let ( aliases
-              , canonical_alias
-              , name
-              , num_joined_members
-              , room_id
-              , topic
-              , world_readable
-              , guest_can_join
-              , avatar_url
-              , federate ) =
+          let ( aliases,
+                canonical_alias,
+                name,
+                num_joined_members,
+                room_id,
+                topic,
+                world_readable,
+                guest_can_join,
+                avatar_url,
+                federate ) =
             v in
           {
-            aliases
-          ; canonical_alias
-          ; name
-          ; num_joined_members
-          ; room_id
-          ; topic
-          ; world_readable
-          ; guest_can_join
-          ; avatar_url
-          ; federate
+            aliases;
+            canonical_alias;
+            name;
+            num_joined_members;
+            room_id;
+            topic;
+            world_readable;
+            guest_can_join;
+            avatar_url;
+            federate;
           } in
         let with_tuple =
           obj10
@@ -98,10 +98,10 @@ module Get_public_rooms = struct
     end
 
     type t = {
-        chunk: Public_rooms_chunk.t list
-      ; next_batch: string option
-      ; prev_batch: string option
-      ; total_room_count_estimate: int option
+      chunk: Public_rooms_chunk.t list;
+      next_batch: string option;
+      prev_batch: string option;
+      total_room_count_estimate: int option;
     }
     [@@deriving accessor]
 
@@ -137,21 +137,21 @@ module Filter_public_rooms = struct
     end
 
     type t = {
-        limit: int option
-      ; since: string option
-      ; filter: Filter.t option
-      ; include_all_networks: bool option
-      ; third_party_instance_id: string option
+      limit: int option;
+      since: string option;
+      filter: Filter.t option;
+      include_all_networks: bool option;
+      third_party_instance_id: string option;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.limit
-        , t.since
-        , t.filter
-        , t.include_all_networks
-        , t.third_party_instance_id ) in
+        ( t.limit,
+          t.since,
+          t.filter,
+          t.include_all_networks,
+          t.third_party_instance_id ) in
       let of_tuple v =
         let limit, since, filter, include_all_networks, third_party_instance_id
             =

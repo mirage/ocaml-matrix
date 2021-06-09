@@ -14,12 +14,12 @@ end
 
 module Response = struct
   type t = {
-      start: string option
-    ; end_: string option
-    ; events_before: Events.Room_event.t list option
-    ; event: Events.Room_event.t option
-    ; events_after: Events.Room_event.t list option
-    ; state: Events.State_event.t list option
+    start: string option;
+    end_: string option;
+    events_before: Events.Room_event.t list option;
+    event: Events.Room_event.t option;
+    events_after: Events.Room_event.t list option;
+    state: Events.State_event.t list option;
   }
   [@@deriving accessor]
 

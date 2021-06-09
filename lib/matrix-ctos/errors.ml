@@ -30,12 +30,12 @@ module Auth_error = struct
   end
 
   type t = {
-      errcode: string option
-    ; error: string option
-    ; completed: string list option
-    ; flows: Flow.t list
-    ; params: (string * (string * string) list) list option
-    ; session: string option
+    errcode: string option;
+    error: string option;
+    completed: string list option;
+    flows: Flow.t list;
+    params: (string * (string * string) list) list option;
+    session: string option;
   }
   [@@deriving accessor]
 
@@ -79,10 +79,10 @@ let encoding =
     [
       case Error.encoding
         (function Error t -> Some t | _ -> None)
-        (fun t -> Error t)
-    ; case Auth_error.encoding
+        (fun t -> Error t);
+      case Auth_error.encoding
         (function Auth_error t -> Some t | _ -> None)
-        (fun t -> Auth_error t)
+        (fun t -> Auth_error t);
     ]
 
 let pp ppf = function

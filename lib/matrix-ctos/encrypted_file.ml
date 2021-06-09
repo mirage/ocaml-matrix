@@ -1,11 +1,11 @@
 open Json_encoding
 
 type t = {
-    url: string
-  ; key: Jwk.t
-  ; iv: string
-  ; hashes: (string * string) list
-  ; v: string
+  url: string;
+  key: Jwk.t;
+  iv: string;
+  hashes: (string * string) list;
+  v: string;
 }
 [@@deriving accessor]
 

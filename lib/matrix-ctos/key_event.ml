@@ -3,10 +3,10 @@ open Json_encoding
 module Verification = struct
   module Request = struct
     type t = {
-        from_device: string
-      ; transaction_id: string
-      ; methods: string list
-      ; timestamp: int
+      from_device: string;
+      transaction_id: string;
+      methods: string list;
+      timestamp: int;
     }
     [@@deriving accessor]
 
@@ -25,10 +25,10 @@ module Verification = struct
 
   module Start = struct
     type t = {
-        from_device: string
-      ; transaction_id: string
-      ; verification_method: string
-      ; next_method: string
+      from_device: string;
+      transaction_id: string;
+      verification_method: string;
+      next_method: string;
     }
     [@@deriving accessor]
 
@@ -72,42 +72,42 @@ module Sas_verification = struct
 
   module Start = struct
     type t = {
-        from_device: string
-      ; transaction_id: string
-      ; verification_method: string
-      ; key_agreement_protocols: string list
-      ; hashes: string list
-      ; message_authentication_codes: string list
-      ; short_authentication_string: Sas.t list
+      from_device: string;
+      transaction_id: string;
+      verification_method: string;
+      key_agreement_protocols: string list;
+      hashes: string list;
+      message_authentication_codes: string list;
+      short_authentication_string: Sas.t list;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.from_device
-        , t.transaction_id
-        , t.verification_method
-        , t.key_agreement_protocols
-        , t.hashes
-        , t.message_authentication_codes
-        , t.short_authentication_string ) in
+        ( t.from_device,
+          t.transaction_id,
+          t.verification_method,
+          t.key_agreement_protocols,
+          t.hashes,
+          t.message_authentication_codes,
+          t.short_authentication_string ) in
       let of_tuple v =
-        let ( from_device
-            , transaction_id
-            , verification_method
-            , key_agreement_protocols
-            , hashes
-            , message_authentication_codes
-            , short_authentication_string ) =
+        let ( from_device,
+              transaction_id,
+              verification_method,
+              key_agreement_protocols,
+              hashes,
+              message_authentication_codes,
+              short_authentication_string ) =
           v in
         {
-          from_device
-        ; transaction_id
-        ; verification_method
-        ; key_agreement_protocols
-        ; hashes
-        ; message_authentication_codes
-        ; short_authentication_string
+          from_device;
+          transaction_id;
+          verification_method;
+          key_agreement_protocols;
+          hashes;
+          message_authentication_codes;
+          short_authentication_string;
         } in
       let with_tuple =
         obj7 (req "from_device" string)
@@ -122,42 +122,42 @@ module Sas_verification = struct
 
   module Accept = struct
     type t = {
-        transaction_id: string
-      ; verification_method: string
-      ; key_agreement_protocol: string
-      ; hash: string
-      ; message_authentication_code: string
-      ; short_authentication_string: Sas.t list
-      ; commitment: string
+      transaction_id: string;
+      verification_method: string;
+      key_agreement_protocol: string;
+      hash: string;
+      message_authentication_code: string;
+      short_authentication_string: Sas.t list;
+      commitment: string;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.transaction_id
-        , t.verification_method
-        , t.key_agreement_protocol
-        , t.hash
-        , t.message_authentication_code
-        , t.short_authentication_string
-        , t.commitment ) in
+        ( t.transaction_id,
+          t.verification_method,
+          t.key_agreement_protocol,
+          t.hash,
+          t.message_authentication_code,
+          t.short_authentication_string,
+          t.commitment ) in
       let of_tuple v =
-        let ( transaction_id
-            , verification_method
-            , key_agreement_protocol
-            , hash
-            , message_authentication_code
-            , short_authentication_string
-            , commitment ) =
+        let ( transaction_id,
+              verification_method,
+              key_agreement_protocol,
+              hash,
+              message_authentication_code,
+              short_authentication_string,
+              commitment ) =
           v in
         {
-          transaction_id
-        ; verification_method
-        ; key_agreement_protocol
-        ; hash
-        ; message_authentication_code
-        ; short_authentication_string
-        ; commitment
+          transaction_id;
+          verification_method;
+          key_agreement_protocol;
+          hash;
+          message_authentication_code;
+          short_authentication_string;
+          commitment;
         } in
       let with_tuple =
         obj7

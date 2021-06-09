@@ -9,8 +9,8 @@ let presence =
   variable
     (paths
        [
-         ( "status"
-         , meths [`GET, Endpoint.presence_get; `PUT, Endpoint.presence_put] )
+         ( "status",
+           meths [`GET, Endpoint.presence_get; `PUT, Endpoint.presence_put] );
        ])
 
 let pushrules =
@@ -22,19 +22,19 @@ let pushrules =
             (node
                ~meths:
                  [
-                   `GET, Endpoint.placeholder; `DELETE, Endpoint.placeholder
-                 ; `PUT, Endpoint.placeholder
+                   `GET, Endpoint.placeholder; `DELETE, Endpoint.placeholder;
+                   `PUT, Endpoint.placeholder;
                  ]
                ~paths:
                  [
-                   ( "enabled"
-                   , meths
+                   ( "enabled",
+                     meths
                        [`GET, Endpoint.placeholder; `PUT, Endpoint.placeholder]
-                   )
-                 ; ( "actions"
-                   , meths
+                   );
+                   ( "actions",
+                     meths
                        [`GET, Endpoint.placeholder; `PUT, Endpoint.placeholder]
-                   )
+                   );
                  ]
                ())))
     ()
@@ -43,18 +43,18 @@ let user =
   variable
     (paths
        [
-         ( "filter"
-         , node
+         ( "filter",
+           node
              ~variable:(meths [`GET, Endpoint.filter_get])
              ~meths:[`POST, Endpoint.filter_post]
-             () )
-       ; ( "account_data"
-         , variable
+             () );
+         ( "account_data",
+           variable
              (meths
                 [
-                  `GET, Endpoint.Account_data.get
-                ; `PUT, Endpoint.Account_data.put
-                ]) )
+                  `GET, Endpoint.Account_data.get;
+                  `PUT, Endpoint.Account_data.put;
+                ]) );
        ])
 
 let sync = meths [`GET, Endpoint.sync]
@@ -66,18 +66,18 @@ let profile =
        ~meths:[`GET, Endpoint.Profile.get]
        ~paths:
          [
-           ( "displayname"
-           , meths
+           ( "displayname",
+             meths
                [
-                 `GET, Endpoint.Profile.Displayname.get
-               ; `PUT, Endpoint.Profile.Displayname.put
-               ] )
-         ; ( "avatar_url"
-           , meths
+                 `GET, Endpoint.Profile.Displayname.get;
+                 `PUT, Endpoint.Profile.Displayname.put;
+               ] );
+           ( "avatar_url",
+             meths
                [
-                 `GET, Endpoint.Profile.Avatar_url.get
-               ; `PUT, Endpoint.Profile.Avatar_url.put
-               ] )
+                 `GET, Endpoint.Profile.Avatar_url.get;
+                 `PUT, Endpoint.Profile.Avatar_url.put;
+               ] );
          ]
        ())
 
@@ -86,10 +86,10 @@ let joined_groups = meths [`GET, Endpoint.joined_groups]
 let keys =
   paths
     [
-      "upload", meths [`POST, Endpoint.keys_upload]
-    ; "query", meths [`POST, Endpoint.keys_query]
-    ; "claim", meths [`POST, Endpoint.placeholder]
-    ; "changes", meths [`POST, Endpoint.placeholder]
+      "upload", meths [`POST, Endpoint.keys_upload];
+      "query", meths [`POST, Endpoint.keys_query];
+      "claim", meths [`POST, Endpoint.placeholder];
+      "changes", meths [`POST, Endpoint.placeholder];
     ]
 
 let pushers = meths [`GET, Endpoint.pushers_get; `POST, Endpoint.placeholder]
@@ -100,28 +100,28 @@ let rooms =
   variable
     (paths
        [
-         "members", meths [`GET, Room_endpoint.Events.Get.members]
-       ; "typing", variable (meths [`PUT, Room_endpoint.room_typing])
-       ; "read_markers", meths [`POST, Room_endpoint.read_markers]
-       ; "invite", meths [`POST, Room_endpoint.Membership.invite]
-       ; "join", meths [`POST, Room_endpoint.Membership.join]
-       ; "leave", meths [`POST, Room_endpoint.Membership.leave]
-       ; "forget", meths [`POST, Room_endpoint.Membership.forget]
-       ; "kick", meths [`POST, Room_endpoint.Membership.kick]
-       ; "ban", meths [`POST, Room_endpoint.Membership.ban]
-       ; "unban", meths [`POST, Room_endpoint.Membership.unban]
-       ; "initialSync", meths [`GET, Endpoint.deprecated]
-       ; ( "send"
-         , variable
-             (variable (meths [`PUT, Room_endpoint.Events.Put.send_message])) )
-       ; ( "state"
-         , variable
+         "members", meths [`GET, Room_endpoint.Events.Get.members];
+         "typing", variable (meths [`PUT, Room_endpoint.room_typing]);
+         "read_markers", meths [`POST, Room_endpoint.read_markers];
+         "invite", meths [`POST, Room_endpoint.Membership.invite];
+         "join", meths [`POST, Room_endpoint.Membership.join];
+         "leave", meths [`POST, Room_endpoint.Membership.leave];
+         "forget", meths [`POST, Room_endpoint.Membership.forget];
+         "kick", meths [`POST, Room_endpoint.Membership.kick];
+         "ban", meths [`POST, Room_endpoint.Membership.ban];
+         "unban", meths [`POST, Room_endpoint.Membership.unban];
+         "initialSync", meths [`GET, Endpoint.deprecated];
+         ( "send",
+           variable
+             (variable (meths [`PUT, Room_endpoint.Events.Put.send_message])) );
+         ( "state",
+           variable
              (variable
                 (meths
                    [
-                     `GET, Room_endpoint.Events.Get.state
-                   ; `PUT, Room_endpoint.Events.Put.state
-                   ])) )
+                     `GET, Room_endpoint.Events.Get.state;
+                     `PUT, Room_endpoint.Events.Put.state;
+                   ])) );
        ])
 
 let join = variable (meths [`POST, Room_endpoint.Membership.join])
@@ -133,25 +133,25 @@ let thirdparty =
 let directory =
   paths
     [
-      ( "room"
-      , variable
+      ( "room",
+        variable
           (meths
              [
-               `PUT, Room_endpoint.Room_alias.put
-             ; `GET, Room_endpoint.Room_alias.get
-             ; `DELETE, Room_endpoint.Room_alias.delete
-             ]) )
-    ; ( "list"
-      , paths
+               `PUT, Room_endpoint.Room_alias.put;
+               `GET, Room_endpoint.Room_alias.get;
+               `DELETE, Room_endpoint.Room_alias.delete;
+             ]) );
+      ( "list",
+        paths
           [
-            ( "room"
-            , variable
+            ( "room",
+              variable
                 (meths
                    [
-                     `GET, Room_endpoint.Listing.get_visibility
-                   ; `PUT, Room_endpoint.Listing.set_visibility
-                   ]) )
-          ] )
+                     `GET, Room_endpoint.Listing.get_visibility;
+                     `PUT, Room_endpoint.Listing.set_visibility;
+                   ]) );
+          ] );
     ]
 
 let user_directory = paths ["search", meths [`POST, Endpoint.user_search]]
@@ -161,14 +161,14 @@ let account = paths ["3pid", meths [`GET, Endpoint.Account.Thirdparty_pid.get]]
 let r0 =
   paths
     [
-      "register", register; "login", login; "logout", logout
-    ; "presence", presence; "pushrules", pushrules; "user", user; "sync", sync
-    ; "voip", voip; "profile", profile; "joined_groups", joined_groups
-    ; "keys", keys; "pushers", pushers; "createRoom", create_room
-    ; "capabilities", capabilities; "rooms", rooms; "publicRooms", public_rooms
-    ; "join", join; "thirdparty", thirdparty; "directory", directory
-    ; "user_directory", user_directory; "publicised_groups", publicised_groups
-    ; "account", account
+      "register", register; "login", login; "logout", logout;
+      "presence", presence; "pushrules", pushrules; "user", user; "sync", sync;
+      "voip", voip; "profile", profile; "joined_groups", joined_groups;
+      "keys", keys; "pushers", pushers; "createRoom", create_room;
+      "capabilities", capabilities; "rooms", rooms; "publicRooms", public_rooms;
+      "join", join; "thirdparty", thirdparty; "directory", directory;
+      "user_directory", user_directory; "publicised_groups", publicised_groups;
+      "account", account;
     ]
 
 let unstable =
@@ -177,13 +177,13 @@ let unstable =
 let matrix =
   paths
     [
-      ( "client"
-      , paths
+      ( "client",
+        paths
           [
-            "versions", versions; "r0", r0
-          ; ( "unstable" (* should not be here, not in the spec but whatever *)
-            , unstable )
-          ] ); "media", Media_routes.routes
+            "versions", versions; "r0", r0;
+            ( "unstable" (* should not be here, not in the spec but whatever *),
+              unstable );
+          ] ); "media", Media_routes.routes;
     ]
 
 let well_known =

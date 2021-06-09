@@ -46,8 +46,8 @@ let set_fun ~loc type_name pld_name =
             (ppat_var ~loc (Loc.make ~loc "v"))
             (pexp_record ~loc
                [
-                 ( Loc.make ~loc (Lident (Loc.txt pld_name))
-                 , pexp_ident ~loc (Loc.make ~loc (Lident "v")) )
+                 ( Loc.make ~loc (Lident (Loc.txt pld_name)),
+                   pexp_ident ~loc (Loc.make ~loc (Lident "v")) );
                ]
                (Some (pexp_ident ~loc (Loc.make ~loc (Lident type_name)))))))
 
@@ -60,8 +60,8 @@ let set_fun_single ~loc pld_name =
             (ppat_var ~loc (Loc.make ~loc "v"))
             (pexp_record ~loc
                [
-                 ( Loc.make ~loc (Lident (Loc.txt pld_name))
-                 , pexp_ident ~loc (Loc.make ~loc (Lident "v")) )
+                 ( Loc.make ~loc (Lident (Loc.txt pld_name)),
+                   pexp_ident ~loc (Loc.make ~loc (Lident "v")) );
                ]
                None)))
 
@@ -89,8 +89,8 @@ let create_fun ~loc labels =
             (pexp_record ~loc
                (List.map
                   (fun {pld_name; _} ->
-                    ( Loc.make ~loc (Lident (Loc.txt pld_name))
-                    , pexp_ident ~loc
+                    ( Loc.make ~loc (Lident (Loc.txt pld_name)),
+                      pexp_ident ~loc
                         (Loc.make ~loc (Lident (Loc.txt pld_name))) ))
                   labels)
                None)))

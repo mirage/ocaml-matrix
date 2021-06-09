@@ -1,10 +1,10 @@
 open Json_encoding
 
 type t = {
-    h: int option
-  ; w: int option
-  ; mimetype: string option
-  ; size: int option
+  h: int option;
+  w: int option;
+  mimetype: string option;
+  size: int option;
 }
 [@@deriving accessor]
 

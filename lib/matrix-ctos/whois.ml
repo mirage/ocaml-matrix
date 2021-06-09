@@ -7,9 +7,9 @@ module Response = struct
     module Session_info = struct
       module Connection_info = struct
         type t = {
-            ip: string option
-          ; last_seen: int option
-          ; user_agent: string option
+          ip: string option;
+          last_seen: int option;
+          user_agent: string option;
         }
         [@@deriving accessor]
 
@@ -49,8 +49,8 @@ module Response = struct
   end
 
   type t = {
-      user_id: string option
-    ; devices: (string * Device_info.t) list option
+    user_id: string option;
+    devices: (string * Device_info.t) list option;
   }
   [@@deriving accessor]
 

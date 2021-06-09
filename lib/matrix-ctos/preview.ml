@@ -23,9 +23,9 @@ end
 
 module Response = struct
   type t = {
-      start: string option
-    ; end_: string option
-    ; chunk: Events.Room_event.t list option
+    start: string option;
+    end_: string option;
+    chunk: Events.Room_event.t list option;
   }
   [@@deriving accessor]
 

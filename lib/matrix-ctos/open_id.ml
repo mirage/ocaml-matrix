@@ -4,10 +4,10 @@ module Query = Empty.Query
 
 module Response = struct
   type t = {
-      access_token: string
-    ; token_type: string
-    ; matrix_server_name: string
-    ; expires_in: int
+    access_token: string;
+    token_type: string;
+    matrix_server_name: string;
+    expires_in: int;
   }
   [@@deriving accessor]
 

@@ -1,11 +1,11 @@
 open Json_encoding
 
 type 'a t = {
-    meth: string
-  ; uri: string
-  ; origin: string
-  ; destination: string
-  ; content: 'a option
+  meth: string;
+  uri: string;
+  origin: string;
+  destination: string;
+  content: 'a option;
 }
 [@@deriving accessor]
 

@@ -25,9 +25,9 @@ module Post = struct
 
   module Request = struct
     type t = {
-        auth: Authentication.t
-      ; device_id: string option
-      ; initial_device_display_name: string option
+      auth: Authentication.t;
+      device_id: string option;
+      initial_device_display_name: string option;
     }
     [@@deriving accessor]
 
@@ -54,11 +54,11 @@ module Post = struct
 
   module Response = struct
     type t = {
-        user_id: string option
-      ; access_token: string option
-      ; home_server: string option
-      ; device_id: string option
-      ; well_known: Well_known.Response.t option
+      user_id: string option;
+      access_token: string option;
+      home_server: string option;
+      device_id: string option;
+      well_known: Well_known.Response.t option;
     }
     [@@deriving accessor]
 

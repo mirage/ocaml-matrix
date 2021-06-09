@@ -1,0 +1,29 @@
+opam-version: "2.0"
+version: "0.1"
+synopsis: "Core library of the matrix spec"
+maintainer: ["Gwenaëlle Lecat <charles-edouard@tarides.com>"]
+authors: ["Gwenaëlle Lecat <charles-edouard@tarides.com>"]
+homepage: "https://github.com/clecat/ocaml-matrix"
+bug-reports: "https://github.com/clecat/ocaml-matrix/issues"
+depends: [
+  "dune" {>= "2.8"}
+  "odoc" {with-doc}
+  "ezjsonm"
+  "fmt"
+  "logs"
+  "ppxlib"
+]
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]

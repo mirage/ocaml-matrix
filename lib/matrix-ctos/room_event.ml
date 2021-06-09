@@ -39,9 +39,9 @@ module Get = struct
   module Members = struct
     module Query = struct
       type t = {
-          at: string option
-        ; membership: Events.Event_content.Membership.t option
-        ; not_membership: Events.Event_content.Membership.t option
+        at: string option;
+        membership: Events.Event_content.Membership.t option;
+        not_membership: Events.Event_content.Membership.t option;
       }
       [@@deriving accessor]
 
@@ -52,14 +52,14 @@ module Get = struct
           match t.membership with
           | None -> l
           | Some membership ->
-            ( "membership"
-            , [Events.Event_content.Membership.to_string membership] )
+            ( "membership",
+              [Events.Event_content.Membership.to_string membership] )
             :: l in
         match t.not_membership with
         | None -> l
         | Some not_membership ->
-          ( "not_membership"
-          , [Events.Event_content.Membership.to_string not_membership] )
+          ( "not_membership",
+            [Events.Event_content.Membership.to_string not_membership] )
           :: l
     end
 

@@ -29,13 +29,13 @@ let make_federation_headers origin key sign ?(header = []) needs_auth =
 
 let process response_encoding (resp, body) =
   let code = resp |> Response.status |> Code.code_of_status in
-  Fmt.(pf stdout "Response code: %d\n" code)
-  ; body |> Cohttp_lwt.Body.to_string >|= fun body ->
-    print_endline ("Received body\n" ^ body)
-    ; let json_body = Ezjsonm.from_string body in
-      if code >= 400 then
-        raise (Json_error (destruct Matrix_ctos.Errors.encoding json_body))
-      else destruct response_encoding json_body
+  Fmt.(pf stdout "Response code: %d\n" code);
+  body |> Cohttp_lwt.Body.to_string >|= fun body ->
+  print_endline ("Received body\n" ^ body);
+  let json_body = Ezjsonm.from_string body in
+  if code >= 400 then
+    raise (Json_error (destruct Matrix_ctos.Errors.encoding json_body))
+  else destruct response_encoding json_body
 
 let get
     ?(make_headers = make_headers)
@@ -44,11 +44,11 @@ let get
     args
     response_encoding
     needs_auth =
-  Fmt.(pf stdout "Request type: %a\n%!" (styled `Magenta string) "Get")
-  ; let uri = make_uri path args in
-    Fmt.(pf stdout "Reaching query: %a\n%!" Uri.pp uri)
-    ; let headers = make_headers ?header needs_auth in
-      Client.get ~headers uri >>= process response_encoding
+  Fmt.(pf stdout "Request type: %a\n%!" (styled `Magenta string) "Get");
+  let uri = make_uri path args in
+  Fmt.(pf stdout "Reaching query: %a\n%!" Uri.pp uri);
+  let headers = make_headers ?header needs_auth in
+  Client.get ~headers uri >>= process response_encoding
 
 let post
     ?(make_headers = make_headers)
@@ -59,14 +59,14 @@ let post
     request_encoding
     response_encoding
     needs_auth =
-  Fmt.(pf stdout "Request type: %a\n%!" (styled `Magenta string) "Post")
-  ; let uri = make_uri path args in
-    Fmt.(pf stdout "Reaching query: %a\n%!" Uri.pp uri)
-    ; let body = construct request_encoding value |> Ezjsonm.value_to_string in
-      Fmt.(pf stdout "Sending body: %s\n%!" body)
-      ; let body = Cohttp_lwt.Body.of_string body in
-        let headers = make_headers ?header needs_auth in
-        Client.post ~headers ~body uri >>= process response_encoding
+  Fmt.(pf stdout "Request type: %a\n%!" (styled `Magenta string) "Post");
+  let uri = make_uri path args in
+  Fmt.(pf stdout "Reaching query: %a\n%!" Uri.pp uri);
+  let body = construct request_encoding value |> Ezjsonm.value_to_string in
+  Fmt.(pf stdout "Sending body: %s\n%!" body);
+  let body = Cohttp_lwt.Body.of_string body in
+  let headers = make_headers ?header needs_auth in
+  Client.post ~headers ~body uri >>= process response_encoding
 
 let put
     ?(make_headers = make_headers)
@@ -77,11 +77,11 @@ let put
     request_encoding
     response_encoding
     needs_auth =
-  Fmt.(pf stdout "Request type: %a\n%!" (styled `Magenta string) "Post")
-  ; let uri = make_uri path args in
-    Fmt.(pf stdout "Reaching query: %a\n%!" Uri.pp uri)
-    ; let body = construct request_encoding value |> Ezjsonm.value_to_string in
-      Fmt.(pf stdout "Sending body: %s\n%!" body)
-      ; let body = Cohttp_lwt.Body.of_string body in
-        let headers = make_headers ?header needs_auth in
-        Client.put ~headers ~body uri >>= process response_encoding
+  Fmt.(pf stdout "Request type: %a\n%!" (styled `Magenta string) "Post");
+  let uri = make_uri path args in
+  Fmt.(pf stdout "Reaching query: %a\n%!" Uri.pp uri);
+  let body = construct request_encoding value |> Ezjsonm.value_to_string in
+  Fmt.(pf stdout "Sending body: %s\n%!" body);
+  let body = Cohttp_lwt.Body.of_string body in
+  let headers = make_headers ?header needs_auth in
+  Client.put ~headers ~body uri >>= process response_encoding

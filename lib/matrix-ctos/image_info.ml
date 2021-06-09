@@ -1,25 +1,25 @@
 open Json_encoding
 
 type t = {
-    h: int option
-  ; w: int option
-  ; mimetype: string option
-  ; size: int option
-  ; thumbnail_url: string option
-  ; thumbnail_file: Encrypted_file.t option
-  ; thumbnail_info: Thumbnail_info.t option
+  h: int option;
+  w: int option;
+  mimetype: string option;
+  size: int option;
+  thumbnail_url: string option;
+  thumbnail_file: Encrypted_file.t option;
+  thumbnail_info: Thumbnail_info.t option;
 }
 [@@deriving accessor]
 
 let encoding =
   let to_tuple t =
-    ( t.h
-    , t.w
-    , t.mimetype
-    , t.size
-    , t.thumbnail_url
-    , t.thumbnail_file
-    , t.thumbnail_info ) in
+    ( t.h,
+      t.w,
+      t.mimetype,
+      t.size,
+      t.thumbnail_url,
+      t.thumbnail_file,
+      t.thumbnail_info ) in
   let of_tuple v =
     let h, w, mimetype, size, thumbnail_url, thumbnail_file, thumbnail_info =
       v in

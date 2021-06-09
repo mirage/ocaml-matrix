@@ -26,12 +26,12 @@ end
 module Response = struct
   module Notification = struct
     type t = {
-        actions: Push_rule.Action.t
-      ; event: Events.Room_event.t
-      ; profile_tag: string option
-      ; read: bool
-      ; room_id: string
-      ; ts: int
+      actions: Push_rule.Action.t;
+      event: Events.Room_event.t;
+      profile_tag: string option;
+      read: bool;
+      room_id: string;
+      ts: int;
     }
     [@@deriving accessor]
 
@@ -51,8 +51,8 @@ module Response = struct
   end
 
   type t = {
-      next_token: string option option
-    ; notifications: Notification.t list
+    next_token: string option option;
+    notifications: Notification.t list;
   }
   [@@deriving accessor]
 

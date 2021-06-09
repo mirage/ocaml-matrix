@@ -16,11 +16,11 @@ module Key : sig
     end
 
     type%accessor t = {
-        server_name: string
-      ; verify_keys: (string * Verify_key.t) list
-      ; old_verify_keys: (string * Old_verify_key.t) list option
-      ; signatures: (string * (string * string) list) list option
-      ; valid_until_ts: int option
+      server_name: string;
+      verify_keys: (string * Verify_key.t) list;
+      old_verify_keys: (string * Old_verify_key.t) list option;
+      signatures: (string * (string * string) list) list option;
+      valid_until_ts: int option;
     }
 
     val encoding : t encoding
@@ -50,10 +50,10 @@ module Public_rooms : sig
   module Get_public_rooms : sig
     module Query : sig
       type%accessor t = {
-          limit: int option
-        ; since: string option
-        ; include_all_networks: bool option
-        ; third_party_instance_id: string option
+        limit: int option;
+        since: string option;
+        include_all_networks: bool option;
+        third_party_instance_id: string option;
       }
 
       val args : t -> (string * string list) list
@@ -62,26 +62,26 @@ module Public_rooms : sig
     module Response : sig
       module Public_rooms_chunk : sig
         type%accessor t = {
-            aliases: string list option
-          ; canonical_alias: string option
-          ; name: string option
-          ; num_joined_members: int
-          ; room_id: string
-          ; topic: string option
-          ; world_readable: bool
-          ; guest_can_join: bool
-          ; avatar_url: string option
-          ; federate: bool option
+          aliases: string list option;
+          canonical_alias: string option;
+          name: string option;
+          num_joined_members: int;
+          room_id: string;
+          topic: string option;
+          world_readable: bool;
+          guest_can_join: bool;
+          avatar_url: string option;
+          federate: bool option;
         }
 
         val encoding : t encoding
       end
 
       type%accessor t = {
-          chunk: Public_rooms_chunk.t list
-        ; next_batch: string option
-        ; prev_batch: string option
-        ; total_room_count_estimate: int option
+        chunk: Public_rooms_chunk.t list;
+        next_batch: string option;
+        prev_batch: string option;
+        total_room_count_estimate: int option;
       }
 
       val encoding : t encoding
@@ -99,11 +99,11 @@ module Public_rooms : sig
       end
 
       type%accessor t = {
-          limit: int option
-        ; since: string option
-        ; filter: Filter.t option
-        ; include_all_networks: bool option
-        ; third_party_instance_id: string option
+        limit: int option;
+        since: string option;
+        filter: Filter.t option;
+        include_all_networks: bool option;
+        third_party_instance_id: string option;
       }
 
       val encoding : t encoding
@@ -124,20 +124,20 @@ module Joining_rooms : sig
     module Response : sig
       module Event_template : sig
         type%accessor t = {
-            sender: string
-          ; origin: string
-          ; origin_server_ts: int
-          ; event_type: string
-          ; state_key: string
-          ; room_id: string option
+          sender: string;
+          origin: string;
+          origin_server_ts: int;
+          event_type: string;
+          state_key: string;
+          room_id: string option;
         }
 
         val encoding : t encoding
       end
 
       type%accessor t = {
-          room_version: string option
-        ; event_template: Event_template.t option
+        room_version: string option;
+        event_template: Event_template.t option;
       }
 
       val encoding : t encoding
@@ -150,12 +150,12 @@ module Joining_rooms : sig
 
       module Request : sig
         type%accessor t = {
-            sender: string
-          ; origin: string
-          ; origin_server_ts: int
-          ; event_type: string
-          ; state_key: string
-          ; content: Events.Event_content.Member.t
+          sender: string;
+          origin: string;
+          origin_server_ts: int;
+          event_type: string;
+          state_key: string;
+          content: Events.Event_content.Member.t;
         }
 
         val encoding : t encoding
@@ -164,9 +164,9 @@ module Joining_rooms : sig
       module Response : sig
         module Room_state : sig
           type%accessor t = {
-              origin: string
-            ; auth_chain: Events.Pdu.t list
-            ; state: Events.Pdu.t list
+            origin: string;
+            auth_chain: Events.Pdu.t list;
+            state: Events.Pdu.t list;
           }
 
           val encoding : t encoding
@@ -184,9 +184,9 @@ module Joining_rooms : sig
 
       module Response : sig
         type%accessor t = {
-            origin: string
-          ; auth_chain: Events.Pdu.t list
-          ; state: Events.Pdu.t list
+          origin: string;
+          auth_chain: Events.Pdu.t list;
+          state: Events.Pdu.t list;
         }
 
         val encoding : t encoding
@@ -197,11 +197,11 @@ end
 
 module Federation_request : sig
   type%accessor 'a t = {
-      meth: string
-    ; uri: string
-    ; origin: string
-    ; destination: string
-    ; content: 'a option
+    meth: string;
+    uri: string;
+    origin: string;
+    destination: string;
+    content: 'a option;
   }
 
   val encoding : 'a encoding -> 'a t encoding
@@ -209,9 +209,9 @@ end
 
 module Signatures : sig
   val encoding :
-       (string * (string * Mirage_crypto_ec.Ed25519.priv) list) list
-    -> 'a encoding
-    -> 'a encoding
+    (string * (string * Mirage_crypto_ec.Ed25519.priv) list) list ->
+    'a encoding ->
+    'a encoding
 end
 
 module Retrieve : sig
@@ -224,8 +224,8 @@ module Retrieve : sig
 
     module Response : sig
       type%accessor t = {
-          auth_chain: Events.State_event.t list
-        ; pdus: Events.State_event.t list
+        auth_chain: Events.State_event.t list;
+        pdus: Events.State_event.t list;
       }
 
       val encoding : t encoding
@@ -255,9 +255,9 @@ module Retrieve : sig
 
     module Response : sig
       type%accessor t = {
-          origin: string
-        ; origin_server_ts: int
-        ; pdus: Pdu.t list
+        origin: string;
+        origin_server_ts: int;
+        pdus: Pdu.t list;
       }
 
       val encoding : t encoding

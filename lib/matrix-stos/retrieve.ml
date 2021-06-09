@@ -12,8 +12,8 @@ module State = struct
 
   module Response = struct
     type t = {
-        auth_chain: Events.State_event.t list
-      ; pdus: Events.State_event.t list
+      auth_chain: Events.State_event.t list;
+      pdus: Events.State_event.t list;
     }
     [@@deriving accessor]
 

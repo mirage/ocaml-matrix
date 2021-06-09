@@ -19,48 +19,48 @@ module Register = struct
 
   module Request = struct
     type t = {
-        auth: Authentication.t option
-      ; bind_email: bool option
-      ; bind_msisdn: bool option
-      ; username: string option
-      ; password: string option
-      ; device_id: string option
-      ; initial_device_display_name: string option
-      ; inhibit_login: bool option
+      auth: Authentication.t option;
+      bind_email: bool option;
+      bind_msisdn: bool option;
+      username: string option;
+      password: string option;
+      device_id: string option;
+      initial_device_display_name: string option;
+      inhibit_login: bool option;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.auth
-        , t.bind_email
-        , t.bind_msisdn
-        , t.username
-        , t.password
-        , t.device_id
-        , t.initial_device_display_name
-        , t.inhibit_login
-        , None ) in
+        ( t.auth,
+          t.bind_email,
+          t.bind_msisdn,
+          t.username,
+          t.password,
+          t.device_id,
+          t.initial_device_display_name,
+          t.inhibit_login,
+          None ) in
       let of_tuple v =
-        let ( auth
-            , bind_email
-            , bind_msisdn
-            , username
-            , password
-            , device_id
-            , initial_device_display_name
-            , inhibit_login
-            , _ ) =
+        let ( auth,
+              bind_email,
+              bind_msisdn,
+              username,
+              password,
+              device_id,
+              initial_device_display_name,
+              inhibit_login,
+              _ ) =
           v in
         {
-          auth
-        ; bind_email
-        ; bind_msisdn
-        ; username
-        ; password
-        ; device_id
-        ; initial_device_display_name
-        ; inhibit_login
+          auth;
+          bind_email;
+          bind_msisdn;
+          username;
+          password;
+          device_id;
+          initial_device_display_name;
+          inhibit_login;
         } in
       let with_tuple =
         obj9
@@ -76,10 +76,10 @@ module Register = struct
 
   module Response = struct
     type t = {
-        user_id: string
-      ; access_token: string option
-      ; home_server: string
-      ; device_id: string option
+      user_id: string;
+      access_token: string option;
+      home_server: string;
+      device_id: string option;
     }
     [@@deriving accessor]
 
@@ -123,11 +123,11 @@ module Email_request_token = struct
 
   module Request = struct
     type t = {
-        client_secret: string
-      ; email: string
-      ; send_attempt: int
-      ; next_link: string option
-      ; id_server: string
+      client_secret: string;
+      email: string;
+      send_attempt: int;
+      next_link: string option;
+      id_server: string;
     }
     [@@deriving accessor]
 
@@ -166,38 +166,38 @@ module Msisdn_request_token = struct
 
   module Request = struct
     type t = {
-        client_secret: string
-      ; country: string
-      ; phone_number: string
-      ; send_attempt: int
-      ; next_link: string option
-      ; id_server: string
+      client_secret: string;
+      country: string;
+      phone_number: string;
+      send_attempt: int;
+      next_link: string option;
+      id_server: string;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.client_secret
-        , t.country
-        , t.phone_number
-        , t.send_attempt
-        , t.next_link
-        , t.id_server ) in
+        ( t.client_secret,
+          t.country,
+          t.phone_number,
+          t.send_attempt,
+          t.next_link,
+          t.id_server ) in
       let of_tuple v =
-        let ( client_secret
-            , country
-            , phone_number
-            , send_attempt
-            , next_link
-            , id_server ) =
+        let ( client_secret,
+              country,
+              phone_number,
+              send_attempt,
+              next_link,
+              id_server ) =
           v in
         {
-          client_secret
-        ; country
-        ; phone_number
-        ; send_attempt
-        ; next_link
-        ; id_server
+          client_secret;
+          country;
+          phone_number;
+          send_attempt;
+          next_link;
+          id_server;
         } in
       let with_tuple =
         obj6
@@ -211,11 +211,11 @@ module Msisdn_request_token = struct
 
   module Response = struct
     type t = {
-        success: bool option
-      ; sid: string
-      ; submit_url: string option
-      ; msisdn: string option
-      ; intl_fmt: string option
+      success: bool option;
+      sid: string;
+      submit_url: string option;
+      msisdn: string option;
+      intl_fmt: string option;
     }
     [@@deriving accessor]
 

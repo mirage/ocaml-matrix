@@ -57,13 +57,13 @@ module Capability = struct
       [
         case Change_password.encoding
           (function Change_password t -> Some t | _ -> None)
-          (fun t -> Change_password t)
-      ; case Room_versions.encoding
+          (fun t -> Change_password t);
+        case Room_versions.encoding
           (function Room_versions t -> Some t | _ -> None)
-          (fun t -> Room_versions t)
-      ; case Custom.encoding
+          (fun t -> Room_versions t);
+        case Custom.encoding
           (function Custom t -> Some t | _ -> None)
-          (fun t -> Custom t)
+          (fun t -> Custom t);
       ]
 end
 

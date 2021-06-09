@@ -1,11 +1,11 @@
 open Json_encoding
 
 type t = {
-    mimetype: string option
-  ; size: int option
-  ; thumbnail_url: string option
-  ; thumbnail_file: Encrypted_file.t option
-  ; thumbnail_info: Thumbnail_info.t option
+  mimetype: string option;
+  size: int option;
+  thumbnail_url: string option;
+  thumbnail_file: Encrypted_file.t option;
+  thumbnail_info: Thumbnail_info.t option;
 }
 [@@deriving accessor]
 

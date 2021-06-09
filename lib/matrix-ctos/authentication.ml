@@ -47,8 +47,8 @@ module Password = struct
   let encoding =
     union
       [
-        case V1.encoding (function V1 t -> Some t | _ -> None) (fun t -> V1 t)
-      ; case V2.encoding (function V2 t -> Some t | _ -> None) (fun t -> V2 t)
+        case V1.encoding (function V1 t -> Some t | _ -> None) (fun t -> V1 t);
+        case V2.encoding (function V2 t -> Some t | _ -> None) (fun t -> V2 t);
       ]
 
   let pp ppf = function
@@ -93,22 +93,22 @@ let encoding =
     cond
       (obj1 (opt "type" string))
       [
-        ( Some "m.login.dummy"
-        , case Dummy.encoding
+        ( Some "m.login.dummy",
+          case Dummy.encoding
             (function Dummy t -> Some t | _ -> None)
-            (fun t -> Dummy t) )
-      ; ( Some "m.login.password"
-        , case Password.encoding
+            (fun t -> Dummy t) );
+        ( Some "m.login.password",
+          case Password.encoding
             (function Password t -> Some t | _ -> None)
-            (fun t -> Password t) )
-      ; ( Some "m.login.token"
-        , case Token.encoding
+            (fun t -> Password t) );
+        ( Some "m.login.token",
+          case Token.encoding
             (function Token t -> Some t | _ -> None)
-            (fun t -> Token t) )
-      ; ( None
-        , case Empty.encoding
+            (fun t -> Token t) );
+        ( None,
+          case Empty.encoding
             (function Empty t -> Some t | _ -> None)
-            (fun t -> Empty t) )
+            (fun t -> Empty t) );
       ] in
   conv to_tuple of_tuple with_tuple
 

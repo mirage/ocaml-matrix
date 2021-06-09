@@ -3,8 +3,8 @@ open Routing
 let public_rooms =
   meths
     [
-      `GET, Federation_endpoints.Listing.Public_rooms.get
-    ; `POST, Federation_endpoints.Listing.Public_rooms.post
+      `GET, Federation_endpoints.Listing.Public_rooms.get;
+      `POST, Federation_endpoints.Listing.Public_rooms.post;
     ]
 
 let make_join =
@@ -19,8 +19,8 @@ let send_join_v2 =
 let v1 =
   paths
     [
-      "publicRooms", public_rooms; "make_join", make_join
-    ; "send_join", send_join_v1
+      "publicRooms", public_rooms; "make_join", make_join;
+      "send_join", send_join_v1;
     ]
 
 let v2 = paths ["send_join", send_join_v2]

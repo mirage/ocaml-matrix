@@ -17,11 +17,11 @@ module Get_all = struct
 
   module Response = struct
     type t = {
-        content: Push_rule.t list option
-      ; override: Push_rule.t list option
-      ; room: Push_rule.t list option
-      ; sender: Push_rule.t list option
-      ; underride: Push_rule.t list option
+      content: Push_rule.t list option;
+      override: Push_rule.t list option;
+      room: Push_rule.t list option;
+      sender: Push_rule.t list option;
+      underride: Push_rule.t list option;
     }
     [@@deriving accessor]
 
@@ -91,15 +91,15 @@ module Put = struct
       let encoding =
         string_enum
           [
-            "notify", Notify; "dont_notify", Dont_notify; "coalesce", Coalesce
-          ; "set_weak", Set_weak
+            "notify", Notify; "dont_notify", Dont_notify; "coalesce", Coalesce;
+            "set_weak", Set_weak;
           ]
     end
 
     type t = {
-        actions: Action.t list
-      ; conditions: Push_rule.Push_condition.t list
-      ; pattern: string
+      actions: Action.t list;
+      conditions: Push_rule.Push_condition.t list;
+      pattern: string;
     }
     [@@deriving accessor]
 

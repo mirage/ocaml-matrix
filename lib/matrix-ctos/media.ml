@@ -17,8 +17,8 @@ module Upload = struct
 
       let header t =
         [
-          "Content-Type", t.content_type
-        ; "Content-Length", Int.to_string t.content_length
+          "Content-Type", t.content_type;
+          "Content-Length", Int.to_string t.content_length;
         ]
     end
   end
@@ -72,10 +72,10 @@ module Thumbnail = struct
     end
 
     type t = {
-        width: int
-      ; height: int
-      ; rezising_method: Rezising.t option
-      ; allow_remote: bool option
+      width: int;
+      height: int;
+      rezising_method: Rezising.t option;
+      allow_remote: bool option;
     }
     [@@deriving accessor]
 

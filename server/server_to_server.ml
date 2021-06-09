@@ -13,14 +13,14 @@ let rooter uri meth _hds request =
       Logs.info (fun m ->
           m "%s '%s' : %a"
             (Code.string_of_method meth)
-            (Uri.to_string uri) response_style `OK)
-      ; let headers = make_headers ~meths () in
-        Server.respond_string ~headers ~status:`OK ~body:"" ()
+            (Uri.to_string uri) response_style `OK);
+      let headers = make_headers ~meths () in
+      Server.respond_string ~headers ~status:`OK ~body:"" ()
     | _ ->
       Logs.err (fun m ->
           m "Uri '%s' with method '%s': Not found" (Uri.to_string uri)
-            (Code.string_of_method meth))
-      ; Server.respond_not_found ())
+            (Code.string_of_method meth));
+      Server.respond_not_found ())
   | _ -> (
     try
       match Routing.parse path meth Federation_routes.routes with
@@ -29,20 +29,20 @@ let rooter uri meth _hds request =
         Logs.info (fun m ->
             m "%s '%s' : %a"
               (Code.string_of_method meth)
-              (Uri.to_string uri) response_style status)
-        ; let headers = make_headers ?body_type () in
-          Server.respond_string ~headers ~status ~body ()
+              (Uri.to_string uri) response_style status);
+        let headers = make_headers ?body_type () in
+        Server.respond_string ~headers ~status ~body ()
       | _ ->
         Logs.err (fun m ->
             m "Uri '%s' with method '%s': Not found" (Uri.to_string uri)
-              (Code.string_of_method meth))
-        ; Server.respond_not_found ()
+              (Code.string_of_method meth));
+        Server.respond_not_found ()
     with e ->
       Logs.err (fun m ->
           m "Exception at uri '%s' with method '%s': %a" (Uri.to_string uri)
             (Code.string_of_method meth)
-            Json_encoding.print_error e)
-      ; Server.respond_not_found ())
+            Json_encoding.print_error e);
+      Server.respond_not_found ())
 
 let server =
   let callback _conn req body =
@@ -56,8 +56,8 @@ let server =
   Server.create
     ~mode:
       (`TLS
-        ( `Crt_file_path crt_file_path
-        , `Key_file_path key_file_path
-        , `No_password
-        , `Port 8448 ))
+        ( `Crt_file_path crt_file_path,
+          `Key_file_path key_file_path,
+          `No_password,
+          `Port 8448 ))
     (Server.make ~callback ())

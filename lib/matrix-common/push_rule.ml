@@ -20,25 +20,25 @@ module Action = struct
       [
         case (constant "notify")
           (function Notify -> Some () | _ -> None)
-          (fun () -> Notify)
-      ; case (constant "dont_notify")
+          (fun () -> Notify);
+        case (constant "dont_notify")
           (function Dont_notify -> Some () | _ -> None)
-          (fun () -> Dont_notify)
-      ; case (constant "coalesce")
+          (fun () -> Dont_notify);
+        case (constant "coalesce")
           (function Coalesce -> Some () | _ -> None)
-          (fun () -> Coalesce)
-      ; case Tweak.encoding
+          (fun () -> Coalesce);
+        case Tweak.encoding
           (function Tweak t -> Some t | _ -> None)
-          (fun t -> Tweak t)
+          (fun t -> Tweak t);
       ]
 end
 
 module Push_condition = struct
   type t = {
-      kind: string
-    ; key: string option
-    ; pattern: string option
-    ; is: string option
+    kind: string;
+    key: string option;
+    pattern: string option;
+    is: string option;
   }
   [@@deriving accessor]
 
@@ -54,12 +54,12 @@ module Push_condition = struct
 end
 
 type t = {
-    actions: Action.t list
-  ; default: bool
-  ; enabled: bool
-  ; rule_id: string
-  ; conditions: Push_condition.t list option
-  ; pattern: string option
+  actions: Action.t list;
+  default: bool;
+  enabled: bool;
+  rule_id: string;
+  conditions: Push_condition.t list option;
+  pattern: string option;
 }
 [@@deriving accessor]
 

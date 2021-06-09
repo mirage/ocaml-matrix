@@ -12,11 +12,11 @@ module Email_request_token = struct
 
   module Request = struct
     type t = {
-        client_secret: string
-      ; email: string
-      ; send_attempt: int
-      ; next_link: string option
-      ; id_server: string
+      client_secret: string;
+      email: string;
+      send_attempt: int;
+      next_link: string option;
+      id_server: string;
     }
     [@@deriving accessor]
 
@@ -52,38 +52,38 @@ module Msisdn_request_token = struct
 
   module Request = struct
     type t = {
-        client_secret: string
-      ; country: string
-      ; phone_number: string
-      ; send_attempt: int
-      ; next_link: string option
-      ; id_server: string
+      client_secret: string;
+      country: string;
+      phone_number: string;
+      send_attempt: int;
+      next_link: string option;
+      id_server: string;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.client_secret
-        , t.country
-        , t.phone_number
-        , t.send_attempt
-        , t.next_link
-        , t.id_server ) in
+        ( t.client_secret,
+          t.country,
+          t.phone_number,
+          t.send_attempt,
+          t.next_link,
+          t.id_server ) in
       let of_tuple v =
-        let ( client_secret
-            , country
-            , phone_number
-            , send_attempt
-            , next_link
-            , id_server ) =
+        let ( client_secret,
+              country,
+              phone_number,
+              send_attempt,
+              next_link,
+              id_server ) =
           v in
         {
-          client_secret
-        ; country
-        ; phone_number
-        ; send_attempt
-        ; next_link
-        ; id_server
+          client_secret;
+          country;
+          phone_number;
+          send_attempt;
+          next_link;
+          id_server;
         } in
       let with_tuple =
         obj6
@@ -181,10 +181,10 @@ module Third_party_id = struct
     module Response = struct
       module Third_party_identifier = struct
         type t = {
-            medium: Medium.t
-          ; address: string
-          ; validated_at: int
-          ; added_at: int
+          medium: Medium.t;
+          address: string;
+          validated_at: int;
+          added_at: int;
         }
         [@@deriving accessor]
 

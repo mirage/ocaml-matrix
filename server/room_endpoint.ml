@@ -12,9 +12,9 @@ let create_room =
     get_logged_user token >>= function
     | Error _ ->
       Lwt.return
-        ( `Internal_server_error
-        , error "M_UNKNOWN" "Internal storage failure"
-        , None )
+        ( `Internal_server_error,
+          error "M_UNKNOWN" "Internal storage failure",
+          None )
     | Ok None ->
       Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
       (* should not happend *)
@@ -26,9 +26,9 @@ let create_room =
       >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok () -> (
         let id = event_id () in
         let event =
@@ -44,11 +44,11 @@ let create_room =
                               ?events:
                                 (Some
                                    [
-                                     "m.room.name", 50
-                                   ; "m.room.power_levels", 100
-                                   ; "m.room.history_visibility", 100
-                                   ; "m.room.canonical_alias", 50
-                                   ; "m.room.avatar", 50
+                                     "m.room.name", 50;
+                                     "m.room.power_levels", 100;
+                                     "m.room.history_visibility", 100;
+                                     "m.room.canonical_alias", 50;
+                                     "m.room.avatar", 50;
                                    ])
                               ?events_default:(Some 0) ?invite:(Some 0)
                               ?kick:(Some 50) ?redact:(Some 50)
@@ -66,9 +66,9 @@ let create_room =
         Event_store.set event_store Key.(v id) encoded_event >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok () -> (
           set_state_event room_id "m.room.power_levels"
             (Events.State_event.get_state_key event)
@@ -76,9 +76,9 @@ let create_room =
           >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () -> (
             let id = event_id () in
             let event =
@@ -102,9 +102,9 @@ let create_room =
             Event_store.set event_store Key.(v id) encoded_event >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok () -> (
               set_state_event room_id "m.room.history_visibility"
                 (Events.State_event.get_state_key event)
@@ -112,9 +112,9 @@ let create_room =
               >>= function
               | Error _ ->
                 Lwt.return
-                  ( `Internal_server_error
-                  , error "M_UNKNOWN" "Internal storage failure"
-                  , None )
+                  ( `Internal_server_error,
+                    error "M_UNKNOWN" "Internal storage failure",
+                    None )
               | Ok () -> (
                 let id = event_id () in
                 let event =
@@ -141,9 +141,9 @@ let create_room =
                 >>= function
                 | Error _ ->
                   Lwt.return
-                    ( `Internal_server_error
-                    , error "M_UNKNOWN" "Internal storage failure"
-                    , None )
+                    ( `Internal_server_error,
+                      error "M_UNKNOWN" "Internal storage failure",
+                      None )
                 | Ok () -> (
                   set_state_event room_id "m.room.create"
                     (Events.State_event.get_state_key event)
@@ -151,9 +151,9 @@ let create_room =
                   >>= function
                   | Error _ ->
                     Lwt.return
-                      ( `Internal_server_error
-                      , error "M_UNKNOWN" "Internal storage failure"
-                      , None )
+                      ( `Internal_server_error,
+                        error "M_UNKNOWN" "Internal storage failure",
+                        None )
                   | Ok () -> (
                     let id = event_id () in
                     let event =
@@ -182,9 +182,9 @@ let create_room =
                     >>= function
                     | Error _ ->
                       Lwt.return
-                        ( `Internal_server_error
-                        , error "M_UNKNOWN" "Internal storage failure"
-                        , None )
+                        ( `Internal_server_error,
+                          error "M_UNKNOWN" "Internal storage failure",
+                          None )
                     | Ok () -> (
                       set_state_event room_id "m.room.member"
                         (Events.State_event.get_state_key event)
@@ -192,9 +192,9 @@ let create_room =
                       >>= function
                       | Error _ ->
                         Lwt.return
-                          ( `Internal_server_error
-                          , error "M_UNKNOWN" "Internal storage failure"
-                          , None )
+                          ( `Internal_server_error,
+                            error "M_UNKNOWN" "Internal storage failure",
+                            None )
                       | Ok () -> (
                         let join_rule : Events.Event_content.Join_rules.rule =
                           match Request.get_preset request with
@@ -231,9 +231,9 @@ let create_room =
                         >>= function
                         | Error _ ->
                           Lwt.return
-                            ( `Internal_server_error
-                            , error "M_UNKNOWN" "Internal storage failure"
-                            , None )
+                            ( `Internal_server_error,
+                              error "M_UNKNOWN" "Internal storage failure",
+                              None )
                         | Ok () -> (
                           set_state_event room_id "m.room.join_rules"
                             (Events.State_event.get_state_key event)
@@ -241,9 +241,9 @@ let create_room =
                           >>= function
                           | Error _ ->
                             Lwt.return
-                              ( `Internal_server_error
-                              , error "M_UNKNOWN" "Internal storage failure"
-                              , None )
+                              ( `Internal_server_error,
+                                error "M_UNKNOWN" "Internal storage failure",
+                                None )
                           | Ok () -> (
                             (match Request.get_name request with
                             | Some room_name -> (
@@ -275,9 +275,9 @@ let create_room =
                               >>= function
                               | Error _ ->
                                 Lwt.return_error
-                                  ( `Internal_server_error
-                                  , error "M_UNKNOWN" "Internal storage failure"
-                                  , None )
+                                  ( `Internal_server_error,
+                                    error "M_UNKNOWN" "Internal storage failure",
+                                    None )
                               | Ok () -> (
                                 set_state_event room_id "m.room.name"
                                   (Events.State_event.get_state_key event)
@@ -285,10 +285,10 @@ let create_room =
                                 >>= function
                                 | Error _ ->
                                   Lwt.return_error
-                                    ( `Internal_server_error
-                                    , error "M_UNKNOWN"
-                                        "Internal storage failure"
-                                    , None )
+                                    ( `Internal_server_error,
+                                      error "M_UNKNOWN"
+                                        "Internal storage failure",
+                                      None )
                                 | Ok () -> Lwt.return_ok ()))
                             | None -> Lwt.return_ok ())
                             >>= function
@@ -324,10 +324,10 @@ let create_room =
                                 >>= function
                                 | Error _ ->
                                   Lwt.return_error
-                                    ( `Internal_server_error
-                                    , error "M_UNKNOWN"
-                                        "Internal storage failure"
-                                    , None )
+                                    ( `Internal_server_error,
+                                      error "M_UNKNOWN"
+                                        "Internal storage failure",
+                                      None )
                                 | Ok () -> (
                                   set_state_event room_id "m.room.topic"
                                     (Events.State_event.get_state_key event)
@@ -335,10 +335,10 @@ let create_room =
                                   >>= function
                                   | Error _ ->
                                     Lwt.return_error
-                                      ( `Internal_server_error
-                                      , error "M_UNKNOWN"
-                                          "Internal storage failure"
-                                      , None )
+                                      ( `Internal_server_error,
+                                        error "M_UNKNOWN"
+                                          "Internal storage failure",
+                                        None )
                                   | Ok () -> Lwt.return_ok ()))
                               | None -> Lwt.return_ok ())
                               >>= function
@@ -362,21 +362,21 @@ module Room_alias = struct
       Store.exists store Key.(v "room_aliases" / alias) >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok (Some _) ->
         Lwt.return
-          ( `Bad_request
-          , error "M_UNKNOWN" (Fmt.str "Room alias %s already exists." alias)
-          , None )
+          ( `Bad_request,
+            error "M_UNKNOWN" (Fmt.str "Room alias %s already exists." alias),
+            None )
       | Ok None -> (
         Store.set store Key.(v "room_aliases" / alias) room_id >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok () ->
           let response = Response.make () in
           let response =
@@ -391,14 +391,14 @@ module Room_alias = struct
       Store.get store Key.(v "room_aliases" / alias) >>= function
       | Error (`Not_found _) ->
         Lwt.return
-          ( `Not_found
-          , error "M_NOT_FOUND" (Fmt.str "Room alias %s not found." alias)
-          , None )
+          ( `Not_found,
+            error "M_NOT_FOUND" (Fmt.str "Room alias %s not found." alias),
+            None )
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok room_id ->
         let response =
           Response.make ~room_id
@@ -416,21 +416,21 @@ module Room_alias = struct
       Store.exists store Key.(v "room_aliases" / alias) >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return
-          ( `Not_found
-          , error "M_NOT_FOUND" (Fmt.str "Room alias %s not found." alias)
-          , None )
+          ( `Not_found,
+            error "M_NOT_FOUND" (Fmt.str "Room alias %s not found." alias),
+            None )
       | Ok (Some _) -> (
         Store.remove store Key.(v "room_aliases" / alias) >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok () ->
           let response = Response.make () in
           let response =
@@ -447,9 +447,9 @@ module Membership = struct
       get_logged_user token >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
         (* should not happend *)
@@ -463,9 +463,9 @@ module Membership = struct
            Event_store.get event_store Key.(v event_id) >>= function
            | Error _ ->
              Lwt.return_error
-               ( `Internal_server_error
-               , error "M_UNKNOWN" "Internal storage failure"
-               , None )
+               ( `Internal_server_error,
+                 error "M_UNKNOWN" "Internal storage failure",
+                 None )
            | Ok event -> (
              let event = destruct Events.State_event.encoding event in
              match Events.State_event.get_event_content event with
@@ -473,22 +473,22 @@ module Membership = struct
                match Events.Event_content.Member.get_membership event with
                | Join ->
                  Lwt.return_error
-                   ( `Internal_server_error
-                   , error "M_FORBIDDEN"
-                       (Fmt.str "%s had already joined the room" user_id)
-                   , None )
+                   ( `Internal_server_error,
+                     error "M_FORBIDDEN"
+                       (Fmt.str "%s had already joined the room" user_id),
+                     None )
                | Ban ->
                  Lwt.return_error
-                   ( `Internal_server_error
-                   , error "M_FORBIDDEN"
-                       (Fmt.str "%s is banned from the room" user_id)
-                   , None )
+                   ( `Internal_server_error,
+                     error "M_FORBIDDEN"
+                       (Fmt.str "%s is banned from the room" user_id),
+                     None )
                | _ -> Lwt.return_ok ())
              | _ ->
                Lwt.return_error
-                 ( `Internal_server_error
-                 , error "M_UNKNOWN" "Internal storage failure"
-                 , None ))))
+                 ( `Internal_server_error,
+                   error "M_UNKNOWN" "Internal storage failure",
+                   None ))))
         >>= function
         | Error err -> Lwt.return err
         | Ok () -> (
@@ -515,9 +515,9 @@ module Membership = struct
           Event_store.set event_store Key.(v id) encoded_event >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () -> (
             set_state_event room_id "m.room.member"
               (Events.State_event.get_state_key event)
@@ -525,9 +525,9 @@ module Membership = struct
             >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok () ->
               let response = Response.make () in
               let response =
@@ -542,9 +542,9 @@ module Membership = struct
       get_logged_user token >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
         (* should not happend *)
@@ -555,9 +555,9 @@ module Membership = struct
            Event_store.get event_store Key.(v event_id) >>= function
            | Error _ ->
              Lwt.return_error
-               ( `Internal_server_error
-               , error "M_UNKNOWN" "Internal storage failure"
-               , None )
+               ( `Internal_server_error,
+                 error "M_UNKNOWN" "Internal storage failure",
+                 None )
            | Ok event -> (
              let event = destruct Events.State_event.encoding event in
              match Events.State_event.get_event_content event with
@@ -565,22 +565,22 @@ module Membership = struct
                match Events.Event_content.Member.get_membership event with
                | Join ->
                  Lwt.return_error
-                   ( `Internal_server_error
-                   , error "M_FORBIDDEN"
-                       (Fmt.str "%s had already joined the room" user_id)
-                   , None )
+                   ( `Internal_server_error,
+                     error "M_FORBIDDEN"
+                       (Fmt.str "%s had already joined the room" user_id),
+                     None )
                | Ban ->
                  Lwt.return_error
-                   ( `Internal_server_error
-                   , error "M_FORBIDDEN"
-                       (Fmt.str "%s is banned from the room" user_id)
-                   , None )
+                   ( `Internal_server_error,
+                     error "M_FORBIDDEN"
+                       (Fmt.str "%s is banned from the room" user_id),
+                     None )
                | _ -> Lwt.return_ok ())
              | _ ->
                Lwt.return_error
-                 ( `Internal_server_error
-                 , error "M_UNKNOWN" "Internal storage failure"
-                 , None ))))
+                 ( `Internal_server_error,
+                   error "M_UNKNOWN" "Internal storage failure",
+                   None ))))
         >>= function
         | Error err -> Lwt.return err
         | Ok () -> (
@@ -606,9 +606,9 @@ module Membership = struct
           Event_store.set event_store Key.(v id) encoded_event >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () -> (
             set_state_event room_id "m.room.member"
               (Events.State_event.get_state_key event)
@@ -616,9 +616,9 @@ module Membership = struct
             >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok () ->
               let response = Response.make ~room_id () in
               let response =
@@ -633,9 +633,9 @@ module Membership = struct
       get_logged_user token >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
         (* should not happend *)
@@ -646,9 +646,9 @@ module Membership = struct
            Event_store.get event_store Key.(v event_id) >>= function
            | Error _ ->
              Lwt.return_error
-               ( `Internal_server_error
-               , error "M_UNKNOWN" "Internal storage failure"
-               , None )
+               ( `Internal_server_error,
+                 error "M_UNKNOWN" "Internal storage failure",
+                 None )
            | Ok event -> (
              let event = destruct Events.State_event.encoding event in
              match Events.State_event.get_event_content event with
@@ -656,22 +656,22 @@ module Membership = struct
                match Events.Event_content.Member.get_membership event with
                | Join ->
                  Lwt.return_error
-                   ( `Internal_server_error
-                   , error "M_FORBIDDEN"
-                       (Fmt.str "%s had already joined the room" user_id)
-                   , None )
+                   ( `Internal_server_error,
+                     error "M_FORBIDDEN"
+                       (Fmt.str "%s had already joined the room" user_id),
+                     None )
                | Ban ->
                  Lwt.return_error
-                   ( `Internal_server_error
-                   , error "M_FORBIDDEN"
-                       (Fmt.str "%s is banned from the room" user_id)
-                   , None )
+                   ( `Internal_server_error,
+                     error "M_FORBIDDEN"
+                       (Fmt.str "%s is banned from the room" user_id),
+                     None )
                | _ -> Lwt.return_ok ())
              | _ ->
                Lwt.return_error
-                 ( `Internal_server_error
-                 , error "M_UNKNOWN" "Internal storage failure"
-                 , None ))))
+                 ( `Internal_server_error,
+                   error "M_UNKNOWN" "Internal storage failure",
+                   None ))))
         >>= function
         | Error err -> Lwt.return err
         | Ok () -> (
@@ -697,9 +697,9 @@ module Membership = struct
           Event_store.set event_store Key.(v id) encoded_event >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () -> (
             set_state_event room_id "m.room.member"
               (Events.State_event.get_state_key event)
@@ -707,9 +707,9 @@ module Membership = struct
             >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok () ->
               let response = Response.make () in
               let response =
@@ -724,9 +724,9 @@ module Membership = struct
       get_logged_user token >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
         (* should not happend *)
@@ -734,16 +734,16 @@ module Membership = struct
         get_state_event room_id "m.room.member" user_id >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok event_id -> (
           Event_store.get event_store Key.(v event_id) >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok event -> (
             let event = destruct Events.State_event.encoding event in
             match Events.State_event.get_event_content event with
@@ -753,9 +753,9 @@ module Membership = struct
                 Event_store.remove event_store Key.(v event_id) >>= function
                 | Error _ ->
                   Lwt.return
-                    ( `Internal_server_error
-                    , error "M_UNKNOWN" "Internal storage failure"
-                    , None )
+                    ( `Internal_server_error,
+                      error "M_UNKNOWN" "Internal storage failure",
+                      None )
                 | Ok () -> (
                   Store.remove store
                     Key.(
@@ -763,9 +763,9 @@ module Membership = struct
                   >>= function
                   | Error _ ->
                     Lwt.return
-                      ( `Internal_server_error
-                      , error "M_UNKNOWN" "Internal storage failure"
-                      , None )
+                      ( `Internal_server_error,
+                        error "M_UNKNOWN" "Internal storage failure",
+                        None )
                   | Ok () ->
                     let response = Response.make () in
                     let response =
@@ -774,15 +774,15 @@ module Membership = struct
                     Lwt.return (`OK, response, None)))
               | _ ->
                 Lwt.return
-                  ( `Internal_server_error
-                  , error "M_FORBIDDEN"
-                      (Fmt.str "%s is banned from the room" user_id)
-                  , None ))
+                  ( `Internal_server_error,
+                    error "M_FORBIDDEN"
+                      (Fmt.str "%s is banned from the room" user_id),
+                    None ))
             | _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )))) in
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )))) in
     true, f
 
   let kick =
@@ -791,9 +791,9 @@ module Membership = struct
       get_logged_user token >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
         (* should not happend *)
@@ -807,9 +807,9 @@ module Membership = struct
            Event_store.get event_store Key.(v event_id) >>= function
            | Error _ ->
              Lwt.return_error
-               ( `Internal_server_error
-               , error "M_UNKNOWN" "Internal storage failure"
-               , None )
+               ( `Internal_server_error,
+                 error "M_UNKNOWN" "Internal storage failure",
+                 None )
            | Ok event -> (
              let event = destruct Events.State_event.encoding event in
              match Events.State_event.get_event_content event with
@@ -818,15 +818,15 @@ module Membership = struct
                | Join -> Lwt.return_ok ()
                | _ ->
                  Lwt.return_error
-                   ( `Internal_server_error
-                   , error "M_FORBIDDEN"
-                       (Fmt.str "%s is banned from the room" user_id)
-                   , None ))
+                   ( `Internal_server_error,
+                     error "M_FORBIDDEN"
+                       (Fmt.str "%s is banned from the room" user_id),
+                     None ))
              | _ ->
                Lwt.return_error
-                 ( `Internal_server_error
-                 , error "M_UNKNOWN" "Internal storage failure"
-                 , None ))))
+                 ( `Internal_server_error,
+                   error "M_UNKNOWN" "Internal storage failure",
+                   None ))))
         >>= function
         | Error err -> Lwt.return err
         | Ok () -> (
@@ -852,9 +852,9 @@ module Membership = struct
           Event_store.set event_store Key.(v id) encoded_event >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () -> (
             set_state_event room_id "m.room.member"
               (Events.State_event.get_state_key event)
@@ -862,9 +862,9 @@ module Membership = struct
             >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok () ->
               let response = Response.make () in
               let response =
@@ -879,9 +879,9 @@ module Membership = struct
       get_logged_user token >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
         (* should not happend *)
@@ -911,9 +911,9 @@ module Membership = struct
         Event_store.set event_store Key.(v id) encoded_event >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok () -> (
           set_state_event room_id "m.room.member"
             (Events.State_event.get_state_key event)
@@ -921,9 +921,9 @@ module Membership = struct
           >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () ->
             let response = Response.make () in
             let response =
@@ -938,9 +938,9 @@ module Membership = struct
       get_logged_user token >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
         (* should not happend *)
@@ -951,16 +951,16 @@ module Membership = struct
         get_state_event room_id "m.room.member" user_id >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok event_id -> (
           Event_store.get event_store Key.(v event_id) >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok event -> (
             let event = destruct Events.State_event.encoding event in
             match Events.State_event.get_event_content event with
@@ -970,9 +970,9 @@ module Membership = struct
                 Event_store.remove event_store Key.(v event_id) >>= function
                 | Error _ ->
                   Lwt.return
-                    ( `Internal_server_error
-                    , error "M_UNKNOWN" "Internal storage failure"
-                    , None )
+                    ( `Internal_server_error,
+                      error "M_UNKNOWN" "Internal storage failure",
+                      None )
                 | Ok () -> (
                   Store.remove store
                     Key.(
@@ -980,9 +980,9 @@ module Membership = struct
                   >>= function
                   | Error _ ->
                     Lwt.return
-                      ( `Internal_server_error
-                      , error "M_UNKNOWN" "Internal storage failure"
-                      , None )
+                      ( `Internal_server_error,
+                        error "M_UNKNOWN" "Internal storage failure",
+                        None )
                   | Ok () ->
                     let response = Response.make () in
                     let response =
@@ -991,15 +991,15 @@ module Membership = struct
                     Lwt.return (`OK, response, None)))
               | _ ->
                 Lwt.return
-                  ( `Internal_server_error
-                  , error "M_FORBIDDEN"
-                      (Fmt.str "%s is banned from the room" user_id)
-                  , None ))
+                  ( `Internal_server_error,
+                    error "M_FORBIDDEN"
+                      (Fmt.str "%s is banned from the room" user_id),
+                    None ))
             | _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )))) in
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )))) in
     true, f
 end
 
@@ -1010,16 +1010,16 @@ module Listing = struct
       get_state_event room_id "m.room.join_rules" "" >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok event_id -> (
         Event_store.get event_store Key.(v event_id) >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok event -> (
           let event = destruct Events.State_event.encoding event in
           match Events.State_event.get_event_content event with
@@ -1035,9 +1035,9 @@ module Listing = struct
             Lwt.return (`OK, response, None)
           | _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None ))) in
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None ))) in
     false, f
 
   let set_visibility =
@@ -1046,9 +1046,9 @@ module Listing = struct
       get_logged_user token >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok None ->
         Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
         (* should not happend *)
@@ -1083,9 +1083,9 @@ module Listing = struct
         Event_store.set event_store Key.(v id) encoded_event >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok () -> (
           set_state_event room_id "m.room.join_rules"
             (Events.State_event.get_state_key event)
@@ -1093,9 +1093,9 @@ module Listing = struct
           >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () ->
             let response = Response.make () in
             let response =
@@ -1110,9 +1110,9 @@ module Listing = struct
       Store.list store Key.(v "rooms") >>= function
       | Error _ ->
         Lwt.return
-          ( `Internal_server_error
-          , error "M_UNKNOWN" "Internal storage failure"
-          , None )
+          ( `Internal_server_error,
+            error "M_UNKNOWN" "Internal storage failure",
+            None )
       | Ok rooms ->
         Lwt_list.filter_map_p
           (fun (room_id, _) ->
@@ -1213,16 +1213,16 @@ module Events = struct
             (`Not_found, error "M_UNKNOWN" "Room has no such state event", None)
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok event_id -> (
           Event_store.get event_store Key.(v event_id) >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok event ->
             (* Needs huge rework *)
             let event_content = Ezjsonm.get_dict event |> List.assoc "content" in
@@ -1237,9 +1237,9 @@ module Events = struct
         >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok state_keys ->
           Lwt_list.filter_map_p
             (fun (state_key, _) ->
@@ -1268,9 +1268,9 @@ module Events = struct
         get_logged_user token >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok None ->
           Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
           (* should not happend *)
@@ -1294,9 +1294,9 @@ module Events = struct
           Event_store.set event_store Key.(v id) encoded_event >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () -> (
             set_state_event room_id state_key
               (Events.State_event.get_state_key event)
@@ -1304,9 +1304,9 @@ module Events = struct
             >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok () ->
               let response = Response.make ~event_id:id () in
               let response =
@@ -1321,9 +1321,9 @@ module Events = struct
         get_logged_user token >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok None ->
           Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
           (* should not happend *)
@@ -1347,25 +1347,25 @@ module Events = struct
           Event_store.set event_store Key.(v id) encoded_event >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () -> (
             Store.get store Key.(v "rooms" / room_id / "messages" / "head")
             >>= function
             | Error _ ->
               Lwt.return
-                ( `Internal_server_error
-                , error "M_UNKNOWN" "Internal storage failure"
-                , None )
+                ( `Internal_server_error,
+                  error "M_UNKNOWN" "Internal storage failure",
+                  None )
             | Ok prev_head -> (
               Store.set store Key.(v "rooms" / room_id / "messages" / "head") id
               >>= function
               | Error _ ->
                 Lwt.return
-                  ( `Internal_server_error
-                  , error "M_UNKNOWN" "Internal storage failure"
-                  , None )
+                  ( `Internal_server_error,
+                    error "M_UNKNOWN" "Internal storage failure",
+                    None )
               | Ok () -> (
                 Store.set store
                   Key.(v "rooms" / room_id / "messages" / id)
@@ -1373,9 +1373,9 @@ module Events = struct
                 >>= function
                 | Error _ ->
                   Lwt.return
-                    ( `Internal_server_error
-                    , error "M_UNKNOWN" "Internal storage failure"
-                    , None )
+                    ( `Internal_server_error,
+                      error "M_UNKNOWN" "Internal storage failure",
+                      None )
                 | Ok () ->
                   let response = Response.make ~event_id:id () in
                   let response =
@@ -1393,9 +1393,9 @@ let room_typing =
     get_logged_user token >>= function
     | Error _ ->
       Lwt.return
-        ( `Internal_server_error
-        , error "M_UNKNOWN" "Internal storage failure"
-        , None )
+        ( `Internal_server_error,
+          error "M_UNKNOWN" "Internal storage failure",
+          None )
     | Ok None ->
       Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
       (* should not happend *)
@@ -1411,9 +1411,9 @@ let room_typing =
         >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok () ->
           let response = Response.make () in
           let response =
@@ -1426,18 +1426,18 @@ let room_typing =
         >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok (Some _) -> (
           Store.remove store
             Key.(v "rooms" / room_id / "ephemeral" / "typing" / user_id)
           >>= function
           | Error _ ->
             Lwt.return
-              ( `Internal_server_error
-              , error "M_UNKNOWN" "Internal storage failure"
-              , None )
+              ( `Internal_server_error,
+                error "M_UNKNOWN" "Internal storage failure",
+                None )
           | Ok () ->
             let response = Response.make () in
             let response =
@@ -1458,9 +1458,9 @@ let read_markers =
     get_logged_user token >>= function
     | Error _ ->
       Lwt.return
-        ( `Internal_server_error
-        , error "M_UNKNOWN" "Internal storage failure"
-        , None )
+        ( `Internal_server_error,
+          error "M_UNKNOWN" "Internal storage failure",
+          None )
     | Ok None ->
       Lwt.return (`Forbidden, error "M_FORBIDDEN" "", None)
       (* should not happend *)
@@ -1475,9 +1475,9 @@ let read_markers =
         >>= function
         | Error _ ->
           Lwt.return
-            ( `Internal_server_error
-            , error "M_UNKNOWN" "Internal storage failure"
-            , None )
+            ( `Internal_server_error,
+              error "M_UNKNOWN" "Internal storage failure",
+              None )
         | Ok () ->
           let response = Response.make () in
           let response =

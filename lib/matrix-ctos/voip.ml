@@ -4,11 +4,11 @@ module Query = Empty.Query
 
 module Response = struct
   type t = {
-      (* Should all be required, but tldr: anwser can be null and `option` didnt work *)
-      username: string option
-    ; password: string option
-    ; uris: string list option
-    ; ttl: int option
+    (* Should all be required, but tldr: anwser can be null and `option` didnt work *)
+    username: string option;
+    password: string option;
+    uris: string list option;
+    ttl: int option;
   }
   [@@deriving accessor]
 

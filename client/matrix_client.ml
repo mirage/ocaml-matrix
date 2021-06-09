@@ -18,9 +18,9 @@ let main () =
 
 let setup level =
   let style_renderer = `Ansi_tty in
-  Fmt_tty.setup_std_outputs ~style_renderer ()
-  ; Logs.set_level level
-  ; Logs.set_reporter (Logs.format_reporter ())
+  Fmt_tty.setup_std_outputs ~style_renderer ();
+  Logs.set_level level;
+  Logs.set_reporter (Logs.format_reporter ())
 
 let () =
   let info =

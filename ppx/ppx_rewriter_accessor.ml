@@ -48,8 +48,8 @@ let create_abstract_type ~loc type_name params =
 
 let from_label ~loc type_name params {pld_name; pld_type; _} =
   [
-    get_fun ~loc type_name pld_name pld_type params
-  ; set_fun ~loc type_name pld_name pld_type params
+    get_fun ~loc type_name pld_name pld_type params;
+    set_fun ~loc type_name pld_name pld_type params;
   ]
 
 let from_abstract ~loc type_name params ptype_manifest =
@@ -70,12 +70,12 @@ let from_td
   let type_, values =
     match ptype_kind with
     | Ptype_record labels ->
-      ( create_abstract_type ~loc ptype_name ptype_params
-      , create_fun ~loc type_name labels params
+      ( create_abstract_type ~loc ptype_name ptype_params,
+        create_fun ~loc type_name labels params
         :: List.flatten (List.map (from_label ~loc type_name params) labels) )
     | Ptype_abstract ->
-      ( create_abstract_type ~loc ptype_name ptype_params
-      , [from_abstract ~loc type_name params ptype_manifest] )
+      ( create_abstract_type ~loc ptype_name ptype_params,
+        [from_abstract ~loc type_name params ptype_manifest] )
     | _ -> errorf ~loc:ptype_loc "unhandled type kind" in
   psig_type ~loc Recursive [type_] :: List.map (psig_value ~loc) values
 

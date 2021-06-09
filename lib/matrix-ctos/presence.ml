@@ -6,8 +6,8 @@ module Put = struct
 
   module Request = struct
     type t = {
-        presence: Events.Event_content.Presence.Presence.t
-      ; status_msg: string option
+      presence: Events.Event_content.Presence.Presence.t;
+      status_msg: string option;
     }
     [@@deriving accessor]
 
@@ -31,22 +31,22 @@ module Get = struct
 
   module Response = struct
     type t = {
-        presence: Events.Event_content.Presence.Presence.t
-      ; last_active_ago: int option
-      ; status_msg: string option
-      ; currently_active: bool option
-      ; user_id: string option
-            (* Not indicated in the documentation, but in the response os synapse *)
+      presence: Events.Event_content.Presence.Presence.t;
+      last_active_ago: int option;
+      status_msg: string option;
+      currently_active: bool option;
+      user_id: string option;
+          (* Not indicated in the documentation, but in the response os synapse *)
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( t.presence
-        , t.last_active_ago
-        , t.status_msg
-        , t.currently_active
-        , t.user_id ) in
+        ( t.presence,
+          t.last_active_ago,
+          t.status_msg,
+          t.currently_active,
+          t.user_id ) in
       let of_tuple v =
         let presence, last_active_ago, status_msg, currently_active, user_id =
           v in

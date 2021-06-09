@@ -3,22 +3,22 @@ open Matrix_common
 
 module Device = struct
   type t = {
-      user_id: string option
-          (* Once again not advertised in the documentation *)
-    ; device_id: string
-    ; display_name: string option
-    ; last_seen_ip: string option
-    ; last_seen_ts: int option
+    user_id: string option;
+    (* Once again not advertised in the documentation *)
+    device_id: string;
+    display_name: string option;
+    last_seen_ip: string option;
+    last_seen_ts: int option;
   }
   [@@deriving accessor]
 
   let encoding =
     let to_tuple t =
-      ( t.user_id
-      , t.device_id
-      , Some t.display_name
-      , Some t.last_seen_ip
-      , Some t.last_seen_ts ) in
+      ( t.user_id,
+        t.device_id,
+        Some t.display_name,
+        Some t.last_seen_ip,
+        Some t.last_seen_ts ) in
     let of_tuple v =
       let user_id, device_id, display_name, last_seen_ip, last_seen_ts = v in
       let display_name = match display_name with Some d -> d | None -> None in

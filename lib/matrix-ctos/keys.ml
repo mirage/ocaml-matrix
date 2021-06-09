@@ -7,11 +7,11 @@ module Upload = struct
   module Request = struct
     module Device_keys = struct
       type t = {
-          user_id: string
-        ; device_id: string
-        ; algorithms: string list
-        ; keys: (string * string) list
-        ; signatures: (string * (string * string) list) list
+        user_id: string;
+        device_id: string;
+        algorithms: string list;
+        keys: (string * string) list;
+        signatures: (string * (string * string) list) list;
       }
       [@@deriving accessor]
 
@@ -35,16 +35,16 @@ module Upload = struct
       let encoding =
         union
           [
-            case string (function Key t -> Some t | _ -> None) (fun t -> Key t)
-          ; case any
+            case string (function Key t -> Some t | _ -> None) (fun t -> Key t);
+            case any
               (function Object_key t -> Some t | _ -> None)
-              (fun t -> Object_key t)
+              (fun t -> Object_key t);
           ]
     end
 
     type t = {
-        device_keys: Device_keys.t option
-      ; one_time_keys: (string * Keys_format.t) list option
+      device_keys: Device_keys.t option;
+      one_time_keys: (string * Keys_format.t) list option;
     }
     [@@deriving accessor]
 
@@ -78,9 +78,9 @@ module Query = struct
 
   module Request = struct
     type t = {
-        timeout: int option
-      ; device_keys: (string * string list) list
-      ; token: string option
+      timeout: int option;
+      device_keys: (string * string list) list;
+      token: string option;
     }
     [@@deriving accessor]
 
@@ -111,12 +111,12 @@ module Query = struct
       end
 
       type t = {
-          user_id: string
-        ; device_id: string
-        ; algorithms: string list
-        ; keys: (string * string) list
-        ; signatures: (string * (string * string) list) list
-        ; unsigned: Unsigned_device_info.t option
+        user_id: string;
+        device_id: string;
+        algorithms: string list;
+        keys: (string * string) list;
+        signatures: (string * (string * string) list) list;
+        unsigned: Unsigned_device_info.t option;
       }
       [@@deriving accessor]
 
@@ -137,8 +137,8 @@ module Query = struct
     end
 
     type t = {
-        failures: (string * Ezjsonm.value) list option
-      ; device_keys: (string * (string * Device_keys.t) list) list option
+      failures: (string * Ezjsonm.value) list option;
+      device_keys: (string * (string * Device_keys.t) list) list option;
     }
     [@@deriving accessor]
 
@@ -160,8 +160,8 @@ module Claim = struct
 
   module Request = struct
     type t = {
-        timeout: int
-      ; one_time_keys: (string * (string * string) list) list
+      timeout: int;
+      one_time_keys: (string * (string * string) list) list;
     }
     [@@deriving accessor]
 
@@ -178,8 +178,8 @@ module Claim = struct
 
   module Response = struct
     type t = {
-        failures: (string * Ezjsonm.value) list
-      ; one_time_keys: (string * (string * string) list) list (* to correct *)
+      failures: (string * Ezjsonm.value) list;
+      one_time_keys: (string * (string * string) list) list; (* to correct *)
     }
     [@@deriving accessor]
 

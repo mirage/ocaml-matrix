@@ -27,22 +27,22 @@ module Server_key = struct
   end
 
   type t = {
-      server_name: string
-    ; verify_keys: (string * Verify_key.t) list
-    ; old_verify_keys: (string * Old_verify_key.t) list option
-    ; signatures: (string * (string * string) list) list option
-          (* there is work to do here *)
-    ; valid_until_ts: int option
+    server_name: string;
+    verify_keys: (string * Verify_key.t) list;
+    old_verify_keys: (string * Old_verify_key.t) list option;
+    signatures: (string * (string * string) list) list option;
+    (* there is work to do here *)
+    valid_until_ts: int option;
   }
   [@@deriving accessor]
 
   let encoding =
     let to_tuple t =
-      ( t.server_name
-      , t.verify_keys
-      , t.old_verify_keys
-      , t.signatures
-      , t.valid_until_ts ) in
+      ( t.server_name,
+        t.verify_keys,
+        t.old_verify_keys,
+        t.signatures,
+        t.valid_until_ts ) in
     let of_tuple v =
       let server_name, verify_keys, old_verify_keys, signatures, valid_until_ts
           =

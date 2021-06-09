@@ -6,10 +6,10 @@ let path room_id = "/_matrix/federation/v1/get_missing_events/" ^ room_id
 
 module Request = struct
   type t = {
-      limit: int option
-    ; min_depth: int option
-    ; earliest_events: string list
-    ; lastest_events: string list
+    limit: int option;
+    min_depth: int option;
+    earliest_events: string list;
+    lastest_events: string list;
   }
   [@@deriving accessor]
 end

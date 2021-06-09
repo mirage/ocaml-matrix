@@ -252,8 +252,8 @@ end = struct
     let f () =
       Fs_event_store.last_modified t k' >>= function
       | [] ->
-        Fmt.pr "Last modified commit where an empty list\n%!"
-        ; Lwt.return (Error (`Not_found k) |> error)
+        Fmt.pr "Last modified commit where an empty list\n%!";
+        Lwt.return (Error (`Not_found k) |> error)
       | h :: _ ->
         let time = Fs_event_store.Commit.info h |> Irmin.Info.date in
         Lwt.return_ok (0, time) in

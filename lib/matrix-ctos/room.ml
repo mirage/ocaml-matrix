@@ -32,66 +32,66 @@ module Create = struct
       let encoding =
         string_enum
           [
-            "public_chat", Public; "private_chat", Private
-          ; "trusted_private_chat", Trusted_private
+            "public_chat", Public; "private_chat", Private;
+            "trusted_private_chat", Trusted_private;
           ]
     end
 
     type t = {
-        visibility: Visibility.t option
-      ; room_alias_name: string option
-      ; name: string option
-      ; topic: string option
-      ; invite: string list option
-      ; invite_3pid: Invite_3pid.t list option
-      ; room_version: string option
-      ; creation_content: Events.Event_content.Create.t option
-      ; initial_state: Events.State_event.t list option
-      ; preset: Preset.t option
-      ; is_direct: bool option
-      ; power_level_content_override: Events.Event_content.Power_levels.t option
+      visibility: Visibility.t option;
+      room_alias_name: string option;
+      name: string option;
+      topic: string option;
+      invite: string list option;
+      invite_3pid: Invite_3pid.t list option;
+      room_version: string option;
+      creation_content: Events.Event_content.Create.t option;
+      initial_state: Events.State_event.t list option;
+      preset: Preset.t option;
+      is_direct: bool option;
+      power_level_content_override: Events.Event_content.Power_levels.t option;
     }
     [@@deriving accessor]
 
     let encoding =
       let to_tuple t =
-        ( ( t.visibility
-          , t.room_alias_name
-          , t.name
-          , t.topic
-          , t.invite
-          , t.invite_3pid
-          , t.room_version
-          , t.creation_content
-          , t.initial_state
-          , t.preset )
-        , (t.is_direct, t.power_level_content_override) ) in
+        ( ( t.visibility,
+            t.room_alias_name,
+            t.name,
+            t.topic,
+            t.invite,
+            t.invite_3pid,
+            t.room_version,
+            t.creation_content,
+            t.initial_state,
+            t.preset ),
+          (t.is_direct, t.power_level_content_override) ) in
       let of_tuple v =
-        let ( ( visibility
-              , room_alias_name
-              , name
-              , topic
-              , invite
-              , invite_3pid
-              , room_version
-              , creation_content
-              , initial_state
-              , preset )
-            , (is_direct, power_level_content_override) ) =
+        let ( ( visibility,
+                room_alias_name,
+                name,
+                topic,
+                invite,
+                invite_3pid,
+                room_version,
+                creation_content,
+                initial_state,
+                preset ),
+              (is_direct, power_level_content_override) ) =
           v in
         {
-          visibility
-        ; room_alias_name
-        ; name
-        ; topic
-        ; invite
-        ; invite_3pid
-        ; room_version
-        ; creation_content
-        ; initial_state
-        ; preset
-        ; is_direct
-        ; power_level_content_override
+          visibility;
+          room_alias_name;
+          name;
+          topic;
+          invite;
+          invite_3pid;
+          room_version;
+          creation_content;
+          initial_state;
+          preset;
+          is_direct;
+          power_level_content_override;
         } in
       let with_tuple =
         merge_objs

@@ -54,9 +54,9 @@ let create_token f username =
   Store.set store Key.(v "tokens" / token) username >>= function
   | Error _ ->
     Lwt.return
-      ( `Internal_server_error
-      , error "M_UNKNOWN" "Internal storage failure"
-      , None )
+      ( `Internal_server_error,
+        error "M_UNKNOWN" "Internal storage failure",
+        None )
   | Ok () -> f (Some token)
 
 let get_account_data _user_id _since = Lwt.return_ok ([], false)

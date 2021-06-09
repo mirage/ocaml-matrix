@@ -17,11 +17,11 @@ module Query = struct
   end
 
   type t = {
-      filter: string option
-    ; since: string option
-    ; full_state: bool option
-    ; set_presence: Presence.t option
-    ; timeout: int option
+    filter: string option;
+    since: string option;
+    full_state: bool option;
+    set_presence: Presence.t option;
+    timeout: int option;
   }
   [@@deriving accessor]
 
@@ -71,46 +71,46 @@ end
 
 module Response = struct
   type t = {
-      next_batch: string
-    ; rooms: Rooms.t option
-    ; presence: Events.State_event.t list option
-    ; account_data: Events.State_event.t list option
-    ; to_device: Events.State_event.t list option
-    ; device_lists: Device_lists.t option
-    ; device_one_time_keys_count: (string * int) list option
-    ; groups: Ezjsonm.value option (* Not on the documentation*)
+    next_batch: string;
+    rooms: Rooms.t option;
+    presence: Events.State_event.t list option;
+    account_data: Events.State_event.t list option;
+    to_device: Events.State_event.t list option;
+    device_lists: Device_lists.t option;
+    device_one_time_keys_count: (string * int) list option;
+    groups: Ezjsonm.value option; (* Not on the documentation*)
   }
   [@@deriving accessor]
 
   let encoding =
     let to_tuple t =
-      ( t.next_batch
-      , t.rooms
-      , t.presence
-      , t.account_data
-      , t.to_device
-      , t.device_lists
-      , t.device_one_time_keys_count
-      , t.groups ) in
+      ( t.next_batch,
+        t.rooms,
+        t.presence,
+        t.account_data,
+        t.to_device,
+        t.device_lists,
+        t.device_one_time_keys_count,
+        t.groups ) in
     let of_tuple v =
-      let ( next_batch
-          , rooms
-          , presence
-          , account_data
-          , to_device
-          , device_lists
-          , device_one_time_keys_count
-          , groups ) =
+      let ( next_batch,
+            rooms,
+            presence,
+            account_data,
+            to_device,
+            device_lists,
+            device_one_time_keys_count,
+            groups ) =
         v in
       {
-        next_batch
-      ; rooms
-      ; presence
-      ; account_data
-      ; to_device
-      ; device_lists
-      ; device_one_time_keys_count
-      ; groups
+        next_batch;
+        rooms;
+        presence;
+        account_data;
+        to_device;
+        device_lists;
+        device_one_time_keys_count;
+        groups;
       } in
     let with_tuple =
       obj8 (req "next_batch" string)

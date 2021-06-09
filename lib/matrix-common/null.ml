@@ -5,17 +5,17 @@ let string =
     [
       case string
         (function Some s -> Some s | _ -> None)
-        (function s -> Some s)
-    ; case null
+        (function s -> Some s);
+      case null
         (function None -> Some () | _ -> assert false)
-        (function () -> None)
+        (function () -> None);
     ]
 
 let int =
   union
     [
-      case int (function Some s -> Some s | _ -> None) (function s -> Some s)
-    ; case null
+      case int (function Some s -> Some s | _ -> None) (function s -> Some s);
+      case null
         (function None -> Some () | _ -> assert false)
-        (function () -> None)
+        (function () -> None);
     ]

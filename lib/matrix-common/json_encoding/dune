@@ -1,4 +1,4 @@
 (library
  (name json_encoding)
- (public_name matrix-common.json_encoding)
+ (package matrix-common)
  (libraries ezjsonm fmt logs logs.cli))
