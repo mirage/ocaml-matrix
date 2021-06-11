@@ -10,3 +10,4 @@ doc/*.html
 server.crt
 server.key
 test.json
+var

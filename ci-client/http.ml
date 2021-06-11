@@ -5,10 +5,10 @@ open Json_encoding
 
 exception Json_error of Matrix_ctos.Errors.t
 
-let make_uri path query =
-  Uri.make ~scheme:"http" ~host:"127.0.0.1" ~port:8008 ~path ?query ()
+let make_uri host port path query =
+  Uri.make ~scheme:"http" ~host ~port ~path ?query ()
 
-let make_headers ?(header = []) auth_token =
+  let make_headers ?(header = []) auth_token =
   let headers = Header.of_list header in
   let headers =
     match auth_token with
@@ -17,8 +17,8 @@ let make_headers ?(header = []) auth_token =
       Header.add headers "Authorization" (Fmt.str "Bearer %s" auth_token) in
   headers
 
-let get ?header path args response_encoding needs_auth =
-  let uri = make_uri path args in
+let get (host, port) ?header path args response_encoding needs_auth =
+  let uri = make_uri host port path args in
   let headers = make_headers ?header needs_auth in
   Client.get ~headers uri >>= fun (resp, body) ->
   let code = resp |> Response.status |> Code.code_of_status in
@@ -28,8 +28,8 @@ let get ?header path args response_encoding needs_auth =
     raise (Json_error (destruct Matrix_ctos.Errors.encoding json_body))
   else destruct response_encoding json_body
 
-let post ?header path args value request_encoding response_encoding auth_token =
-  let uri = make_uri path args in
+let post (host, port) ?header path args value request_encoding response_encoding auth_token =
+  let uri = make_uri host port path args in
   let body = construct request_encoding value |> Ezjsonm.value_to_string in
   let body = Cohttp_lwt.Body.of_string body in
   let headers = make_headers ?header auth_token in
@@ -41,8 +41,8 @@ let post ?header path args value request_encoding response_encoding auth_token =
     raise (Json_error (destruct Matrix_ctos.Errors.encoding json_body))
   else destruct response_encoding json_body
 
-let put ?header path args value request_encoding response_encoding auth_token =
-  let uri = make_uri path args in
+let put (host, port) ?header path args value request_encoding response_encoding auth_token =
+  let uri = make_uri host port path args in
   let body = construct request_encoding value |> Ezjsonm.value_to_string in
   let body = Cohttp_lwt.Body.of_string body in
   let headers = make_headers ?header auth_token in
