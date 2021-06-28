@@ -1,6 +1,12 @@
 type context
 
-val context : host:string -> port:int -> user:string -> pwd:string -> device:string option -> context
+val context :
+  host:string ->
+  port:int ->
+  user:string ->
+  pwd:string ->
+  device:string option ->
+  context
 (** [post ~host ~port ~user ~password ?device] makes a context for a minimalist matrix
     client.
     [host] is the server to be contacted with port [port], while [user] and
