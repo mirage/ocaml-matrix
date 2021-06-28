@@ -1,7 +1,7 @@
 (library
- (name matrix_ci_client)
- (public_name matrix-ci-client)
- (modules matrix_ci_client http)
+ (name matrix_current)
+ (public_name matrix-current)
+ (modules matrix_current post client http)
  (libraries
   matrix-ctos
   fmt.tty
@@ -12,26 +12,7 @@
   cohttp
   cohttp-lwt
   cohttp-lwt-unix
-  uuidm))
-
-(library
- (name matrix_ci_current)
- (public_name matrix-ci-current)
- (modules matrix_ci_current post)
- (libraries
-   current
-   current.cache
-   current.term
-   matrix-ci-client))
-
-(executable
- (name matrix_ci_current_example)
- (public_name matrix-ci-current-example)
- (package matrix-ci-current)
- (modules matrix_ci_current_example)
- (libraries
-   current
-   current_web
-   prometheus-app.unix
-   matrix-ci-current)
- (preprocess (pps ppx_deriving.std ppx_deriving_yojson)))
+  uuidm
+  current
+  current.cache
+  current.term))

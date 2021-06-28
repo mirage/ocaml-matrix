@@ -1,6 +1,6 @@
 opam-version: "2.0"
 version: "0.1"
-synopsis: "A minimalist matrix client for a matrix plugin for ocurrent"
+synopsis: "A minimalist matrix client for an ocurrent plugin"
 maintainer: ["Gwenaëlle Lecat <charles-edouard@tarides.com>"]
 authors: ["Gwenaëlle Lecat <charles-edouard@tarides.com>"]
 homepage: "https://github.com/clecat/ocaml-matrix"

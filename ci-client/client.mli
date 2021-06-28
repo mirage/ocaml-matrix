@@ -6,4 +6,4 @@ type t = {
   pwd : string;
 }
 
-val run: t -> string -> (unit, string) result Lwt.t
+val run: Current.Job.t -> string -> t -> string -> (unit, string) result Lwt.t
