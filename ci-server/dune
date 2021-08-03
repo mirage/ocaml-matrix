@@ -1,11 +1,48 @@
+(library
+ (name server_utility)
+ (package matrix-ci-server)
+ (modules data store)
+ (preprocess
+  (pps ppx_deriver_accessor ppx_rewriter_accessor))
+ (libraries matrix-common lwt irmin-unix))
+
 (executable
  (modes byte exe)
  (name matrix_ci_server)
  (public_name matrix-ci-server)
  (package matrix-ci-server)
+ (modules matrix_ci_server consts client_routes middleware identifiers helper)
  (libraries
+  dream
+  domain-name
   matrix-ctos
   matrix-stos
+  server_utility
+  fmt.tty
+  cmdliner
+  logs
+  logs.cli
+  logs.fmt
+  astring
+  uuidm
+  bheap
+  base64
+  json_encoding
+  ipaddr)
+ (preprocess
+  (pps lwt_ppx)))
+
+(executable
+ (modes byte exe)
+ (name matrix_ci_server_setup)
+ (public_name matrix-ci-server-setup)
+ (package matrix-ci-server)
+ (modules matrix_ci_server_setup)
+ (libraries
+  dream
+  matrix-ctos
+  matrix-stos
+  server_utility
   irmin-unix
   irmin-fs
   mirage-kv
@@ -17,4 +54,8 @@
   astring
   uuidm
   bheap
-  base64))
+  base64
+  json_encoding
+  ipaddr)
+ (preprocess
+  (pps lwt_ppx)))

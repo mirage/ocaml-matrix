@@ -1,17 +1,19 @@
 open Json_encoding
 
 module Error = struct
-  type t = {errcode: string; error: string} [@@deriving accessor]
+  type t = {errcode: string; error: string option} [@@deriving accessor]
 
   let encoding =
     let to_tuple t = t.errcode, t.error in
     let of_tuple v =
       let errcode, error = v in
       {errcode; error} in
-    let with_tuple = obj2 (req "errcode" string) (req "error" string) in
+    let with_tuple = obj2 (req "errcode" string) (opt "error" string) in
     conv to_tuple of_tuple with_tuple
 
-  let pp ppf t = Fmt.(pf ppf "{errcode: %s; error: %s}" t.errcode t.error)
+  let pp ppf t =
+    Fmt.(
+      pf ppf "{errcode: %s; error: %a}" t.errcode (Dump.option string) t.error)
 end
 
 module Auth_error = struct

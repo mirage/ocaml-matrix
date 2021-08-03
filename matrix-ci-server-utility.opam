@@ -1,0 +1,42 @@
+opam-version: "2.0"
+version: "0.1"
+synopsis:
+  "A minimalist matrix server for the hosting of CI trigerred messages"
+maintainer: ["Gwenaëlle Lecat <charles-edouard@tarides.com>"]
+authors: ["Gwenaëlle Lecat <charles-edouard@tarides.com>"]
+homepage: "https://github.com/clecat/ocaml-matrix"
+bug-reports: "https://github.com/clecat/ocaml-matrix/issues"
+depends: [
+  "dune" {>= "2.8"}
+  "odoc" {with-doc}
+  "matrix-ctos" {= version}
+  "matrix-stos" {= version}
+  "astring"
+  "base64"
+  "bheap"
+  "cmdliner"
+  "ezjsonm"
+  "fmt"
+  "irmin-fs"
+  "irmin-unix"
+  "logs"
+  "mirage-crypto-ec"
+  "mirage-kv"
+  "ppxlib"
+  "uuidm"
+  "x509"
+]
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]

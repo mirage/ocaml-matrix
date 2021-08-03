@@ -522,7 +522,7 @@ end
 
 module Errors : sig
   module Error : sig
-    type%accessor t = {errcode: string; error: string}
+    type%accessor t = {errcode: string; error: string option}
 
     val encoding : t encoding
     val pp : t Fmt.t
