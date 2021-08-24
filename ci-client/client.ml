@@ -18,7 +18,7 @@ let make_login device_id user password =
   Login.Post.Request.make ~auth ?device_id ()
 
 let login job server login =
-  Current.Job.log job "Login to %a and port %d" Http.Server.pp server;
+  Current.Job.log job "Login to %a" Http.Server.pp server;
   let open Login.Post in
   Http.post server "_matrix/client/r0/login" None login Request.encoding
     Response.encoding None
