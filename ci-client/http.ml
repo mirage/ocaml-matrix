@@ -58,8 +58,7 @@ let post
   if code >= 400 then
     raise
       (Json_error
-         (Fmt.str "Json error in post: %a" Matrix_ctos.Errors.pp
-            (destruct Matrix_ctos.Errors.encoding json_body)))
+         (Fmt.str "Json error in get: %s" body))
   else destruct response_encoding json_body
 
 let put
@@ -76,6 +75,5 @@ let put
   if code >= 400 then
     raise
       (Json_error
-         (Fmt.str "Json error in put: %s %a" path Matrix_ctos.Errors.pp
-            (destruct Matrix_ctos.Errors.encoding json_body)))
+         (Fmt.str "Json error in get: %s" body))
   else destruct response_encoding json_body
