@@ -77,6 +77,8 @@ let is_logged handler request =
               {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched"}|}
         )))
 
+let is_logged_server _ _ = assert false
+
 module Rate_limit = struct
   let rate_limit =
     let show_value t =

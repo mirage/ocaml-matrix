@@ -5,11 +5,6 @@ open Middleware
 open Matrix_common
 open Matrix_ctos
 
-let server_name_ref = ref ""
-
-let server_name =
-  Dream.new_global ~name:"server_name" ~show_value:(fun s -> !s) (fun () -> server_name_ref)
-
 (** Notes:
   - In need of adding the support of the get route in order to advertise
   which authentication mechanism is supported: at the moment, only password v2
@@ -134,7 +129,7 @@ let logout request =
         let%lwt _ =
           Store.remove ~info:Irmin.Info.none store
             (Store.Key.v ["tokens"; token]) in
-        (* delete the device iteself *)
+        (* delete the device *)
         let%lwt _ =
           Store.remove ~info:Irmin.Info.none store
             (Store.Key.v ["devices"; device]) in
@@ -182,18 +177,17 @@ let send request =
     Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
   in
   match Dream.local logged_user request with
-  | Some user -> (
+  | Some user ->
     let room_id = Dream.param "room_id" request in
     let%lwt b = Helper.is_room_user room_id user in
-    if b
-    then
+    if b then
       let id = "$" ^ Uuidm.(v `V4 |> to_string) in
       let message_content = Request.get_event message in
       let event =
         Events.Room_event.make
           ~event:
             (Events.Event.make
-              ~event_content:(Events.Event_content.Message message_content) ())
+               ~event_content:(Events.Event_content.Message message_content) ())
           ~event_id:id ~sender:user
           ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
           () in
@@ -210,8 +204,8 @@ let send request =
       match prev_head with
       | None ->
         let error =
-          Errors.Error.make ~errcode:"M_UNKNOWN" ~error:"Internal storage failure"
-            ()
+          Errors.Error.make ~errcode:"M_UNKNOWN"
+            ~error:"Internal storage failure" ()
           |> Json_encoding.construct Errors.Error.encoding
           |> Ezjsonm.value_to_string in
         Dream.json ~status:`Internal_Server_Error error
@@ -229,21 +223,19 @@ let send request =
           |> Json_encoding.construct Response.encoding
           |> Ezjsonm.value_to_string in
         Dream.json response
-      else
-        Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|})
+    else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
   | None -> assert false
 (* Should obviously return a 401 instead: If this case
    was to happen, it would mean that the user of the matrix library has
    forgotten to use the authentication middleware. But we might prefer having
    a clean error than a simple raise. Or maybe a 5XX would be more appropriate *)
 
-let router server_name =
-  server_name_ref := server_name;
+let router =
   Dream.router
     [
       Dream.scope "/_matrix" []
         [
-          Dream.scope "/client" [Dream.memory_sessions]
+          Dream.scope "/client" []
             [
               Dream.scope "/r0" []
                 [

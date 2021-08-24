@@ -8,13 +8,9 @@ module Server = struct
     | Domain of string list
 
   let ( or ) a b x = a x || b x
-
   let is_alpha = function 'a' .. 'z' | 'A' .. 'Z' -> true | _ -> false
-
   let is_digit = function '0' .. '9' -> true | _ -> false
-
   let is_dash = ( = ) '-'
-
   let let_dig = satisfy (is_alpha or is_digit)
 
   (* XXX(dinosaure): Ldh-str = *( ALPHA / DIGIT / "-" ) Let-dig
@@ -25,13 +21,12 @@ module Server = struct
    * **is not** a dash. *)
   let ldh_str =
     take_while1 (is_alpha or is_digit or is_dash) >>= fun res ->
-    if String.get res (String.length res - 1) <> '-'
-    then return res
+    if String.get res (String.length res - 1) <> '-' then return res
     else fail "Invalid ldh-str token"
 
   let sub_domain =
     let_dig >>= fun pre ->
-    option "" ldh_str >>| fun lst -> String.concat "" [ String.make 1 pre; lst ]
+    option "" ldh_str >>| fun lst -> String.concat "" [String.make 1 pre; lst]
 
   let domain =
     sub_domain >>= fun x ->
@@ -68,7 +63,6 @@ module Server = struct
     | None -> fail "ipv6_addr"
 
   let ipv6_address_literal = string "IPv6:" *> ipv6_addr
-
   let failf fmt = Fmt.kstrf fail fmt
 
   let ldh_str =
@@ -76,8 +70,8 @@ module Server = struct
       | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '-' -> true
       | _ -> false)
     >>= fun ldh ->
-    if String.unsafe_get ldh (String.length ldh - 1) = '-'
-    then failf "ldh_str: %s is invalid" ldh
+    if String.unsafe_get ldh (String.length ldh - 1) = '-' then
+      failf "ldh_str: %s is invalid" ldh
     else return ldh
 
   let general_address_literal =
@@ -100,14 +94,10 @@ module Server = struct
     | Error _ -> Fmt.invalid_arg "Invalid domain: %s" x
 end
 
-module Room_alias =
-struct
+module Room_alias = struct
   let is_sep = function ':' -> true | _ -> false
-
   let room_local = take_till is_sep
-
-  let room_id =
-    (and+) (char '#' *> room_local) (char ':' *> Server.server)
+  let room_id = ( and+ ) (char '#' *> room_local) (char ':' *> Server.server)
 
   let of_string_exn x =
     match parse_string ~consume:Consume.All room_id x with

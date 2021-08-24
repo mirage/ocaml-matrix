@@ -11,7 +11,15 @@
  (name matrix_ci_server)
  (public_name matrix-ci-server)
  (package matrix-ci-server)
- (modules matrix_ci_server consts client_routes middleware identifiers helper)
+ (modules
+  matrix_ci_server
+  consts
+  common_routes
+  client_routes
+  federation_routes
+  middleware
+  identifiers
+  helper)
  (libraries
   dream
   domain-name

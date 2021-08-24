@@ -66,184 +66,185 @@ module Room = struct
     | Some _ ->
       Logs.err (fun m -> m "room alias %s already exist" alias);
       Lwt.return 1
-    | None ->
+    | None -> (
       let%lwt s_user = Store.find store (Store.Key.v ["users"; user_id]) in
       match s_user with
       | None ->
         Logs.err (fun m -> m "user id %s does not exist" user_id);
         Lwt.return 1
       | Some _ ->
-          let room_id = "$" ^ Uuidm.(v `V4 |> to_string) in
-      (* Create the head for the message feed *)
-      let%lwt _ =
-        Store.set ~info:Irmin.Info.none store
-          (Store.Key.v ["rooms"; room_id; "messages_id"; "head"])
-          "" in
-      (* Create the state events of the room *)
-      (* power_level *)
-      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-      let event =
-        Events.State_event.make
-          ~room_event:
-            (Events.Room_event.make
-               ~event:
-                 (Events.Event.make
-                    ~event_content:
-                      (Events.Event_content.Power_levels
-                         (Events.Event_content.Power_levels.make
-                            ?users:(Some [user_id, 100])
-                            ?users_default:(Some (-1)) ()))
-                    ())
-               ~event_id:id ~sender:user_id ())
-          ~state_key:"" () in
-      let json_event =
-        Json_encoding.construct Events.State_event.encoding event
-        |> Ezjsonm.value_to_string in
-      let%lwt _ =
-        Store.set ~info:Irmin.Info.none store
-          (Store.Key.v ["rooms"; room_id; "state"; "m.room.power_levels"])
-          json_event in
-      (* history_visibility *)
-      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-      let event =
-        Events.State_event.make
-          ~room_event:
-            (Events.Room_event.make
-               ~event:
-                 (Events.Event.make
-                    ~event_content:
-                      (Events.Event_content.History_visibility
-                         (Events.Event_content.History_visibility.make
-                            ~visibility:Shared ()))
-                    ())
-               ~event_id:id ~sender:user_id ())
-          ~state_key:"" () in
-      let json_event =
-        Json_encoding.construct Events.State_event.encoding event
-        |> Ezjsonm.value_to_string in
-      let%lwt _ =
-        Store.set ~info:Irmin.Info.none store
-          (Store.Key.v ["rooms"; room_id; "state"; "m.room.history_visibility"])
-          json_event in
-      (* create *)
-      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-      let event =
-        Events.State_event.make
-          ~room_event:
-            (Events.Room_event.make
-               ~event:
-                 (Events.Event.make
-                    ~event_content:
-                      (Events.Event_content.Create
-                         (Events.Event_content.Create.make ~creator:user_id
-                            ?room_version:(Some "4") ()))
-                    ())
-               ~event_id:id ~sender:user_id ())
-          ~state_key:"" () in
-      let json_event =
-        Json_encoding.construct Events.State_event.encoding event
-        |> Ezjsonm.value_to_string in
-      let%lwt _ =
-        Store.set ~info:Irmin.Info.none store
-          (Store.Key.v ["rooms"; room_id; "state"; "m.room.create"])
-          json_event in
-      (* member *)
-      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-      let event =
-        Events.State_event.make
-          ~room_event:
-            (Events.Room_event.make
-               ~event:
-                 (Events.Event.make
-                    ~event_content:
-                      (Events.Event_content.Member
-                         (Events.Event_content.Member.make ~avatar_url:None
-                            ~displayname:(Some user_id) ~membership:Join ()))
-                    ())
-               ~event_id:id ~sender:user_id ())
-          ~state_key:user_id () in
-      let json_event =
-        Json_encoding.construct Events.State_event.encoding event
-        |> Ezjsonm.value_to_string in
-      let%lwt _ =
-        Store.set ~info:Irmin.Info.none store
-          (Store.Key.v ["rooms"; room_id; "state"; "m.room.member"; user_id])
-          json_event in
-      (* join_rules *)
-      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-      let event =
-        Events.State_event.make
-          ~room_event:
-            (Events.Room_event.make
-               ~event:
-                 (Events.Event.make
-                    ~event_content:
-                      (Events.Event_content.Join_rules
-                         (Events.Event_content.Join_rules.make ~join_rule:Public
-                            ()))
-                    ())
-               ~event_id:id ~sender:user_id ())
-          ~state_key:"" () in
-      let json_event =
-        Json_encoding.construct Events.State_event.encoding event
-        |> Ezjsonm.value_to_string in
-      let%lwt _ =
-        Store.set ~info:Irmin.Info.none store
-          (Store.Key.v ["rooms"; room_id; "state"; "m.room.join_rules"])
-          json_event in
-      (* name *)
-      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-      let event =
-        Events.State_event.make
-          ~room_event:
-            (Events.Room_event.make
-               ~event:
-                 (Events.Event.make
-                    ~event_content:
-                      (Events.Event_content.Name
-                         (Events.Event_content.Name.make ~name:alias ()))
-                    ())
-               ~event_id:id ~sender:user_id ())
-          ~state_key:"" () in
-      let json_event =
-        Json_encoding.construct Events.State_event.encoding event
-        |> Ezjsonm.value_to_string in
-      let%lwt _ =
-        Store.set ~info:Irmin.Info.none store
-          (Store.Key.v ["rooms"; room_id; "state"; "m.room.name"])
-          json_event in
-      (* canonical_alias *)
-      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-      let event =
-        Events.State_event.make
-          ~room_event:
-            (Events.Room_event.make
-               ~event:
-                 (Events.Event.make
-                    ~event_content:
-                      (Events.Event_content.Canonical_alias
-                         (Events.Event_content.Canonical_alias.make
-                            ~alias:(Some alias) ()))
-                    ())
-               ~event_id:id ~sender:user_id ())
-          ~state_key:"" () in
-      let json_event =
-        Json_encoding.construct Events.State_event.encoding event
-        |> Ezjsonm.value_to_string in
-      let%lwt _ =
-        Store.set ~info:Irmin.Info.none store
-          (Store.Key.v ["rooms"; room_id; "state"; "m.room.canonical_alias"])
-          json_event in
-      (* Saving the alias in the aliases folder *)
-      let json_alias =
-        Alias.make ~room_id ()
-        |> Json_encoding.construct Alias.encoding
-        |> Ezjsonm.value_to_string in
-      let%lwt _ =
-        Store.set ~info:Irmin.Info.none store
-          (Store.Key.v ["aliases"; alias])
-          json_alias in
-      Lwt.return 0
+        let room_id = "$" ^ Uuidm.(v `V4 |> to_string) in
+        (* Create the head for the message feed *)
+        let%lwt _ =
+          Store.set ~info:Irmin.Info.none store
+            (Store.Key.v ["rooms"; room_id; "messages_id"; "head"])
+            "" in
+        (* Create the state events of the room *)
+        (* power_level *)
+        let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+        let event =
+          Events.State_event.make
+            ~room_event:
+              (Events.Room_event.make
+                 ~event:
+                   (Events.Event.make
+                      ~event_content:
+                        (Events.Event_content.Power_levels
+                           (Events.Event_content.Power_levels.make
+                              ?users:(Some [user_id, 100])
+                              ?users_default:(Some (-1)) ()))
+                      ())
+                 ~event_id:id ~sender:user_id ())
+            ~state_key:"" () in
+        let json_event =
+          Json_encoding.construct Events.State_event.encoding event
+          |> Ezjsonm.value_to_string in
+        let%lwt _ =
+          Store.set ~info:Irmin.Info.none store
+            (Store.Key.v ["rooms"; room_id; "state"; "m.room.power_levels"])
+            json_event in
+        (* history_visibility *)
+        let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+        let event =
+          Events.State_event.make
+            ~room_event:
+              (Events.Room_event.make
+                 ~event:
+                   (Events.Event.make
+                      ~event_content:
+                        (Events.Event_content.History_visibility
+                           (Events.Event_content.History_visibility.make
+                              ~visibility:Shared ()))
+                      ())
+                 ~event_id:id ~sender:user_id ())
+            ~state_key:"" () in
+        let json_event =
+          Json_encoding.construct Events.State_event.encoding event
+          |> Ezjsonm.value_to_string in
+        let%lwt _ =
+          Store.set ~info:Irmin.Info.none store
+            (Store.Key.v
+               ["rooms"; room_id; "state"; "m.room.history_visibility"])
+            json_event in
+        (* create *)
+        let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+        let event =
+          Events.State_event.make
+            ~room_event:
+              (Events.Room_event.make
+                 ~event:
+                   (Events.Event.make
+                      ~event_content:
+                        (Events.Event_content.Create
+                           (Events.Event_content.Create.make ~creator:user_id
+                              ?room_version:(Some "4") ()))
+                      ())
+                 ~event_id:id ~sender:user_id ())
+            ~state_key:"" () in
+        let json_event =
+          Json_encoding.construct Events.State_event.encoding event
+          |> Ezjsonm.value_to_string in
+        let%lwt _ =
+          Store.set ~info:Irmin.Info.none store
+            (Store.Key.v ["rooms"; room_id; "state"; "m.room.create"])
+            json_event in
+        (* member *)
+        let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+        let event =
+          Events.State_event.make
+            ~room_event:
+              (Events.Room_event.make
+                 ~event:
+                   (Events.Event.make
+                      ~event_content:
+                        (Events.Event_content.Member
+                           (Events.Event_content.Member.make ~avatar_url:None
+                              ~displayname:(Some user_id) ~membership:Join ()))
+                      ())
+                 ~event_id:id ~sender:user_id ())
+            ~state_key:user_id () in
+        let json_event =
+          Json_encoding.construct Events.State_event.encoding event
+          |> Ezjsonm.value_to_string in
+        let%lwt _ =
+          Store.set ~info:Irmin.Info.none store
+            (Store.Key.v ["rooms"; room_id; "state"; "m.room.member"; user_id])
+            json_event in
+        (* join_rules *)
+        let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+        let event =
+          Events.State_event.make
+            ~room_event:
+              (Events.Room_event.make
+                 ~event:
+                   (Events.Event.make
+                      ~event_content:
+                        (Events.Event_content.Join_rules
+                           (Events.Event_content.Join_rules.make
+                              ~join_rule:Public ()))
+                      ())
+                 ~event_id:id ~sender:user_id ())
+            ~state_key:"" () in
+        let json_event =
+          Json_encoding.construct Events.State_event.encoding event
+          |> Ezjsonm.value_to_string in
+        let%lwt _ =
+          Store.set ~info:Irmin.Info.none store
+            (Store.Key.v ["rooms"; room_id; "state"; "m.room.join_rules"])
+            json_event in
+        (* name *)
+        let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+        let event =
+          Events.State_event.make
+            ~room_event:
+              (Events.Room_event.make
+                 ~event:
+                   (Events.Event.make
+                      ~event_content:
+                        (Events.Event_content.Name
+                           (Events.Event_content.Name.make ~name:alias ()))
+                      ())
+                 ~event_id:id ~sender:user_id ())
+            ~state_key:"" () in
+        let json_event =
+          Json_encoding.construct Events.State_event.encoding event
+          |> Ezjsonm.value_to_string in
+        let%lwt _ =
+          Store.set ~info:Irmin.Info.none store
+            (Store.Key.v ["rooms"; room_id; "state"; "m.room.name"])
+            json_event in
+        (* canonical_alias *)
+        let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+        let event =
+          Events.State_event.make
+            ~room_event:
+              (Events.Room_event.make
+                 ~event:
+                   (Events.Event.make
+                      ~event_content:
+                        (Events.Event_content.Canonical_alias
+                           (Events.Event_content.Canonical_alias.make
+                              ~alias:(Some alias) ()))
+                      ())
+                 ~event_id:id ~sender:user_id ())
+            ~state_key:"" () in
+        let json_event =
+          Json_encoding.construct Events.State_event.encoding event
+          |> Ezjsonm.value_to_string in
+        let%lwt _ =
+          Store.set ~info:Irmin.Info.none store
+            (Store.Key.v ["rooms"; room_id; "state"; "m.room.canonical_alias"])
+            json_event in
+        (* Saving the alias in the aliases folder *)
+        let json_alias =
+          Alias.make ~room_id ()
+          |> Json_encoding.construct Alias.encoding
+          |> Ezjsonm.value_to_string in
+        let%lwt _ =
+          Store.set ~info:Irmin.Info.none store
+            (Store.Key.v ["aliases"; alias])
+            json_alias in
+        Lwt.return 0)
 
   let alias =
     Arg.(
