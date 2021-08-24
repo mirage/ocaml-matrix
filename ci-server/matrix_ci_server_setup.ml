@@ -61,8 +61,8 @@ end
 
 module Room = struct
   let f alias user_id () =
-    let%lwt s_user = Store.find store (Store.Key.v ["aliases"; alias]) in
-    match s_user with
+    let%lwt s_alias = Store.find store (Store.Key.v ["aliases"; alias]) in
+    match s_alias with
     | Some _ ->
       Logs.err (fun m -> m "room alias %s already exist" alias);
       Lwt.return 1
