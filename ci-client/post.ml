@@ -13,7 +13,7 @@ end
 module Value = Current.String
 module Outcome = Current.Unit
 
-let publish t job {Key.key; room_id} message =
+let publish t job Key.{room_id; _} message =
   Current.Job.start job ~level:Current.Level.Above_average >>= fun () ->
   Current.Job.log job "publishing message %S" message;
   Client.post ~job ~room_id t message >>= function

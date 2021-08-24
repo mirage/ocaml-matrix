@@ -116,13 +116,13 @@ let get_room ~job ~alias ~name ~topic ctx =
     match existing_room_alias with
     | None ->
       let+ create_room_response =
-        create_room job ctx.server auth_token alias (name, topic)
+        create_room ~job ctx.server auth_token alias (name, topic)
       in
       Room.Create.Response.get_room_id create_room_response
     | Some room_id ->
       Current.Job.log job
         "Room already exists, making sure it has the correct name and topic.";
-      let+ () = update_room job ctx.server auth_token room_id (name, topic) in
+      let+ () = update_room ~job ctx.server auth_token room_id (name, topic) in
       room_id
   in
   Current.Job.log job "Room id: %s" room_id;
