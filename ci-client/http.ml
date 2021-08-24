@@ -37,12 +37,19 @@ let get server ?header path args response_encoding needs_auth =
   Cohttp_lwt_unix.Client.get ~headers uri >>= fun (resp, body) ->
   let code = resp |> Response.status |> Code.code_of_status in
   body |> Cohttp_lwt.Body.to_string >|= fun body ->
-  let json_body = Ezjsonm.from_string body in
-  if code >= 400 then
+  if body <> ""
+  then
+    (let json_body = Ezjsonm.from_string body in
+    if code >= 400 then
+      raise
+        (Json_error
+          (Fmt.str "Json error in get: %a" Matrix_ctos.Errors.pp
+              (destruct Matrix_ctos.Errors.encoding json_body)))
+    else destruct response_encoding json_body)
+  else
     raise
       (Json_error
-         (Fmt.str "Json error in get: %s" body))
-  else destruct response_encoding json_body
+        (Fmt.str "Error in get"))
 
 let post
     server ?header path args value request_encoding response_encoding auth_token
@@ -54,12 +61,19 @@ let post
   Cohttp_lwt_unix.Client.post ~headers ~body uri >>= fun (resp, body) ->
   let code = resp |> Response.status |> Code.code_of_status in
   body |> Cohttp_lwt.Body.to_string >|= fun body ->
-  let json_body = Ezjsonm.from_string body in
-  if code >= 400 then
-    raise
-      (Json_error
-         (Fmt.str "Json error in get: %s" body))
-  else destruct response_encoding json_body
+  if body <> ""
+    then
+      (let json_body = Ezjsonm.from_string body in
+      if code >= 400 then
+        raise
+          (Json_error
+            (Fmt.str "Json error in post: %a" Matrix_ctos.Errors.pp
+                (destruct Matrix_ctos.Errors.encoding json_body)))
+      else destruct response_encoding json_body)
+    else
+      raise
+        (Json_error
+          (Fmt.str "Error in post"))
 
 let put
     server ?header path args value request_encoding response_encoding auth_token
@@ -71,9 +85,16 @@ let put
   Cohttp_lwt_unix.Client.put ~headers ~body uri >>= fun (resp, body) ->
   let code = resp |> Response.status |> Code.code_of_status in
   body |> Cohttp_lwt.Body.to_string >|= fun body ->
-  let json_body = Ezjsonm.from_string body in
-  if code >= 400 then
-    raise
-      (Json_error
-         (Fmt.str "Json error in get: %s" body))
-  else destruct response_encoding json_body
+  if body <> ""
+    then
+      (let json_body = Ezjsonm.from_string body in
+      if code >= 400 then
+        raise
+          (Json_error
+            (Fmt.str "Json error in put: %a" Matrix_ctos.Errors.pp
+                (destruct Matrix_ctos.Errors.encoding json_body)))
+      else destruct response_encoding json_body)
+    else
+      raise
+        (Json_error
+          (Fmt.str "Error in put"))
