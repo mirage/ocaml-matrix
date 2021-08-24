@@ -41,8 +41,7 @@ let get server ?header path args response_encoding needs_auth =
   if code >= 400 then
     raise
       (Json_error
-         (Fmt.str "Json error in get: %a" Matrix_ctos.Errors.pp
-            (destruct Matrix_ctos.Errors.encoding json_body)))
+         (Fmt.str "Json error in get: %s" body))
   else destruct response_encoding json_body
 
 let post
