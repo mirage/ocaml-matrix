@@ -1,7 +1,7 @@
 (library
  (name matrix_current)
  (public_name matrix-current)
- (modules matrix_current post client http)
+ (modules matrix_current post client http room)
  (libraries
   matrix-ctos
   fmt.tty
