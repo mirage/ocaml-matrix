@@ -3,13 +3,14 @@ type context
 val context :
   host:string ->
   port:int ->
+  scheme:[ `Http | `Https ] ->
   user:string ->
   pwd:string ->
   device:string option ->
   context
-(** [post ~host ~port ~user ~password ?device] makes a context for a minimalist matrix
+(** [post ~host ~port ~scheme ~user ~password ?device] makes a context for a minimalist matrix
     client.
-    [host] is the server to be contacted with port [port], while [user] and
+    [host] is the server to be contacted with port [port] using http or https, while [user] and
     [pwd] are the credentials used for the login.
     The optionnal [device] represents the key that will be associated with the
     future transactions for per device operations by the matrix server

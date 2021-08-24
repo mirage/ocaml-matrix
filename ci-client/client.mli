@@ -1,6 +1,5 @@
 type t = {
-  host: string;
-  port: int;
+  server: Http.Server.t;
   device: string option;
   user: string;
   pwd: string;
