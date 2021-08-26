@@ -106,7 +106,7 @@ let logout request =
           (* remove the device from the user info *)
           let s_user =
             User.set_devices s_user
-              (List.filter (fun s -> s = device) (User.get_devices s_user))
+              (List.filter (fun s -> s <> device) (User.get_devices s_user))
           in
           let s_user =
             Json_encoding.construct User.encoding s_user
@@ -388,6 +388,79 @@ let create_room request =
             | None -> assert false)))
   | _ -> Dream.json ~status:`Bad_Request {|{"errcode": "M_FORBIDDEN"; "error": "Current implementation only accepts public rooms"}|}
 
+let state request =
+  let open Room_event.Put.State_event in
+  let%lwt body = Dream.body request in
+  let state =
+    Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
+  in
+  match Dream.local logged_user request with
+  | Some user ->
+    let room_id = Dream.param "room_id" request in
+    let event_type = Dream.param "event_type" request in
+    let state_key = Dream.param "state_key" request in
+    let%lwt b = Helper.is_room_user room_id user in
+    if b then
+      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+      let event_content = Room_event.Put.State_event.Request.get_event state in
+      let event =
+        Events.Room_event.make
+          ~event:
+            (Events.Event.make ~event_content ())
+          ~event_id:id ~sender:user
+          ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
+          () in
+      let json_event =
+        Json_encoding.construct Events.Room_event.encoding event
+        |> Ezjsonm.value_to_string in
+      let%lwt _ =
+        Store.set ~info:Irmin.Info.none store
+          (Store.Key.v ["rooms"; room_id; "state"; event_type; state_key])
+          json_event in
+      let response =
+        Response.make ~event_id:id ()
+        |> Json_encoding.construct Response.encoding
+        |> Ezjsonm.value_to_string in
+      Dream.json response
+    else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
+  | None -> assert false
+
+let state_stateless request =
+  let open Room_event.Put.State_event in
+  let%lwt body = Dream.body request in
+  let state =
+    Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
+  in
+  match Dream.local logged_user request with
+  | Some user ->
+    let room_id = Dream.param "room_id" request in
+    let event_type = Dream.param "event_type" request in
+    let%lwt b = Helper.is_room_user room_id user in
+    if b then
+      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+      let event_content = Room_event.Put.State_event.Request.get_event state in
+      let event =
+        Events.Room_event.make
+          ~event:
+            (Events.Event.make ~event_content ())
+          ~event_id:id ~sender:user
+          ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
+          () in
+      let json_event =
+        Json_encoding.construct Events.Room_event.encoding event
+        |> Ezjsonm.value_to_string in
+      let%lwt _ =
+        Store.set ~info:Irmin.Info.none store
+          (Store.Key.v ["rooms"; room_id; "state"; event_type])
+          json_event in
+      let response =
+        Response.make ~event_id:id ()
+        |> Json_encoding.construct Response.encoding
+        |> Ezjsonm.value_to_string in
+      Dream.json response
+    else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
+  | None -> assert false
+
 (** Notes:
     - Properly use the ID
   *)
@@ -466,6 +539,8 @@ let router =
                   Dream.scope "" [is_logged]
                     [
                       Dream.post "/createRoom" create_room;
+                      Dream.put "/rooms/:room_id/state/:event_type/:state_key" state;
+                      Dream.put "/rooms/:room_id/state/:event_type/" state_stateless;
                       Dream.put "/rooms/:room_id/send/:event_type/:txn_id" send;
                       Dream.post "/logout" logout;
                     ];
