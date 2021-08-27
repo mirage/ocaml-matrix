@@ -20,3 +20,9 @@ let is_room_user room_id user_id =
     | _ -> assert false)
 
 let time () = Unix.time () |> Float.to_int
+
+let info (t: Common_routes.t) ?(message="") () =
+  Irmin.Info.v
+    ~date:(Int64.of_float (Unix.gettimeofday ()))
+    ~author:t.server_name
+    message

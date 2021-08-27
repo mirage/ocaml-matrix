@@ -1,6 +1,6 @@
 open Cmdliner
 
-let client_server () =
+let client_server info =
   let interface = "0.0.0.0" in
   let scheme = "http" in
   let port = 8008 in
@@ -8,7 +8,7 @@ let client_server () =
   Dream.log "Type Ctrl+C to stop";
   Dream.serve ~interface ~port
   @@ Dream.logger
-  @@ Client_routes.router
+  @@ Client_routes.router info
   @@ Dream.not_found
 
 (* Fix the certificate and key paths for some command line args *)
@@ -41,7 +41,7 @@ let read_key file =
 let main server_name server_key () =
   let priv_key, pub_key = read_key server_key in
   let info = Common_routes.{server_name; priv_key; pub_key} in
-  Lwt_main.run (Lwt.join [client_server (); federation_server info])
+  Lwt_main.run (Lwt.join [client_server info; federation_server info])
 
 let setup level =
   let style_renderer = `Ansi_tty in

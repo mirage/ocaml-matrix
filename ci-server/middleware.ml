@@ -37,7 +37,7 @@ let is_logged handler request =
     match s_token with
     | None ->
       Dream.json ~status:`Unauthorized
-        {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched tok"}|}
+        {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched"}|}
     | Some s_token -> (
       let s_token =
         Json_encoding.destruct Token.encoding
@@ -48,7 +48,7 @@ let is_logged handler request =
       match s_device with
       | None ->
         Dream.json ~status:`Unauthorized
-          {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched dev"}|}
+          {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched"}|}
       | Some s_device -> (
         let s_device =
           Json_encoding.destruct Device.encoding
@@ -59,7 +59,7 @@ let is_logged handler request =
         match s_user with
         | None ->
           Dream.json ~status:`Unauthorized
-            {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched user"}|}
+            {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched"}|}
         | Some s_user ->
           let s_user =
             Json_encoding.destruct User.encoding
@@ -91,7 +91,7 @@ module Rate_limit = struct
   (** The error code is getting old, it needs to be rewritten with all the new
     methods*)
   let limit_exceeded wait =
-    Dream.json ~status:`Unauthorized
+    Dream.json ~status:`Too_Many_Requests
       (Fmt.str
          {|{"errcode": "M_LIMIT_EXCEEDED", "error": "Rate limit exceed, please wait before retrying", "retry_after_ms": %d}|}
          (Float.to_int wait))
