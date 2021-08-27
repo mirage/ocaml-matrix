@@ -18,7 +18,7 @@ module Room = struct
   let make
       ctx ~alias ?(name = Current.return alias) ?(topic = Current.return "") ()
       =
-    Current.component "Matrix room"
+    Current.component "matrix room"
     |> let> name = name and> topic = topic in
        RC.set ctx alias {name; topic}
 end
@@ -26,6 +26,6 @@ end
 module PC = Current_cache.Output (Post)
 
 let post ctx ~key ~room message =
-  Current.component "matrix-post"
+  Current.component "matrix post"
   |> let> message = message and> room = room in
      PC.set ctx {key; room_id= room} message
