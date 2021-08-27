@@ -1,9 +1,7 @@
-type t = {
-  server: Http.Server.t;
-  device: string option;
-  user: string;
-  pwd: string;
-}
+type t
+
+val v :
+  server:Http.Server.t -> device:string option -> user:string -> pwd:string -> t
 
 val post :
   job:Current.Job.t ->
