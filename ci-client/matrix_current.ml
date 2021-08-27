@@ -8,7 +8,7 @@ type context = Post.t
 
 let context ~host ~port ~scheme ~user ~pwd ~device =
   let server = Http.Server.v scheme host port in
-  Client.{server; user; pwd; device}
+  Client.v ~server ~user ~pwd ~device
 
 module Room = struct
   type t = string

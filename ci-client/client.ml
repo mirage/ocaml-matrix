@@ -3,11 +3,72 @@ open Lwt.Syntax
 open Matrix_ctos
 module Room = Matrix_ctos.Room
 
+module Token = struct
+  type t = {
+    mutex: Lwt_mutex.t;
+    server: Http.Server.t;
+    login: Login.Post.Request.t;
+    mutable token: (string * int) option; (* token and ref count *)
+  }
+
+  let v ~server ~login () =
+    {server; login; mutex= Lwt_mutex.create (); token= None}
+
+  let login ~job server login =
+    Current.Job.log job "Login to %a" Http.Server.pp server;
+    let open Login.Post in
+    Http.post server "_matrix/client/r0/login" None login Request.encoding
+      Response.encoding None
+
+  let login_and_mutate ~job t =
+    let+ response = login ~job t.server t.login in
+    let token = Login.Post.Response.get_access_token response |> Option.get in
+    t.token <- Some (token, 1);
+    token
+
+  let logout ~job server auth_token =
+    Current.Job.log job "Logout from server";
+    let open Logout.Logout in
+    Http.post server "_matrix/client/r0/logout" None (Request.make ())
+      Request.encoding Response.encoding auth_token
+
+  let logout_and_mutate ~job t token =
+    let+ _ = logout ~job t.server (Some token) in
+    t.token <- None
+
+  (** [with_token ~job t fn] ensures a login token is available before calling [fn] with its value. *)
+  let with_token ~job t fn =
+    Lwt.finalize
+      (fun () ->
+        let* token =
+          (* locking ensures a single thread has access to the ref count at the same time*)
+          Lwt_mutex.with_lock t.mutex (fun () ->
+              (* increment the reference count, login if no token is available *)
+              match t.token with
+              | None -> login_and_mutate ~job t
+              | Some (token, n) ->
+                t.token <- Some (token, n + 1);
+                Lwt.return token)
+        in
+        (* use token with the user function *)
+        fn token)
+      (fun () ->
+        (* locking as we don't want concurrent access to the token while logging out *)
+        Lwt_mutex.with_lock t.mutex (fun () ->
+            match t.token with
+            | None -> Lwt.return_unit
+            | Some (token, 1) -> logout_and_mutate ~job t token
+            | Some (token, n) ->
+              t.token <- Some (token, n - 1);
+              Lwt.return_unit))
+end
+
 type t = {
   server: Http.Server.t;
   device: string option;
   user: string;
   pwd: string;
+  token: Token.t;
 }
 
 let make_login device_id user password =
@@ -17,17 +78,10 @@ let make_login device_id user password =
       (V2 (Authentication.Password.V2.make ~identifier ~password ())) in
   Login.Post.Request.make ~auth ?device_id ()
 
-let login job server login =
-  Current.Job.log job "Login to %a" Http.Server.pp server;
-  let open Login.Post in
-  Http.post server "_matrix/client/r0/login" None login Request.encoding
-    Response.encoding None
-
-let logout job server auth_token =
-  Current.Job.log job "Logout from server";
-  let open Logout.Logout in
-  Http.post server "_matrix/client/r0/logout" None (Request.make ())
-    Request.encoding Response.encoding auth_token
+let v ~server ~device ~user ~pwd =
+  let login = make_login device user pwd in
+  let token = Token.v ~server ~login () in
+  {server; device; user; pwd; token}
 
 let resolve_alias job server room_alias =
   Current.Job.log job "Resolving alias `%s` for room name" room_alias;
@@ -55,10 +109,7 @@ let send_state job server auth_token room_id (state_kind, state, state_key) =
   >|= ignore
 
 let post ~job ~room_id ctx message =
-  let* login_response =
-    login job ctx.server (make_login ctx.device ctx.user ctx.pwd)
-  in
-  let auth_token = Login.Post.Response.get_access_token login_response in
+  Token.with_token ~job ctx.token @@ fun auth_token ->
   let txn_id = Uuidm.(v `V4 |> to_string) in
   let message =
     Room_event.Put.Message_event.Request.make
@@ -67,8 +118,9 @@ let post ~job ~room_id ctx message =
            (Matrix_common.Events.Event_content.Message.Text.make ~body:message
               ()))
       () in
-  let* () = send_message job ctx.server auth_token txn_id message room_id in
-  let+ _ = logout job ctx.server auth_token in
+  let+ () =
+    send_message job ctx.server (Some auth_token) txn_id message room_id
+  in
   Ok ()
 
 let create_room ~job server auth_token room (name, topic) =
@@ -98,10 +150,7 @@ let update_room ~job server auth_token room_id (name, topic) =
   send_state job server auth_token room_id ("m.room.topic", state_topic, "")
 
 let get_room ~job ~alias ~name ~topic ctx =
-  let* login_response =
-    login job ctx.server (make_login ctx.device ctx.user ctx.pwd)
-  in
-  let auth_token = Login.Post.Response.get_access_token login_response in
+  Token.with_token ~job ctx.token @@ fun auth_token ->
   (* we look for the room *)
   let* existing_room_alias =
     Lwt.catch
@@ -116,13 +165,15 @@ let get_room ~job ~alias ~name ~topic ctx =
     match existing_room_alias with
     | None ->
       let+ create_room_response =
-        create_room ~job ctx.server auth_token alias (name, topic)
+        create_room ~job ctx.server (Some auth_token) alias (name, topic)
       in
       Room.Create.Response.get_room_id create_room_response
     | Some room_id ->
       Current.Job.log job
         "Room already exists, making sure it has the correct name and topic.";
-      let+ () = update_room ~job ctx.server auth_token room_id (name, topic) in
+      let+ () =
+        update_room ~job ctx.server (Some auth_token) room_id (name, topic)
+      in
       room_id
   in
   Current.Job.log job "Room id: %s" room_id;
