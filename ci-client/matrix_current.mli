@@ -16,12 +16,14 @@ val context :
     future transactions for per device operations by the matrix server
     (disconnection of a given device, blocking, etc.) *)
 
+val cmdliner : context option Cmdliner.Term.t
+
 module Room : sig
   type t
 
   val make :
     context ->
-    alias:string ->
+    alias:string Current.t ->
     ?name:string Current.t ->
     ?topic:string Current.t ->
     unit ->
@@ -35,7 +37,7 @@ end
 
 val post :
   context ->
-  key:string ->
+  key:string Current.t ->
   room:Room.t Current.t ->
   string Current.t ->
   unit Current.t
