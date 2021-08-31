@@ -33,8 +33,9 @@ module Token = struct
       Request.encoding Response.encoding auth_token
 
   let logout_and_mutate ~job t token =
-    let+ _ = logout ~job t.server (Some token) in
-    t.token <- None
+    t.token <- None;
+    logout ~job t.server (Some token)
+    |> Lwt.map ignore
 
   (** [with_token ~job t fn] ensures a login token is available before calling [fn] with its value. *)
   let with_token ~job t fn =
