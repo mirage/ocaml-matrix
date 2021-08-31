@@ -35,11 +35,13 @@ module Room : sig
       to.*)
 end
 
+type message = Matrix_common.Events.Event_content.Message.t
+
 val post :
   context ->
   key:string Current.t ->
   room:Room.t Current.t ->
-  string Current.t ->
+  message Current.t ->
   unit Current.t
 (** [post context ~key ~room message] records that [key] is now set to [message], and
     uses a minimalist matrix client to send [message] to [room] using the user

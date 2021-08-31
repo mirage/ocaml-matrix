@@ -89,6 +89,8 @@ end
 
 module PC = Current_cache.Output (Post)
 
+type message = Matrix_common.Events.Event_content.Message.t
+
 let post ctx ~key ~room message =
   Current.component "matrix post"
   |> let> message = message and> room = room and> key = key in
