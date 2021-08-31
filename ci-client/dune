@@ -5,6 +5,7 @@
  (libraries
   matrix-ctos
   fmt.tty
+  cmdliner
   logs
   logs.cli
   logs.fmt

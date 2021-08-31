@@ -33,8 +33,9 @@ module Token = struct
       Request.encoding Response.encoding auth_token
 
   let logout_and_mutate ~job t token =
-    let+ _ = logout ~job t.server (Some token) in
-    t.token <- None
+    t.token <- None;
+    logout ~job t.server (Some token)
+    |> Lwt.map ignore
 
   (** [with_token ~job t fn] ensures a login token is available before calling [fn] with its value. *)
   let with_token ~job t fn =
@@ -111,13 +112,7 @@ let send_state job server auth_token room_id (state_kind, state, state_key) =
 let post ~job ~room_id ctx message =
   Token.with_token ~job ctx.token @@ fun auth_token ->
   let txn_id = Uuidm.(v `V4 |> to_string) in
-  let message =
-    Room_event.Put.Message_event.Request.make
-      ~event:
-        (Matrix_common.Events.Event_content.Message.Text
-           (Matrix_common.Events.Event_content.Message.Text.make ~body:message
-              ()))
-      () in
+  let message = Room_event.Put.Message_event.Request.make ~event:message () in
   let+ () =
     send_message job ctx.server (Some auth_token) txn_id message room_id
   in
