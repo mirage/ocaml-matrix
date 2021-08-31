@@ -7,7 +7,7 @@ val post :
   job:Current.Job.t ->
   room_id:string ->
   t ->
-  string ->
+  Matrix_common.Events.Event_content.Message.t ->
   (unit, string) result Lwt.t
 
 val get_room :

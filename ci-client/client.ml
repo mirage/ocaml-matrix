@@ -111,13 +111,7 @@ let send_state job server auth_token room_id (state_kind, state, state_key) =
 let post ~job ~room_id ctx message =
   Token.with_token ~job ctx.token @@ fun auth_token ->
   let txn_id = Uuidm.(v `V4 |> to_string) in
-  let message =
-    Room_event.Put.Message_event.Request.make
-      ~event:
-        (Matrix_common.Events.Event_content.Message.Text
-           (Matrix_common.Events.Event_content.Message.Text.make ~body:message
-              ()))
-      () in
+  let message = Room_event.Put.Message_event.Request.make ~event:message () in
   let+ () =
     send_message job ctx.server (Some auth_token) txn_id message room_id
   in
