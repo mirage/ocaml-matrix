@@ -31,7 +31,11 @@ let login t request =
       | Some pwd -> (
         (* Verify the username/password combination *)
         let password = Authentication.Password.V2.get_password auth in
-        if password <> pwd then
+        let%lwt salt =
+          Store.get store (Store.Key.v ["users"; username; "salt"]) in
+        let digest = Digestif.BLAKE2B.hmac_string ~key:salt password in
+        let pwd = Digestif.BLAKE2B.of_hex pwd in
+        if not (Digestif.BLAKE2B.equal digest pwd) then
           Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
         else
           let device =

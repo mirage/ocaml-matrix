@@ -28,14 +28,19 @@ module User = struct
       Logs.err (fun m -> m "user id %s already exists" user_id);
       Lwt.return 1
     | None -> (
+      Mirage_crypto_rng_lwt.initialize ();
+      let salt = Cstruct.to_string @@ Mirage_crypto_rng.generate 32 in
+      let digest = Digestif.BLAKE2B.hmac_string ~key:salt password in
+      let hashed = Digestif.BLAKE2B.to_hex digest in
       let%lwt tree = Store.tree store in
       let%lwt tree =
         Store.Tree.add tree (Store.Key.v ["users"; user_id; "username"]) user_id
       in
       let%lwt tree =
-        Store.Tree.add tree
-          (Store.Key.v ["users"; user_id; "password"])
-          password in
+        Store.Tree.add tree (Store.Key.v ["users"; user_id; "salt"]) salt in
+      let%lwt tree =
+        Store.Tree.add tree (Store.Key.v ["users"; user_id; "password"]) hashed
+      in
       let%lwt return =
         Store.set_tree
           ~info:(fun () ->
