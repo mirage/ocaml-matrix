@@ -23,7 +23,7 @@ module User = struct
     let%lwt repo = Store.Repo.v config in
     let%lwt store = Store.master repo in
     (* Verify if the user already exists *)
-    let%lwt s_user = Store.find store (Store.Key.v ["users"; user_id]) in
+    let%lwt s_user = Store.find_tree store (Store.Key.v ["users"; user_id]) in
     match s_user with
     | Some _ ->
       Logs.err (fun m -> m "user id %s already exists" user_id);
