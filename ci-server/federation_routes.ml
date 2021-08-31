@@ -6,19 +6,17 @@ open Common_routes
 let placeholder _ = assert false
 
 let sign t encoding =
-  Signatures.encoding
-  [t.server_name, ["ed25519:foo_bar", t.priv_key]]
-  encoding
+  Signatures.encoding [t.server_name, ["ed25519:foo_bar", t.priv_key]] encoding
 
 module Key = struct
-
   module V2 = struct
     let direct_query t request =
       let open Key.Direct_query in
       let _key_id = Dream.param "key_id" request in
       match
         Base64.encode ~pad:false
-          (Cstruct.to_string @@ Mirage_crypto_ec.Ed25519.pub_to_cstruct t.pub_key)
+          (Cstruct.to_string
+          @@ Mirage_crypto_ec.Ed25519.pub_to_cstruct t.pub_key)
       with
       | Ok base64_key ->
         let server_name = t.server_name in
@@ -37,7 +35,7 @@ module Key = struct
   end
 end
 
-let router (t: Common_routes.t) =
+let router (t : Common_routes.t) =
   Dream.router
     [
       Dream.scope "/_matrix" []

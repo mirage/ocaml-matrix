@@ -1,5 +1,3 @@
-open Server_utility
-open Data
 open Store
 open Middleware
 open Matrix_common
@@ -26,16 +24,14 @@ let login t request =
     | User user -> (
       (* check the user data *)
       let username = Identifier.User.get_user user in
-      let%lwt s_user = Store.find store (Store.Key.v ["users"; username]) in
-      match s_user with
+      let%lwt pwd =
+        Store.find store (Store.Key.v ["users"; username; "password"]) in
+      match pwd with
       | None -> Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
-      | Some s_user ->
-        let s_user =
-          Json_encoding.destruct User.encoding
-            (Ezjsonm.value_from_string s_user) in
+      | Some pwd -> (
         (* Verify the username/password combination *)
         let password = Authentication.Password.V2.get_password auth in
-        if password <> User.get_password s_user then
+        if password <> pwd then
           Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
         else
           let device =
@@ -43,40 +39,48 @@ let login t request =
             | None -> Uuidm.(v `V4 |> to_string)
             | Some device -> Fmt.str "%s:%s" device username in
           let token = Uuidm.(v `V4 |> to_string) in
-          let s_token =
-            Token.make ~device ~expires_at:0. ()
-            |> Json_encoding.construct Token.encoding
-            |> Ezjsonm.value_to_string in
-          let%lwt _ =
-            Store.set ~info:(Helper.info t ~message:"login: set token") store
-              (Store.Key.v ["tokens"; token])
-              s_token in
-          let s_device =
-            Device.make ~user:username ~token ()
-            |> Json_encoding.construct Device.encoding
-            |> Ezjsonm.value_to_string in
-          let%lwt _ =
-            Store.set ~info:(Helper.info t ~message:"login: set device") store
-              (Store.Key.v ["devices"; device])
-              s_device in
-          let s_user =
-            User.set_devices s_user
-              (List.sort_uniq String.compare
-                 (device :: User.get_devices s_user)) in
-          let s_user =
-            Json_encoding.construct User.encoding s_user
-            |> Ezjsonm.value_to_string in
-          let%lwt _ =
-            Store.set ~info:(Helper.info t ~message:"login: update user") store
-              (Store.Key.v ["users"; username])
-              s_user in
-          (* There is an obvious problem with replacing existing devices, thus
-             loosing all related informations *)
-          let response =
-            Response.make ~access_token:token ~device_id:device ()
-            |> Json_encoding.construct Response.encoding
-            |> Ezjsonm.value_to_string in
-          Dream.json response)
+          let%lwt tree = Store.tree store in
+          (* add token *)
+          let%lwt tree =
+            Store.Tree.add tree (Store.Key.v ["tokens"; token; "device"]) device
+          in
+          let expires_at = Float.to_string @@ (Unix.gettimeofday () +. 3600.) in
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v ["tokens"; token; "expires_at"])
+              expires_at in
+          (* add device *)
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v ["devices"; device; "user_id"])
+              username in
+          let%lwt tree =
+            Store.Tree.add tree (Store.Key.v ["devices"; device; "token"]) token
+          in
+          (* update user *)
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v ["users"; username; "devices"; device])
+              device in
+          (* saving new tree *)
+          let%lwt return =
+            Store.set_tree
+              ~info:(Helper.info t ~message:"login user")
+              store (Store.Key.v []) tree in
+          match return with
+          | Ok () ->
+            let response =
+              Response.make ~access_token:token ~device_id:device ()
+              |> Json_encoding.construct Response.encoding
+              |> Ezjsonm.value_to_string in
+            Dream.json response
+          | Error write_error ->
+            Dream.error (fun m ->
+                m "Write error: %a"
+                  (Irmin.Type.pp Store.write_error_t)
+                  write_error);
+            Dream.json ~status:`Internal_Server_Error
+              {|{"errcode": "M_UNKNOWN"}|}))
     | _ ->
       Dream.json ~status:`Bad_Request
         {|{"errcode": "M_UNKNOWN", "error": "Bad identifier type"}|})
@@ -93,48 +97,28 @@ let logout t request =
     match
       Dream.local logged_user request, Dream.local logged_device request
     with
-    | Some user, Some device -> (
-      (* fetch the user *)
-      let%lwt _ =
-        let%lwt s_user = Store.find store (Store.Key.v ["users"; user]) in
-        match s_user with
-        | None -> Lwt.return_unit
-        | Some s_user ->
-          let s_user =
-            Json_encoding.destruct User.encoding
-              (Ezjsonm.value_from_string s_user) in
-          (* remove the device from the user info *)
-          let s_user =
-            User.set_devices s_user
-              (List.filter (fun s -> s <> device) (User.get_devices s_user))
-          in
-          let s_user =
-            Json_encoding.construct User.encoding s_user
-            |> Ezjsonm.value_to_string in
-          let%lwt _ =
-            Store.set ~info:(Helper.info t ~message:"logout: update user") store
-              (Store.Key.v ["users"; user])
-              s_user in
-          Lwt.return_unit in
-      (* fetch the device *)
-      let%lwt s_device = Store.find store (Store.Key.v ["devices"; device]) in
-      match s_device with
-      | None -> Lwt.return_unit
-      | Some s_device ->
-        let s_device =
-          Json_encoding.destruct Device.encoding
-            (Ezjsonm.value_from_string s_device) in
-        (* delete the device *)
-        let%lwt _ =
-          Store.remove ~info:(Helper.info t ~message:"logout: remove device") store
-            (Store.Key.v ["devices"; device]) in
-        (* delete the device's token *)
-        let token = Device.get_token s_device in
-        let%lwt _ =
-          Store.remove ~info:(Helper.info t ~message:"logout: remove token") store
-            (Store.Key.v ["tokens"; token]) in
+    | Some username, Some device -> (
+      let%lwt token =
+        Store.get store (Store.Key.v ["devices"; device; "token"]) in
+      (* remove the device data and the associated token *)
+      let%lwt tree = Store.tree store in
+      let%lwt tree =
+        Store.Tree.remove tree
+          (Store.Key.v ["users"; username; "devices"; device]) in
+      let%lwt tree = Store.Tree.remove tree (Store.Key.v ["devices"; device]) in
+      let%lwt tree = Store.Tree.remove tree (Store.Key.v ["tokens"; token]) in
+      let%lwt return =
+        Store.set_tree
+          ~info:(Helper.info t ~message:"logout user")
+          store (Store.Key.v []) tree in
+      match return with
+      | Ok () -> Lwt.return_unit
+      | Error write_error ->
+        Dream.error (fun m ->
+            m "Write error: %a" (Irmin.Type.pp Store.write_error_t) write_error);
         Lwt.return_unit)
-    | _ -> Lwt.return_unit in
+    | _ -> Lwt.return_unit
+    (* should never happen if is_logged middleware is used *) in
   let response =
     Response.make ()
     |> Json_encoding.construct Response.encoding
@@ -144,23 +128,20 @@ let logout t request =
 (** Notes:
     - Use the federation api ? We dont really want to do that however, as we
       want a minimalist server.
+    - At least verify if the server part of the alias is the right one
   *)
 let resolve_alias request =
   let open Room.Resolve_alias in
   let alias = Dream.param "alias" request in
   let room_alias, _ = Identifiers.Room_alias.of_string_exn alias in
-  let%lwt s_alias = Store.find store (Store.Key.v ["aliases"; room_alias]) in
-  match s_alias with
+  let%lwt room_id = Store.find store (Store.Key.v ["aliases"; room_alias]) in
+  match room_id with
   | None ->
     Dream.json ~status:`Not_Found
       (Fmt.str
          {|{"errcode": "M_NOT_FOUND", "error": "Room alias %s not found."}|}
          room_alias)
-  | Some s_alias ->
-    let s_alias =
-      Json_encoding.destruct Alias.encoding (Ezjsonm.value_from_string s_alias)
-    in
-    let room_id = Alias.get_room_id s_alias in
+  | Some room_id ->
     let response =
       Response.make ~room_id ()
       |> Json_encoding.construct Response.encoding
@@ -175,257 +156,240 @@ let create_room t request =
   in
   (* Verify that the request is for a public room *)
   match Request.get_visibility create_room with
-  | Some Public ->
-    (match Request.get_room_alias_name create_room with
+  | Some Public -> (
+    match Request.get_room_alias_name create_room with
     | None ->
-      Dream.json ~status:`Bad_Request {|{"errcode": "M_INVALID_ROOM_STATE"; "error": "Room alias is mandatory for a public room"}|}
-    | Some alias ->
-      (let%lwt s_alias = Store.find store (Store.Key.v ["aliases"; alias]) in
+      Dream.json ~status:`Bad_Request
+        {|{"errcode": "M_INVALID_ROOM_STATE"; "error": "Room alias is mandatory for a public room"}|}
+    | Some alias -> (
+      let%lwt s_alias = Store.find store (Store.Key.v ["aliases"; alias]) in
       match s_alias with
       | Some _ ->
-        Dream.json ~status:`Bad_Request {|{"errcode": "M_ROOM_IN_USE"; "error": "Room alias already in use"}|}
-      | None ->
-        (match Dream.local logged_user request with
-        | Some user ->
-          (let user_id = user in
-              let room_id = "$" ^ Uuidm.(v `V4 |> to_string) in
-              (* Create the head for the message feed *)
-              let%lwt _ =
-                Store.set ~info:(Helper.info t ~message:"create room: set message head") store
-                  (Store.Key.v ["rooms"; room_id; "messages_id"; "head"])
-                  "" in
-              (* Create the state events of the room *)
-              (* create *)
-              let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-              let event =
-                Events.State_event.make
-                  ~room_event:
-                    (Events.Room_event.make
-                      ~event:
-                        (Events.Event.make
-                            ~event_content:
-                              (Events.Event_content.Create
-                                (Events.Event_content.Create.make ~creator:user_id
-                                    ?room_version:(Some "4") ()))
-                            ())
-                      ~event_id:id ~sender:user_id ())
-                  ~state_key:"" () in
-              let json_event =
-                Json_encoding.construct Events.State_event.encoding event
-                |> Ezjsonm.value_to_string in
-              let%lwt _ =
-                Store.set ~info:(Helper.info t ~message:"create room: set create state") store
-                  (Store.Key.v ["rooms"; room_id; "state"; "m.room.create"])
-                  json_event in
-              (* member *)
-              let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-              let event =
-                Events.State_event.make
-                  ~room_event:
-                    (Events.Room_event.make
-                      ~event:
-                        (Events.Event.make
-                            ~event_content:
-                              (Events.Event_content.Member
-                                (Events.Event_content.Member.make ~avatar_url:None
-                                    ~displayname:(Some user_id) ~membership:Join ()))
-                            ())
-                      ~event_id:id ~sender:user_id ())
-                  ~state_key:user_id () in
-              let json_event =
-                Json_encoding.construct Events.State_event.encoding event
-                |> Ezjsonm.value_to_string in
-              let%lwt _ =
-                Store.set ~info:(Helper.info t ~message:"create room: set member state") store
-                  (Store.Key.v ["rooms"; room_id; "state"; "m.room.member"; user_id])
-                  json_event in
-              (* power_level *)
-              let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+        Dream.json ~status:`Bad_Request
+          {|{"errcode": "M_ROOM_IN_USE"; "error": "Room alias already in use"}|}
+      | None -> (
+        match Dream.local logged_user request with
+        | Some user -> (
+          let%lwt tree = Store.tree store in
+          let user_id = user in
+          let room_id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          (* Create the head for the message feed *)
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v ["rooms"; room_id; "messages_id"; "head"])
+              "" in
+          (* Create the state events of the room *)
+          (* create *)
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let event =
+            Events.State_event.make
+              ~room_event:
+                (Events.Room_event.make
+                   ~event:
+                     (Events.Event.make
+                        ~event_content:
+                          (Events.Event_content.Create
+                             (Events.Event_content.Create.make ~creator:user_id
+                                ?room_version:(Some "4") ()))
+                        ())
+                   ~event_id:id ~sender:user_id ())
+              ~state_key:"" () in
+          let json_event =
+            Json_encoding.construct Events.State_event.encoding event
+            |> Ezjsonm.value_to_string in
+
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v ["rooms"; room_id; "state"; "m.room.create"])
+              json_event in
+          (* member *)
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let event =
+            Events.State_event.make
+              ~room_event:
+                (Events.Room_event.make
+                   ~event:
+                     (Events.Event.make
+                        ~event_content:
+                          (Events.Event_content.Member
+                             (Events.Event_content.Member.make ~avatar_url:None
+                                ~displayname:(Some user_id) ~membership:Join ()))
+                        ())
+                   ~event_id:id ~sender:user_id ())
+              ~state_key:user_id () in
+          let json_event =
+            Json_encoding.construct Events.State_event.encoding event
+            |> Ezjsonm.value_to_string in
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v
+                 ["rooms"; room_id; "state"; "m.room.member"; user_id])
+              json_event in
+          (* power_level *)
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let power_level =
+            match Request.get_power_level_content_override create_room with
+            | None ->
+              Events.Event_content.Power_levels.make
+                ?users:(Some [user_id, 100])
+                ?users_default:(Some (-1)) ()
+            | Some power_level ->
+              let user_default =
+                match
+                  Events.Event_content.Power_levels.get_users_default
+                    power_level
+                with
+                | Some _ as user_default -> user_default
+                | None -> Some (-1) in
+              let users =
+                match
+                  Events.Event_content.Power_levels.get_users power_level
+                with
+                | Some _ as users -> users
+                | None -> Some [user_id, 100] in
               let power_level =
-                match Request.get_power_level_content_override create_room with
-                | None ->
-                  Events.Event_content.Power_levels.make
-                  ?users:(Some [user_id, 100])
-                  ?users_default:(Some (-1)) ()
-                | Some power_level ->
-                  let user_default =
-                    match Events.Event_content.Power_levels.get_users_default power_level with
-                    | Some _ as user_default -> user_default
-                    | None -> Some (-1)
-                  in
-                  let users =
-                    match Events.Event_content.Power_levels.get_users power_level with
-                    | Some _ as users -> users
-                    | None -> Some [user_id, 100]
-                  in
-                  let power_level = Events.Event_content.Power_levels.set_users_default power_level user_default in
-                  Events.Event_content.Power_levels.set_users power_level users
-              in
-              let event =
-                Events.State_event.make
-                  ~room_event:
-                    (Events.Room_event.make
-                      ~event:
-                        (Events.Event.make
-                            ~event_content:
-                              (Events.Event_content.Power_levels power_level) ())
-                      ~event_id:id ~sender:user_id ())
-                  ~state_key:"" () in
-              let json_event =
-                Json_encoding.construct Events.State_event.encoding event
-                |> Ezjsonm.value_to_string in
-              let%lwt _ =
-                Store.set ~info:(Helper.info t ~message:"create room: set power level state") store
-                  (Store.Key.v ["rooms"; room_id; "state"; "m.room.power_levels"])
-                  json_event in
-              (* join_rules *)
-              let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-              let event =
-                Events.State_event.make
-                  ~room_event:
-                    (Events.Room_event.make
-                      ~event:
-                        (Events.Event.make
-                            ~event_content:
-                              (Events.Event_content.Join_rules
-                                (Events.Event_content.Join_rules.make
-                                    ~join_rule:Public ()))
-                            ())
-                      ~event_id:id ~sender:user_id ())
-                  ~state_key:"" () in
-              let json_event =
-                Json_encoding.construct Events.State_event.encoding event
-                |> Ezjsonm.value_to_string in
-              let%lwt _ =
-                Store.set ~info:(Helper.info t ~message:"create room: set join rules state") store
-                  (Store.Key.v ["rooms"; room_id; "state"; "m.room.join_rules"])
-                  json_event in
-              (* history_visibility *)
-              let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-              let event =
-                Events.State_event.make
-                  ~room_event:
-                    (Events.Room_event.make
-                      ~event:
-                        (Events.Event.make
-                            ~event_content:
-                              (Events.Event_content.History_visibility
-                                (Events.Event_content.History_visibility.make
-                                    ~visibility:Shared ()))
-                            ())
-                      ~event_id:id ~sender:user_id ())
-                  ~state_key:"" () in
-              let json_event =
-                Json_encoding.construct Events.State_event.encoding event
-                |> Ezjsonm.value_to_string in
-              let%lwt _ =
-                Store.set ~info:(Helper.info t ~message:"create room: set history visibility state") store
-                  (Store.Key.v
-                    ["rooms"; room_id; "state"; "m.room.history_visibility"])
-                  json_event in
-              (* name *)
-              let name =
-                match Request.get_name create_room with
-                | Some name -> name
-                | None -> alias
-              in
-              let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-              let event =
-                Events.State_event.make
-                  ~room_event:
-                    (Events.Room_event.make
-                      ~event:
-                        (Events.Event.make
-                            ~event_content:
-                              (Events.Event_content.Name
-                                (Events.Event_content.Name.make ~name ()))
-                            ())
-                      ~event_id:id ~sender:user_id ())
-                  ~state_key:"" () in
-              let json_event =
-                Json_encoding.construct Events.State_event.encoding event
-                |> Ezjsonm.value_to_string in
-              let%lwt _ =
-                Store.set ~info:(Helper.info t ~message:"create room: set name state") store
-                  (Store.Key.v ["rooms"; room_id; "state"; "m.room.name"])
-                  json_event in
-              (* canonical_alias *)
-              let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-              let event =
-                Events.State_event.make
-                  ~room_event:
-                    (Events.Room_event.make
-                      ~event:
-                        (Events.Event.make
-                            ~event_content:
-                              (Events.Event_content.Canonical_alias
-                                (Events.Event_content.Canonical_alias.make
-                                    ~alias:(Some alias) ()))
-                            ())
-                      ~event_id:id ~sender:user_id ())
-                  ~state_key:"" () in
-              let json_event =
-                Json_encoding.construct Events.State_event.encoding event
-                |> Ezjsonm.value_to_string in
-              let%lwt _ =
-                Store.set ~info:(Helper.info t ~message:"create room: set canonical alias state") store
-                  (Store.Key.v ["rooms"; room_id; "state"; "m.room.canonical_alias"])
-                  json_event in
-              (* Saving the alias in the aliases folder *)
-              let json_alias =
-                Alias.make ~room_id ()
-                |> Json_encoding.construct Alias.encoding
-                |> Ezjsonm.value_to_string in
-              let%lwt _ =
-                Store.set ~info:(Helper.info t ~message:"create room: add alias") store
-                  (Store.Key.v ["aliases"; alias])
-                  json_alias in
-              let response =
-                Response.make ~room_id ()
-                |> Json_encoding.construct Response.encoding
-                |> Ezjsonm.value_to_string in
-              Dream.json response)
-            | None -> assert false)))
-  | _ -> Dream.json ~status:`Bad_Request {|{"errcode": "M_FORBIDDEN"; "error": "Current implementation only accepts public rooms"}|}
+                Events.Event_content.Power_levels.set_users_default power_level
+                  user_default in
+              Events.Event_content.Power_levels.set_users power_level users
+          in
+          let event =
+            Events.State_event.make
+              ~room_event:
+                (Events.Room_event.make
+                   ~event:
+                     (Events.Event.make
+                        ~event_content:
+                          (Events.Event_content.Power_levels power_level) ())
+                   ~event_id:id ~sender:user_id ())
+              ~state_key:"" () in
+          let json_event =
+            Json_encoding.construct Events.State_event.encoding event
+            |> Ezjsonm.value_to_string in
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v ["rooms"; room_id; "state"; "m.room.power_levels"])
+              json_event in
+          (* join_rules *)
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let event =
+            Events.State_event.make
+              ~room_event:
+                (Events.Room_event.make
+                   ~event:
+                     (Events.Event.make
+                        ~event_content:
+                          (Events.Event_content.Join_rules
+                             (Events.Event_content.Join_rules.make
+                                ~join_rule:Public ()))
+                        ())
+                   ~event_id:id ~sender:user_id ())
+              ~state_key:"" () in
+          let json_event =
+            Json_encoding.construct Events.State_event.encoding event
+            |> Ezjsonm.value_to_string in
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v ["rooms"; room_id; "state"; "m.room.join_rules"])
+              json_event in
+          (* history_visibility *)
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let event =
+            Events.State_event.make
+              ~room_event:
+                (Events.Room_event.make
+                   ~event:
+                     (Events.Event.make
+                        ~event_content:
+                          (Events.Event_content.History_visibility
+                             (Events.Event_content.History_visibility.make
+                                ~visibility:Shared ()))
+                        ())
+                   ~event_id:id ~sender:user_id ())
+              ~state_key:"" () in
+          let json_event =
+            Json_encoding.construct Events.State_event.encoding event
+            |> Ezjsonm.value_to_string in
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v
+                 ["rooms"; room_id; "state"; "m.room.history_visibility"])
+              json_event in
+          (* name *)
+          let name =
+            match Request.get_name create_room with
+            | Some name -> name
+            | None -> alias in
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let event =
+            Events.State_event.make
+              ~room_event:
+                (Events.Room_event.make
+                   ~event:
+                     (Events.Event.make
+                        ~event_content:
+                          (Events.Event_content.Name
+                             (Events.Event_content.Name.make ~name ()))
+                        ())
+                   ~event_id:id ~sender:user_id ())
+              ~state_key:"" () in
+          let json_event =
+            Json_encoding.construct Events.State_event.encoding event
+            |> Ezjsonm.value_to_string in
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v ["rooms"; room_id; "state"; "m.room.name"])
+              json_event in
+          (* canonical_alias *)
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let event =
+            Events.State_event.make
+              ~room_event:
+                (Events.Room_event.make
+                   ~event:
+                     (Events.Event.make
+                        ~event_content:
+                          (Events.Event_content.Canonical_alias
+                             (Events.Event_content.Canonical_alias.make
+                                ~alias:(Some alias) ()))
+                        ())
+                   ~event_id:id ~sender:user_id ())
+              ~state_key:"" () in
+          let json_event =
+            Json_encoding.construct Events.State_event.encoding event
+            |> Ezjsonm.value_to_string in
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v
+                 ["rooms"; room_id; "state"; "m.room.canonical_alias"])
+              json_event in
+          (* Saving the alias in the aliases folder *)
+          let%lwt tree =
+            Store.Tree.add tree (Store.Key.v ["aliases"; alias]) room_id in
+          (* saving update tree *)
+          let%lwt return =
+            Store.set_tree
+              ~info:(Helper.info t ~message:"create room")
+              store (Store.Key.v []) tree in
+          match return with
+          | Ok () ->
+            let response =
+              Response.make ~room_id ()
+              |> Json_encoding.construct Response.encoding
+              |> Ezjsonm.value_to_string in
+            Dream.json response
+          | Error write_error ->
+            Dream.error (fun m ->
+                m "Write error: %a"
+                  (Irmin.Type.pp Store.write_error_t)
+                  write_error);
+            Dream.json ~status:`Internal_Server_Error
+              {|{"errcode": "M_UNKNOWN"}|})
+        | None -> assert false (* should not happend *))))
+  | _ ->
+    Dream.json ~status:`Bad_Request
+      {|{"errcode": "M_FORBIDDEN"; "error": "Current implementation only accepts public rooms"}|}
 
-let state t request =
-  let open Room_event.Put.State_event in
-  let%lwt body = Dream.body request in
-  let state =
-    Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
-  in
-  match Dream.local logged_user request with
-  | Some user ->
-    let room_id = Dream.param "room_id" request in
-    let event_type = Dream.param "event_type" request in
-    let state_key = Dream.param "state_key" request in
-    let%lwt b = Helper.is_room_user room_id user in
-    if b then
-      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-      let event_content = Room_event.Put.State_event.Request.get_event state in
-      let event =
-        Events.Room_event.make
-          ~event:
-            (Events.Event.make ~event_content ())
-          ~event_id:id ~sender:user
-          ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
-          () in
-      let json_event =
-        Json_encoding.construct Events.Room_event.encoding event
-        |> Ezjsonm.value_to_string in
-      let%lwt _ =
-        Store.set ~info:(Helper.info t ~message:"state: state new state") store
-          (Store.Key.v ["rooms"; room_id; "state"; event_type; state_key])
-          json_event in
-      let response =
-        Response.make ~event_id:id ()
-        |> Json_encoding.construct Response.encoding
-        |> Ezjsonm.value_to_string in
-      Dream.json response
-    else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
-  | None -> assert false
-
-let state_stateless t request =
+let state t request ~with_state_key =
   let open Room_event.Put.State_event in
   let%lwt body = Dream.body request in
   let state =
@@ -436,28 +400,41 @@ let state_stateless t request =
     let room_id = Dream.param "room_id" request in
     let event_type = Dream.param "event_type" request in
     let%lwt b = Helper.is_room_user room_id user in
-    if b then
+    if b then (
       let id = "$" ^ Uuidm.(v `V4 |> to_string) in
       let event_content = Room_event.Put.State_event.Request.get_event state in
       let event =
         Events.Room_event.make
-          ~event:
-            (Events.Event.make ~event_content ())
+          ~event:(Events.Event.make ~event_content ())
           ~event_id:id ~sender:user
           ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
           () in
       let json_event =
         Json_encoding.construct Events.Room_event.encoding event
         |> Ezjsonm.value_to_string in
-      let%lwt _ =
-        Store.set ~info:(Helper.info t ~message:"state: state new state") store
-          (Store.Key.v ["rooms"; room_id; "state"; event_type])
-          json_event in
-      let response =
-        Response.make ~event_id:id ()
-        |> Json_encoding.construct Response.encoding
-        |> Ezjsonm.value_to_string in
-      Dream.json response
+      let%lwt tree = Store.tree store in
+      let key =
+        if with_state_key then
+          let state_key = Dream.param "state_key" request in
+          ["rooms"; room_id; "state"; event_type; state_key]
+        else ["rooms"; room_id; "state"; event_type] in
+      let%lwt tree = Store.Tree.add tree (Store.Key.v key) json_event in
+      (* saving update tree *)
+      let%lwt return =
+        Store.set_tree
+          ~info:(Helper.info t ~message:"set room state")
+          store (Store.Key.v []) tree in
+      match return with
+      | Ok () ->
+        let response =
+          Response.make ~event_id:id ()
+          |> Json_encoding.construct Response.encoding
+          |> Ezjsonm.value_to_string in
+        Dream.json response
+      | Error write_error ->
+        Dream.error (fun m ->
+            m "Write error: %a" (Irmin.Type.pp Store.write_error_t) write_error);
+        Dream.json ~status:`Internal_Server_Error {|{"errcode": "M_UNKNOWN"}|})
     else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
   | None -> assert false
 
@@ -488,10 +465,6 @@ let send t request =
       let json_event =
         Json_encoding.construct Events.Room_event.encoding event
         |> Ezjsonm.value_to_string in
-      let%lwt _ =
-        Store.set ~info:(Helper.info t ~message:"send: add message") store
-          (Store.Key.v ["rooms"; room_id; "messages"; id])
-          json_event in
       let%lwt prev_head =
         Store.find store (Store.Key.v ["rooms"; room_id; "messages_id"; "head"])
       in
@@ -503,20 +476,39 @@ let send t request =
           |> Json_encoding.construct Errors.Error.encoding
           |> Ezjsonm.value_to_string in
         Dream.json ~status:`Internal_Server_Error error
-      | Some prev_head ->
-        let%lwt _ =
-          Store.set ~info:(Helper.info t ~message:"send: add message to chain") store
+      | Some prev_head -> (
+        let%lwt tree = Store.tree store in
+        let%lwt tree =
+          Store.Tree.add tree
+            (Store.Key.v ["rooms"; room_id; "messages"; id])
+            json_event in
+        let%lwt tree =
+          Store.Tree.add tree
             (Store.Key.v ["rooms"; room_id; "messages_id"; id])
             prev_head in
-        let%lwt _ =
-          Store.set ~info:(Helper.info t ~message:"send: update head") store
+        let%lwt tree =
+          Store.Tree.add tree
             (Store.Key.v ["rooms"; room_id; "messages_id"; "head"])
             id in
-        let response =
-          Response.make ~event_id:id ()
-          |> Json_encoding.construct Response.encoding
-          |> Ezjsonm.value_to_string in
-        Dream.json response
+        (* saving update tree *)
+        let%lwt return =
+          Store.set_tree
+            ~info:(Helper.info t ~message:"set message")
+            store (Store.Key.v []) tree in
+        match return with
+        | Ok () ->
+          let response =
+            Response.make ~event_id:id ()
+            |> Json_encoding.construct Response.encoding
+            |> Ezjsonm.value_to_string in
+          Dream.json response
+        | Error write_error ->
+          Dream.error (fun m ->
+              m "Write error: %a"
+                (Irmin.Type.pp Store.write_error_t)
+                write_error);
+          Dream.json ~status:`Internal_Server_Error {|{"errcode": "M_UNKNOWN"}|}
+        )
     else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
   | None -> assert false
 (* Should obviously return a 401 instead: If this case
@@ -524,7 +516,7 @@ let send t request =
    forgotten to use the authentication middleware. But we might prefer having
    a clean error than a simple raise. Or maybe a 5XX would be more appropriate *)
 
-let router (t: Common_routes.t) =
+let router (t : Common_routes.t) =
   Dream.router
     [
       Dream.scope "/_matrix" []
@@ -539,10 +531,12 @@ let router (t: Common_routes.t) =
                   Dream.scope "" [is_logged]
                     [
                       Dream.post "/createRoom" (create_room t);
-                      Dream.put "/rooms/:room_id/state/:event_type/:state_key" (state t);
-                      Dream.put "/rooms/:room_id/state/:event_type/" (state_stateless t);
-                      Dream.put "/rooms/:room_id/send/:event_type/:txn_id" (send t);
-                      Dream.post "/logout" (logout t);
+                      Dream.put "/rooms/:room_id/state/:event_type/:state_key"
+                        (state t ~with_state_key:true);
+                      Dream.put "/rooms/:room_id/state/:event_type/"
+                        (state t ~with_state_key:false);
+                      Dream.put "/rooms/:room_id/send/:event_type/:txn_id"
+                        (send t); Dream.post "/logout" (logout t);
                     ];
                 ];
             ];

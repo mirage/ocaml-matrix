@@ -67,5 +67,9 @@ let () =
     Term.info "server" ~version:"%%VERSION%%" ~doc in
   Term.exit
   @@ Term.eval
-       ( Term.(const main $ server_name $ server_key $ Term.(const setup $ Logs_cli.level ())),
+       ( Term.(
+           const main
+           $ server_name
+           $ server_key
+           $ Term.(const setup $ Logs_cli.level ())),
          info )

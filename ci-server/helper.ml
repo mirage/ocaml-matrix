@@ -1,10 +1,10 @@
 open Matrix_common
-open Server_utility
 open Store
 
 let is_room_user room_id user_id =
+  let%lwt tree = Store.tree store in
   let%lwt state_event =
-    Store.find store
+    Store.Tree.find tree
       (Store.Key.v ["rooms"; room_id; "state"; "m.room.member"; user_id]) in
   match state_event with
   | None -> Lwt.return false
@@ -21,8 +21,7 @@ let is_room_user room_id user_id =
 
 let time () = Unix.time () |> Float.to_int
 
-let info (t: Common_routes.t) ?(message="") () =
+let info (t : Common_routes.t) ?(message = "") () =
   Irmin.Info.v
     ~date:(Int64.of_float (Unix.gettimeofday ()))
-    ~author:t.server_name
-    message
+    ~author:t.server_name message

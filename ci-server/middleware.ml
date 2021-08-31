@@ -1,6 +1,4 @@
-open Server_utility
 open Store
-open Data
 
 let logged_user =
   Dream.new_local ~name:"logged_user" ~show_value:(fun s -> s) ()
@@ -18,9 +16,14 @@ let unkown_token =
   Dream.json ~status:`Unauthorized
     {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched"}|}
 
+let is_valid_token token_tree =
+  let%lwt expires_at = Store.Tree.get token_tree @@ Store.Key.v ["expires_at"] in
+  let expires_at = Float.of_string expires_at in
+  let current_time = Unix.gettimeofday () in
+  Lwt.return (expires_at > current_time)
+
 (** Notes:
   - In cruel need of error handling
-  - Check the token's validity
 *)
 let is_logged handler request =
   let token =
@@ -32,50 +35,42 @@ let is_logged handler request =
     Dream.json ~status:`Unauthorized
       {|{"errcode": "M_MISSING_TOKEN", "error": "No access token was specified"}|}
   | Some token -> (
+    let%lwt tree = Store.tree store in
     (* fetch the token *)
-    let%lwt s_token = Store.find store (Store.Key.v ["tokens"; token]) in
-    match s_token with
-    | None ->
-      Dream.json ~status:`Unauthorized
-        {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched"}|}
-    | Some s_token -> (
-      let s_token =
-        Json_encoding.destruct Token.encoding
-          (Ezjsonm.value_from_string s_token) in
-      (* fetch the device *)
-      let device = Token.get_device s_token in
-      let%lwt s_device = Store.find store (Store.Key.v ["devices"; device]) in
-      match s_device with
-      | None ->
-        Dream.json ~status:`Unauthorized
-          {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched"}|}
-      | Some s_device -> (
-        let s_device =
-          Json_encoding.destruct Device.encoding
-            (Ezjsonm.value_from_string s_device) in
-        (* fetch the user *)
-        let user = Device.get_user s_device in
-        let%lwt s_user = Store.find store (Store.Key.v ["users"; user]) in
-        match s_user with
-        | None ->
-          Dream.json ~status:`Unauthorized
-            {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched"}|}
-        | Some s_user ->
-          let s_user =
-            Json_encoding.destruct User.encoding
-              (Ezjsonm.value_from_string s_user) in
-          (* check the user/device/token *)
-          if
-            List.exists (String.equal device) (User.get_devices s_user)
-            && String.equal token (Device.get_token s_device)
-          then
-            handler
-              (Dream.with_local logged_device device
-                 (Dream.with_local logged_user user request))
-          else
-            Dream.json ~status:`Unauthorized
-              {|{"errcode": "M_UNKNOWN_TOKEN", "error": "No access token matched"}|}
-        )))
+    let%lwt token_tree =
+      Store.Tree.find_tree tree @@ Store.Key.v ["tokens"; token] in
+    match token_tree with
+    | None -> unkown_token
+    | Some token_tree -> (
+      let%lwt is_valid = is_valid_token token_tree in
+      if not is_valid then unkown_token
+      else
+        (* fetch the device *)
+        let%lwt device = Store.Tree.get token_tree @@ Store.Key.v ["device"] in
+        let%lwt device_tree = Store.Tree.find_tree tree (Store.Key.v ["devices"; device]) in
+        match device_tree with
+        | None -> unkown_token
+        | Some device_tree -> (
+          (* fetch the user *)
+          let%lwt user = Store.Tree.get device_tree @@ Store.Key.v ["user_id"] in
+          let%lwt user_tree = Store.Tree.find_tree tree (Store.Key.v ["users"; user]) in
+          match user_tree with
+          | None -> unkown_token
+          | Some user_tree ->
+            (* verify the device is still listed in the user's devices *)
+            let%lwt user_device = Store.Tree.find_tree user_tree (Store.Key.v ["devices"; device]) in
+            match user_device with
+            | None -> unkown_token
+            | Some _ ->
+              (* verify the token is still the actual device token *)
+              let%lwt device_token = Store.Tree.get device_tree (Store.Key.v ["token"]) in
+              if device_token <> token
+              then
+                unkown_token
+              else
+                handler
+                    (Dream.with_local logged_device device
+                      (Dream.with_local logged_user user request)))))
 
 let is_logged_server _ _ = assert false
 
