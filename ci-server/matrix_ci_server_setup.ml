@@ -1,5 +1,4 @@
 open Cmdliner
-
 module Store = Irmin_unix.Git.FS.KV (Irmin.Contents.String)
 
 let setup =
@@ -74,7 +73,8 @@ module User = struct
       let doc = "Creates a user." in
       Term.info "user" ~doc in
     let term =
-      Term.(app (const Lwt_main.run) (const f $ store $ user_id $ pwd $ setup)) in
+      Term.(app (const Lwt_main.run) (const f $ store $ user_id $ pwd $ setup))
+    in
     term, info
 end
 

@@ -47,30 +47,33 @@ let is_logged handler request =
       else
         (* fetch the device *)
         let%lwt device = Store.Tree.get token_tree @@ Store.Key.v ["device"] in
-        let%lwt device_tree = Store.Tree.find_tree tree (Store.Key.v ["devices"; device]) in
+        let%lwt device_tree =
+          Store.Tree.find_tree tree (Store.Key.v ["devices"; device]) in
         match device_tree with
         | None -> unkown_token
         | Some device_tree -> (
           (* fetch the user *)
           let%lwt user = Store.Tree.get device_tree @@ Store.Key.v ["user_id"] in
-          let%lwt user_tree = Store.Tree.find_tree tree (Store.Key.v ["users"; user]) in
+          let%lwt user_tree =
+            Store.Tree.find_tree tree (Store.Key.v ["users"; user]) in
           match user_tree with
           | None -> unkown_token
-          | Some user_tree ->
+          | Some user_tree -> (
             (* verify the device is still listed in the user's devices *)
-            let%lwt user_device = Store.Tree.find_tree user_tree (Store.Key.v ["devices"; device]) in
+            let%lwt user_device =
+              Store.Tree.find_tree user_tree (Store.Key.v ["devices"; device])
+            in
             match user_device with
             | None -> unkown_token
             | Some _ ->
               (* verify the token is still the actual device token *)
-              let%lwt device_token = Store.Tree.get device_tree (Store.Key.v ["token"]) in
-              if device_token <> token
-              then
-                unkown_token
+              let%lwt device_token =
+                Store.Tree.get device_tree (Store.Key.v ["token"]) in
+              if device_token <> token then unkown_token
               else
                 handler
-                    (Dream.with_local logged_device device
-                      (Dream.with_local logged_user user request)))))
+                  (Dream.with_local logged_device device
+                     (Dream.with_local logged_user user request))))))
 
 let is_logged_server _ _ = assert false
 

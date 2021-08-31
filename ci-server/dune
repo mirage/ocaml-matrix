@@ -13,12 +13,7 @@
   identifiers
   helper
   store)
- (libraries
-  dream
-  matrix-ctos
-  matrix-stos
-  irmin-unix
-  uuidm)
+ (libraries dream matrix-ctos matrix-stos irmin-unix uuidm)
  (preprocess
   (pps lwt_ppx)))
 
@@ -28,8 +23,6 @@
  (public_name matrix-ci-server-setup)
  (package matrix-ci-server)
  (modules matrix_ci_server_setup)
- (libraries
-  irmin-unix
-  cmdliner)
+ (libraries irmin-unix cmdliner)
  (preprocess
   (pps lwt_ppx)))
