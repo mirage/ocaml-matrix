@@ -68,7 +68,7 @@ module Cmdliner = struct
       let server = Http.Server.v scheme (Option.get host) port in
       Some
         (Client.v ~server ~device:None ~user:(Option.get user)
-           ~pwd:(load_file (Option.get passfile |> String.trim)))
+           ~pwd:(load_file (Option.get passfile) |> String.trim))
     with Invalid_argument _ -> None
 
   let v = Term.(const v $ host $ port $ scheme $ user $ passfile)
