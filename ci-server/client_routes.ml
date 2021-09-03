@@ -2,6 +2,7 @@ open Store
 open Middleware
 open Matrix_common
 open Matrix_ctos
+open Common_routes
 
 (** Notes:
   - In need of adding the support of the get route in order to advertise
@@ -176,7 +177,7 @@ let create_room t request =
         | Some user -> (
           let%lwt tree = Store.tree store in
           let user_id = user in
-          let room_id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let room_id = "!" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
           (* Create the head for the message feed *)
           let%lwt tree =
             Store.Tree.add tree
@@ -184,7 +185,7 @@ let create_room t request =
               "" in
           (* Create the state events of the room *)
           (* create *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
           let event =
             Events.State_event.make
               ~room_event:
@@ -201,13 +202,12 @@ let create_room t request =
           let json_event =
             Json_encoding.construct Events.State_event.encoding event
             |> Ezjsonm.value_to_string in
-
           let%lwt tree =
             Store.Tree.add tree
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.create"])
               json_event in
           (* member *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
           let event =
             Events.State_event.make
               ~room_event:
@@ -230,7 +230,7 @@ let create_room t request =
                  ["rooms"; room_id; "state"; "m.room.member"; user_id])
               json_event in
           (* power_level *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
           let power_level =
             match Request.get_power_level_content_override create_room with
             | None ->
@@ -274,7 +274,7 @@ let create_room t request =
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.power_levels"])
               json_event in
           (* join_rules *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
           let event =
             Events.State_event.make
               ~room_event:
@@ -296,7 +296,7 @@ let create_room t request =
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.join_rules"])
               json_event in
           (* history_visibility *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
           let event =
             Events.State_event.make
               ~room_event:
@@ -323,8 +323,8 @@ let create_room t request =
             match Request.get_name create_room with
             | Some name -> name
             | None -> alias in
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
-          let event =
+            let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
+            let event =
             Events.State_event.make
               ~room_event:
                 (Events.Room_event.make
@@ -344,7 +344,7 @@ let create_room t request =
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.name"])
               json_event in
           (* canonical_alias *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
           let event =
             Events.State_event.make
               ~room_event:
@@ -405,24 +405,28 @@ let state t request ~with_state_key =
     let event_type = Dream.param "event_type" request in
     let%lwt b = Helper.is_room_user room_id user in
     if b then (
-      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+      let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
       let event_content = Room_event.Put.State_event.Request.get_event state in
-      let event =
-        Events.Room_event.make
-          ~event:(Events.Event.make ~event_content ())
-          ~event_id:id ~sender:user
-          ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
-          () in
-      let json_event =
-        Json_encoding.construct Events.Room_event.encoding event
-        |> Ezjsonm.value_to_string in
-      let%lwt tree = Store.tree store in
-      let key =
+      let state_key, store_key =
         if with_state_key then
           let state_key = Dream.param "state_key" request in
-          ["rooms"; room_id; "state"; event_type; state_key]
-        else ["rooms"; room_id; "state"; event_type] in
-      let%lwt tree = Store.Tree.add tree (Store.Key.v key) json_event in
+          state_key, ["rooms"; room_id; "state"; event_type; state_key]
+        else "", ["rooms"; room_id; "state"; event_type]
+      in
+      let event =
+        Events.State_event.make
+          ~room_event:
+            (Events.Room_event.make
+              ~event:(Events.Event.make ~event_content ())
+              ~event_id:id ~sender:user
+              ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
+            ())
+          ~state_key () in
+      let json_event =
+        Json_encoding.construct Events.State_event.encoding event
+        |> Ezjsonm.value_to_string in
+      let%lwt tree = Store.tree store in
+      let%lwt tree = Store.Tree.add tree (Store.Key.v store_key) json_event in
       (* saving update tree *)
       let%lwt return =
         Store.set_tree
@@ -430,8 +434,9 @@ let state t request ~with_state_key =
           store (Store.Key.v []) tree in
       match return with
       | Ok () ->
+        let event_id = "$" ^ id ^ ":" ^ t.server_name in
         let response =
-          Response.make ~event_id:id ()
+          Response.make ~event_id ()
           |> Json_encoding.construct Response.encoding
           |> Ezjsonm.value_to_string in
         Dream.json response
@@ -456,7 +461,7 @@ let send t request =
     let room_id = Dream.param "room_id" request in
     let%lwt b = Helper.is_room_user room_id user in
     if b then
-      let id = "$" ^ Uuidm.(v `V4 |> to_string) in
+      let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
       let message_content = Request.get_event message in
       let event =
         Events.Room_event.make
@@ -501,8 +506,9 @@ let send t request =
             store (Store.Key.v []) tree in
         match return with
         | Ok () ->
+          let event_id = "$" ^ id ^ ":" ^ t.server_name in
           let response =
-            Response.make ~event_id:id ()
+            Response.make ~event_id ()
             |> Json_encoding.construct Response.encoding
             |> Ezjsonm.value_to_string in
           Dream.json response

@@ -38,9 +38,9 @@ let read_key file =
   | `ED25519 key -> key, Mirage_crypto_ec.Ed25519.pub_of_priv key
   | _ -> raise @@ Invalid_argument "Not an ED25519 key"
 
-let main server_name server_key () =
-  let priv_key, pub_key = read_key server_key in
-  let info = Common_routes.{server_name; priv_key; pub_key} in
+let main server_name (key_name, key_path) () =
+  let priv_key, pub_key = read_key key_path in
+  let info = Common_routes.{server_name; key_name; priv_key; pub_key} in
   Lwt_main.run (Lwt.join [client_server info; federation_server info])
 
 let setup level =
@@ -58,8 +58,8 @@ let server_name =
 let server_key =
   Arg.(
     required
-    & pos 1 (some string) None
-    & info [] ~docv:"server_key" ~doc:"the key used for json signing")
+    & pos 1 (some @@ pair string string) None
+    & info [] ~docv:"server_key" ~doc:"the key name and it's path, separated by a ','")
 
 let () =
   let info =

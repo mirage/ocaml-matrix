@@ -75,7 +75,8 @@ let is_logged handler request =
                   (Dream.with_local logged_device device
                      (Dream.with_local logged_user user request))))))
 
-let is_logged_server _ _ = assert false
+let is_logged_server handler request =
+  handler request
 
 module Rate_limit = struct
   let rate_limit =

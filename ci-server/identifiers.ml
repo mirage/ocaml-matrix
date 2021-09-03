@@ -97,10 +97,10 @@ end
 module Room_alias = struct
   let is_sep = function ':' -> true | _ -> false
   let room_local = take_till is_sep
-  let room_id = ( and+ ) (char '#' *> room_local) (char ':' *> Server.server)
+  let room_alias = ( and+ ) (char '#' *> room_local) (char ':' *> Server.server)
 
   let of_string_exn x =
-    match parse_string ~consume:Consume.All room_id x with
+    match parse_string ~consume:Consume.All room_alias x with
     | Ok v -> v
-    | Error _ -> Fmt.invalid_arg "Invalid room id: %s" x
+    | Error _ -> Fmt.invalid_arg "Invalid room alias: %s" x
 end
