@@ -34,3 +34,8 @@ client.
 
 It then fetches all the room he is currently in and notices them that a new
 commit was pushed with a message before disconnecting itself.
+
+
+## Acknowledgement 
+
+`ocaml-matrix` has received funding from the Next Generation Internet Initiative (NGI) within the framework of the DAPSI Project.
