@@ -197,18 +197,34 @@ let post ~job ~room_id ctx message =
   in
   Ok ()
 
-let create_room ~job ~pool server auth_token room (name, topic) =
-  let power_level_content_override =
-    Matrix_common.Events.Event_content.Power_levels.make ~events_default:100 ()
-  in
+type settings = {
+  name: string;
+  topic: string;
+  power_level_content_override:
+    Matrix_common.Events.Event_content.Power_levels.t option;
+}
+
+let create_room
+    ~job
+    ~pool
+    server
+    auth_token
+    room
+    {name; topic; power_level_content_override} =
   Current.Job.log job "Creating room `%s`" room;
   let open Room.Create in
   Http.post ~job ~pool server "/_matrix/client/r0/createRoom" None
     (Request.make ~visibility:Public ~room_alias_name:room ~name ~topic
-       ~power_level_content_override ())
+       ?power_level_content_override ())
     Request.encoding Response.encoding auth_token
 
-let update_room ~job ~pool server auth_token room_id (name, topic) =
+let update_room
+    ~job
+    ~pool
+    server
+    auth_token
+    room_id
+    {name; topic; power_level_content_override} =
   Current.Job.log job "Updating room `%s`" room_id;
   let state_name =
     Room_event.Put.State_event.Request.make
@@ -222,10 +238,21 @@ let update_room ~job ~pool server auth_token room_id (name, topic) =
     Room_event.Put.State_event.Request.make
       ~event:(Topic (Matrix_common.Events.Event_content.Topic.make ~topic ()))
       () in
-  send_state ~job ~pool server auth_token room_id
-    ("m.room.topic", state_topic, "")
+  let* () =
+    send_state ~job ~pool server auth_token room_id
+      ("m.room.topic", state_topic, "")
+  in
+  let power_level_content_override =
+    Option.value power_level_content_override
+      ~default:(Matrix_common.Events.Event_content.Power_levels.make ()) in
+  let state_power_levels =
+    Room_event.Put.State_event.Request.make
+      ~event:(Power_levels power_level_content_override) () in
 
-let get_room ~job ~alias ~name ~topic ctx =
+  send_state ~job ~pool server auth_token room_id
+    ("m.room.power_levels", state_power_levels, "")
+
+let get_room ~job ~alias ~settings ctx =
   let pool = ctx.pool in
   Token.with_token ~job ~pool ctx.token @@ fun auth_token ->
   (* we look for the room *)
@@ -243,14 +270,14 @@ let get_room ~job ~alias ~name ~topic ctx =
     match existing_room_alias with
     | None ->
       let+ create_room_response =
-        create_room ~job ~pool ctx.server (Some auth_token) alias (name, topic)
+        create_room ~job ~pool ctx.server (Some auth_token) alias settings
       in
       Room.Create.Response.get_room_id create_room_response
     | Some room_id ->
       Current.Job.log job
-        "Room already exists, making sure it has the correct name and topic.";
+        "Room already exists, making sure it has the correct settings.";
       let+ () =
-        update_room ~job ~pool ctx.server (Some auth_token) room_id (name, topic)
+        update_room ~job ~pool ctx.server (Some auth_token) room_id settings
       in
       room_id
   in

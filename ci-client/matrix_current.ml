@@ -91,10 +91,21 @@ module Room = struct
 
   module RC = Current_cache.Output (Room)
 
-  let make ctx ~alias ?(name = alias) ?(topic = Current.return "") () =
+  let make
+      ctx
+      ~alias
+      ?(name = alias)
+      ?(topic = Current.return "")
+      ?power_level_content_override
+      () =
     Current.component "matrix room"
-    |> let> name = name and> topic = topic and> alias = alias in
-       RC.set ctx alias {name; topic}
+    |> let> name = name
+       and> topic = topic
+       and> alias = alias
+       and> power_level_content_override =
+         Current.option_seq power_level_content_override
+       in
+       RC.set ctx alias {name; topic; power_level_content_override}
 end
 
 module PC = Current_cache.Output (Post)

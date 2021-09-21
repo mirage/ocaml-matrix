@@ -28,6 +28,8 @@ module Room : sig
     alias:string Current.t ->
     ?name:string Current.t ->
     ?topic:string Current.t ->
+    ?power_level_content_override:
+      Matrix_common.Events.Event_content.Power_levels.t Current.t ->
     unit ->
     t Current.t
   (** [make context ~alias ~name ~topic ()] manages a room accessible using [alias], 
