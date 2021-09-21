@@ -1,7 +1,13 @@
 type t
 
 val v :
-  server:Http.Server.t -> device:string option -> user:string -> pwd:string -> t
+  ?max_connections:int ->
+  server:Http.Server.t ->
+  device:string option ->
+  user:string ->
+  pwd:string ->
+  unit ->
+  t
 
 val post :
   job:Current.Job.t ->

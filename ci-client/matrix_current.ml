@@ -6,9 +6,9 @@ module Log = (val Logs.src_log src : Logs.LOG)
 
 type context = Post.t
 
-let context ~host ~port ~scheme ~user ~pwd ~device =
+let context ?max_connections ~host ~port ~scheme ~user ~pwd ~device () =
   let server = Http.Server.v scheme host port in
-  Client.v ~server ~user ~pwd ~device
+  Client.v ?max_connections ~server ~user ~pwd ~device ()
 
 module Cmdliner = struct
   open Cmdliner
@@ -58,20 +58,30 @@ module Cmdliner = struct
          ["matrix-passfile"]
     |> named (fun x -> `Passfile x)
 
+  let max_connections =
+    Arg.value
+    @@ Arg.opt Arg.(some int) None
+    @@ Arg.info ~doc:"Maximal number of concurrent connections to the server"
+         ~docv:"MATRIX_MAX_CONNECTIONS" ["matrix-max-connections"]
+    |> named (fun x -> `Max_connections x)
+
   let v
       (`Host host)
       (`Port port)
       (`Scheme scheme)
       (`User user)
-      (`Passfile passfile) =
+      (`Passfile passfile)
+      (`Max_connections max_connections) =
     try
       let server = Http.Server.v scheme (Option.get host) port in
       Some
-        (Client.v ~server ~device:None ~user:(Option.get user)
-           ~pwd:(load_file (Option.get passfile) |> String.trim))
+        (Client.v ?max_connections ~server ~device:None ~user:(Option.get user)
+           ~pwd:(load_file (Option.get passfile) |> String.trim)
+           ())
     with Invalid_argument _ -> None
 
-  let v = Term.(const v $ host $ port $ scheme $ user $ passfile)
+  let v =
+    Term.(const v $ host $ port $ scheme $ user $ passfile $ max_connections)
 end
 
 let cmdliner = Cmdliner.v

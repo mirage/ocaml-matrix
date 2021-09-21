@@ -1,12 +1,14 @@
 type context
 
 val context :
+  ?max_connections:int ->
   host:string ->
   port:int ->
   scheme:[ `Http | `Https ] ->
   user:string ->
   pwd:string ->
   device:string option ->
+  unit ->
   context
 (** [post ~host ~port ~scheme ~user ~password ?device] makes a context for a minimalist matrix
     client.

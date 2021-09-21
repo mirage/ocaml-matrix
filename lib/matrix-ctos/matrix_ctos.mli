@@ -528,6 +528,13 @@ module Errors : sig
     val pp : t Fmt.t
   end
 
+  module Rate_limited : sig
+    type%accessor t = {errcode: string; error: string; retry_after_ms: int option}
+
+    val encoding : t encoding
+    val pp : t Fmt.t
+  end
+
   module Auth_error : sig
     module Flow : sig
       type%accessor t = {stages: string list}
@@ -549,7 +556,7 @@ module Errors : sig
     val pp : t Fmt.t
   end
 
-  type t = Error of Error.t | Auth_error of Auth_error.t
+  type t = Error of Error.t | Auth_error of Auth_error.t | Rate_limited of Rate_limited.t
 
   val encoding : t encoding
   val pp : t Fmt.t
