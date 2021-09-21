@@ -31,21 +31,21 @@ let make_headers ?(header = []) auth_token =
       Header.add headers "Authorization" (Fmt.str "Bearer %s" auth_token) in
   headers
 
+type 'a or_error = ('a, Matrix_ctos.Errors.t) Result.t
+
+let parse_or_fail code json_encoding body =
+  let json_body = Ezjsonm.from_string body in
+  if code >= 400 then Error (destruct Matrix_ctos.Errors.encoding json_body)
+  else Ok (destruct json_encoding json_body)
+
 let get server ?header path args response_encoding needs_auth =
   let uri = Server.to_uri server path args in
   let headers = make_headers ?header needs_auth in
   Cohttp_lwt_unix.Client.get ~headers uri >>= fun (resp, body) ->
   let code = resp |> Response.status |> Code.code_of_status in
   body |> Cohttp_lwt.Body.to_string >|= fun body ->
-  if body <> "" then
-    let json_body = Ezjsonm.from_string body in
-    if code >= 400 then
-      raise
-        (Json_error
-           (Fmt.str "Error %d in get: %a" code Matrix_ctos.Errors.pp
-              (destruct Matrix_ctos.Errors.encoding json_body)))
-    else destruct response_encoding json_body
-  else raise (Json_error (Fmt.str "Error %d in get" code))
+  if body <> "" then parse_or_fail code response_encoding body
+  else raise (Json_error (Fmt.str "Error %d in get: no body" code))
 
 let post
     server ?header path args value request_encoding response_encoding auth_token
@@ -57,14 +57,7 @@ let post
   Cohttp_lwt_unix.Client.post ~headers ~body uri >>= fun (resp, body) ->
   let code = resp |> Response.status |> Code.code_of_status in
   body |> Cohttp_lwt.Body.to_string >|= fun body ->
-  if body <> "" then
-    let json_body = Ezjsonm.from_string body in
-    if code >= 400 then
-      raise
-        (Json_error
-           (Fmt.str "Error %d in post: %a" code Matrix_ctos.Errors.pp
-              (destruct Matrix_ctos.Errors.encoding json_body)))
-    else destruct response_encoding json_body
+  if body <> "" then parse_or_fail code response_encoding body
   else raise (Json_error (Fmt.str "Error %d in post" code))
 
 let put
@@ -77,12 +70,5 @@ let put
   Cohttp_lwt_unix.Client.put ~headers ~body uri >>= fun (resp, body) ->
   let code = resp |> Response.status |> Code.code_of_status in
   body |> Cohttp_lwt.Body.to_string >|= fun body ->
-  if body <> "" then
-    let json_body = Ezjsonm.from_string body in
-    if code >= 400 then
-      raise
-        (Json_error
-           (Fmt.str "Error %d in put: %a" code Matrix_ctos.Errors.pp
-              (destruct Matrix_ctos.Errors.encoding json_body)))
-    else destruct response_encoding json_body
+  if body <> "" then parse_or_fail code response_encoding body
   else raise (Json_error (Fmt.str "Error %d in put" code))
