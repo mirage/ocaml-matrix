@@ -16,10 +16,16 @@ val post :
   Matrix_common.Events.Event_content.Message.t ->
   (unit, string) result Lwt.t
 
+type settings = {
+  name: string;
+  topic: string;
+  power_level_content_override:
+    Matrix_common.Events.Event_content.Power_levels.t option;
+}
+
 val get_room :
   job:Current.Job.t ->
   alias:string ->
-  name:string ->
-  topic:string ->
+  settings:settings ->
   t ->
   (string, string) result Lwt.t
