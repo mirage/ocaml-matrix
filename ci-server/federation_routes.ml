@@ -160,7 +160,7 @@ let router (t : Common_routes.t) =
                   Dream.get "/version" placeholder;
                   Dream.put "/3pid/onbind" placeholder;
                   Dream.get "/openid/userinfo" placeholder;
-                  Dream.scope "" [is_logged_server]
+                  Dream.scope "" [is_logged_server t]
                     [
                       Dream.put "/send/:txn_id" placeholder;
                       Dream.get "/event_auth/:room_id/:event_id" placeholder;
@@ -196,7 +196,7 @@ let router (t : Common_routes.t) =
                 ];
               Dream.scope "/v2" []
                 [
-                  Dream.scope "" [is_logged_server]
+                  Dream.scope "" [is_logged_server t]
                     [
                       Dream.put "/send_join/:room_id/:event_id" placeholder;
                       Dream.put "/invite/:room_id/:event_id" placeholder;

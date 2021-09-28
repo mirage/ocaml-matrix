@@ -1,4 +1,5 @@
 open Store
+open Matrix_stos
 
 let logged_user =
   Dream.new_local ~name:"logged_user" ~show_value:(fun s -> s) ()
@@ -7,9 +8,11 @@ let logged_device =
   Dream.new_local ~name:"logged_device" ~show_value:(fun s -> s) ()
 
 let clean_token token =
-  let len = String.length token in
-  let sub = String.sub token 0 (min len 7) in
-  if String.equal sub "Bearer " then Some (String.sub token 7 (len - 7))
+  if Astring.String.is_prefix ~affix:"Bearer " token
+  then
+    match Astring.String.cut ~sep:" " token with
+    | Some (_, r) -> Some r
+    | None -> None
   else None
 
 let unkown_token =
@@ -74,9 +77,149 @@ let is_logged handler request =
                 handler
                   (Dream.with_local logged_device device
                      (Dream.with_local logged_user user request))))))
+let logged_server =
+  Dream.new_local ~name:"logged_server" ~show_value:(fun s -> s) ()
 
-let is_logged_server handler request =
-  handler request
+let clean_auth auth =
+  if Astring.String.is_prefix ~affix:"X-Matrix " auth
+    then
+      let auth = snd @@ Option.get @@ Astring.String.cut ~sep:" " auth in
+      (match Astring.String.cuts ~sep:"," auth with
+      | [origin; key; signature] ->
+        if Astring.String.is_prefix ~affix:"origin=" origin &&
+          Astring.String.is_prefix ~affix:"key=" key &&
+          Astring.String.is_prefix ~affix:"sig=" signature
+        then
+          let origin = snd @@ Option.get @@ Astring.String.cut ~sep:"=" origin in
+          let key = Astring.String.trim ~drop:(function '"' -> true | _ -> false) @@ snd @@ Option.get @@ Astring.String.cut ~sep:"=" key in
+          let signature = Astring.String.trim ~drop:(function '"' -> true | _ -> false) @@ snd @@ Option.get @@ Astring.String.cut ~sep:"=" signature in
+          Some (origin, key, signature)
+        else None
+      | _ -> None)
+    else None
+
+let unkown_key key =
+  Dream.json ~status:`Unauthorized
+    (Fmt.str {|{"errcode": "M_UNAUTHORIZED", "error": "Failed to find any valid key for [%s]"}|} key)
+
+let is_valid_key key_tree =
+  let%lwt valid_until = Store.Tree.get key_tree @@ Store.Key.v ["valid_until"] in
+  let expires_at = Float.of_string valid_until in
+  let current_time = Unix.gettimeofday () in
+  Lwt.return (expires_at > current_time)
+
+(** Notes:
+  - Use the right key type
+*)
+let is_valid_signature origin destination signature key request =
+  let meth = Dream.method_to_string @@ Dream.method_ request in
+  let uri = Dream.target request in
+  let%lwt body = Dream.body request in
+  let json =
+    Federation_request.Str.make
+      ~meth
+      ~uri
+      ?content:(if body = "" then None else Some body)
+      ~origin
+      ~destination
+    ()
+    |> Json_encoding.construct Federation_request.Str.encoding
+    |> Json_encoding.canonize |> Ezjsonm.value_to_string
+  in
+  match Base64.decode ~pad:false key with
+  | Error _ ->
+    Lwt.return_false
+  | Ok key ->
+    match Mirage_crypto_ec.Ed25519.pub_of_cstruct (Cstruct.of_string key) with
+    | Error _ ->
+      Lwt.return_false
+    | Ok key ->
+      match Base64.decode ~pad:false signature with
+      | Error _ ->
+        Lwt.return_false
+      | Ok signature ->
+        let verify = Mirage_crypto_ec.Ed25519.verify ~key (Cstruct.of_string signature)
+          ~msg:(Cstruct.of_string json)
+        in
+        Lwt.return verify
+
+let fetching_key server_name key_id =
+  let open Matrix_stos.Key.Direct_query in
+  let uri = Uri.make ~scheme:"https" ~port:8449 ~host:server_name ~path:("/_matrix/key/v2/server/" ^ key_id) () in
+  let tls_authenticator = fun ~host:_ _ -> Ok None in
+  let%lwt ctx = Conduit_lwt_unix.init ~tls_authenticator () in
+  let ctx = Cohttp_lwt_unix.Net.init ~ctx () in
+  let%lwt _resp, body = Cohttp_lwt_unix.Client.get ~ctx uri in
+  let%lwt body = Cohttp_lwt.Body.to_string body in
+  let direct_keys =
+    Json_encoding.destruct Response.encoding (Ezjsonm.value_from_string body)
+  in
+  (* we should use the signatures *)
+  let verify_keys = Response.get_verify_keys direct_keys in
+  let valid_until = Response.get_valid_until_ts direct_keys in
+  match List.assoc_opt key_id verify_keys, valid_until with
+  | Some key, Some valid_until ->
+    let key = Response.Verify_key.get_key key in
+    Lwt.return_some (key, valid_until)
+  | _ ->
+    Lwt.return_none
+
+(** Notes:
+  - Maybe do some server name resolution in order to avoid false negatives
+  - Upgrade the key fetching with proper retries and using several notary
+    servers.
+*)
+let is_logged_server t handler request =
+  match Option.bind (Dream.header "Authorization" request) clean_auth with
+  | None ->
+    Dream.json ~status:`Unauthorized
+    {|{"errcode": "M_UNAUTHORIZED", "error": "Missing Authorization header"}|}
+  | Some (origin, key_id, signature) ->
+    let%lwt tree = Store.tree store in
+    (* fetch the server's key *)
+    let%lwt key_tree =
+      Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id] in
+    let%lwt key_tree =
+      if key_tree = None
+      then
+        let%lwt key_s = fetching_key origin key_id in
+        match key_s with
+          | Some (key_s, valid_until) ->
+            let%lwt tree = Store.Tree.add tree (Store.Key.v ["keys"; origin; key_id; "key"])
+              key_s in
+            let%lwt tree = Store.Tree.add tree (Store.Key.v ["keys"; origin; key_id; "valid_until"])
+              (Int.to_string valid_until) in
+            let%lwt return =
+              Store.set_tree
+                ~info:(Helper.info t ~message:"add server key")
+                store (Store.Key.v []) tree in
+            (match return with
+            | Ok () ->
+              Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id]
+            | Error write_error ->
+              Dream.error (fun m ->
+                  m "Write error: %a"
+                    (Irmin.Type.pp Store.write_error_t)
+                    write_error);
+              Lwt.return_none)
+        | None -> Lwt.return_none
+      else
+        Lwt.return key_tree
+    in
+    match key_tree with
+    | None ->
+      unkown_key key_id
+    | Some key_tree -> (
+      let%lwt is_valid = is_valid_key key_tree in
+      if not is_valid then unkown_key key_id
+      else
+        let%lwt key = Store.Tree.get key_tree (Store.Key.v ["key"]) in
+        let%lwt is_valid = is_valid_signature origin t.server_name signature key request in
+        if not is_valid
+        then unkown_key key_id
+        else
+          handler
+            (Dream.with_local logged_server origin request))
 
 module Rate_limit = struct
   let rate_limit =

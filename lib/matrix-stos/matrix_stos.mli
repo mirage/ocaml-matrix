@@ -196,15 +196,29 @@ module Joining_rooms : sig
 end
 
 module Federation_request : sig
-  type%accessor 'a t = {
-    meth: string;
-    uri: string;
-    origin: string;
-    destination: string;
-    content: 'a option;
-  }
+  module Obj : sig
+    type%accessor 'a t = {
+      meth: string;
+      uri: string;
+      origin: string;
+      destination: string option;
+      content: 'a option;
+    }
 
-  val encoding : 'a encoding -> 'a t encoding
+    val encoding : 'a encoding -> 'a t encoding
+  end
+
+  module Str : sig
+    type%accessor t = {
+      meth: string;
+      uri: string;
+      origin: string;
+      destination: string option;
+      content: string option;
+    }
+
+    val encoding : t encoding
+  end
 end
 
 module Signatures : sig
