@@ -323,8 +323,8 @@ let create_room t request =
             match Request.get_name create_room with
             | Some name -> name
             | None -> alias in
-            let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
-            let event =
+          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
+          let event =
             Events.State_event.make
               ~room_event:
                 (Events.Room_event.make
@@ -411,16 +411,15 @@ let state t request ~with_state_key =
         if with_state_key then
           let state_key = Dream.param "state_key" request in
           state_key, ["rooms"; room_id; "state"; event_type; state_key]
-        else "", ["rooms"; room_id; "state"; event_type]
-      in
+        else "", ["rooms"; room_id; "state"; event_type] in
       let event =
         Events.State_event.make
           ~room_event:
             (Events.Room_event.make
-              ~event:(Events.Event.make ~event_content ())
-              ~event_id:id ~sender:user
-              ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
-            ())
+               ~event:(Events.Event.make ~event_content ())
+               ~event_id:id ~sender:user
+               ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
+               ())
           ~state_key () in
       let json_event =
         Json_encoding.construct Events.State_event.encoding event

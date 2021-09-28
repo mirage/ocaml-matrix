@@ -59,7 +59,8 @@ let server_key =
   Arg.(
     required
     & pos 1 (some @@ pair string string) None
-    & info [] ~docv:"server_key" ~doc:"the key name and it's path, separated by a ','")
+    & info [] ~docv:"server_key"
+        ~doc:"the key name and it's path, separated by a ','")
 
 let () =
   let info =

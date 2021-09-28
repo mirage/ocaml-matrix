@@ -8,13 +8,15 @@ open Common_routes
 let placeholder _ = assert false
 
 let sign t encoding =
-  Signatures.encoding [t.server_name, ["ed25519:" ^ t.key_name, t.priv_key]] encoding
+  Signatures.encoding
+    [t.server_name, ["ed25519:" ^ t.key_name, t.priv_key]]
+    encoding
 
 module Key = struct
   module V2 = struct
     (* Notes:
-      - Handle old_verify_keys
-      - Use a proper and appropriate validity time
+       - Handle old_verify_keys
+       - Use a proper and appropriate validity time
     *)
     let direct_query t _request =
       let open Key.Direct_query in
@@ -30,7 +32,10 @@ module Key = struct
         let response =
           Response.make ~server_name:t.server_name
             ~verify_keys:
-              ["ed25519:" ^ t.key_name, Response.Verify_key.make ~key:base64_key ()]
+              [
+                ( "ed25519:" ^ t.key_name,
+                  Response.Verify_key.make ~key:base64_key () );
+              ]
             ~old_verify_keys:[]
             ~valid_until_ts:((time () + 60) * 1000)
             ()
@@ -43,10 +48,9 @@ module Key = struct
   end
 end
 
-module Public_rooms =
-struct
+module Public_rooms = struct
   (* Notes:
-    - Filter & pagination are ignored for now
+     - Filter & pagination are ignored for now
   *)
   let get _t _request =
     let open Public_rooms.Get_public_rooms in
@@ -59,87 +63,98 @@ struct
         (fun (room_id, room_tree) ->
           (* retrieve the room's canonical_alias if any *)
           let%lwt canonical_alias =
-            let%lwt json = Store.Tree.find room_tree @@ Store.Key.v ["state"; "m.room.join_rules"] in
+            let%lwt json =
+              Store.Tree.find room_tree
+              @@ Store.Key.v ["state"; "m.room.join_rules"] in
             match json with
             | None -> Lwt.return_none
-            | Some json ->
+            | Some json -> (
               let event =
-                Json_encoding.destruct Events.State_event.encoding (Ezjsonm.value_from_string json)
-              in
+                Json_encoding.destruct Events.State_event.encoding
+                  (Ezjsonm.value_from_string json) in
               match Events.State_event.get_event_content event with
               | Canonical_alias canonical_alias ->
-                Lwt.return (Option.join @@ Events.Event_content.Canonical_alias.get_alias canonical_alias)
-              | _ -> Lwt.return_none
-          in
+                Lwt.return
+                  (Option.join
+                  @@ Events.Event_content.Canonical_alias.get_alias
+                       canonical_alias)
+              | _ -> Lwt.return_none) in
           (* retrieve the room's name if any *)
           let%lwt name =
-            let%lwt json = Store.Tree.find room_tree @@ Store.Key.v ["state"; "m.room.name"] in
+            let%lwt json =
+              Store.Tree.find room_tree @@ Store.Key.v ["state"; "m.room.name"]
+            in
             match json with
             | None -> Lwt.return_none
-            | Some json ->
+            | Some json -> (
               let event =
-                Json_encoding.destruct Events.State_event.encoding (Ezjsonm.value_from_string json)
-              in
+                Json_encoding.destruct Events.State_event.encoding
+                  (Ezjsonm.value_from_string json) in
               match Events.State_event.get_event_content event with
               | Name name ->
                 Lwt.return_some (Events.Event_content.Name.get_name name)
-              | _ -> Lwt.return_none
-          in
+              | _ -> Lwt.return_none) in
           (* retrieve the room's members number *)
-          (* let num_joined_members =
-            let%lwt json = Store.Tree.find room_tree @@ Store.Key.v ["state"; "m.room.name"] in
-            let event =
-              Json_encoding.destruct Events.State_event.encoding (Ezjsonm.value_from_string json)
-            in
-            match Events.State_event.get_event_content event with
-            | Name name ->
-              Lwt.return_some (Events.Event_content.Name.get_name name)
-            | _ -> Lwt.return_none
-          in *)
+          let%lwt num_joined_members =
+            let%lwt members =
+              Store.Tree.list room_tree
+              @@ Store.Key.v ["state"; "m.room.member"] in
+            let f n (_, member_tree) =
+              let%lwt json = Store.Tree.get member_tree @@ Store.Key.v [] in
+              let event =
+                Json_encoding.destruct Events.State_event.encoding
+                  (Ezjsonm.value_from_string json) in
+              match Events.State_event.get_event_content event with
+              | Member member ->
+                if
+                  Events.Event_content.Member.get_membership member
+                  = Events.Event_content.Membership.Join
+                then Lwt.return (n + 1)
+                else Lwt.return n
+              | _ -> Lwt.return n in
+            Lwt_list.fold_left_s f 0 members in
           (* retrieve the room's topic if any *)
           let%lwt topic =
-            let%lwt json = Store.Tree.find room_tree @@ Store.Key.v ["state"; "m.room.topic"] in
+            let%lwt json =
+              Store.Tree.find room_tree @@ Store.Key.v ["state"; "m.room.topic"]
+            in
             match json with
             | None -> Lwt.return_none
-            | Some json ->
+            | Some json -> (
               let event =
-                Json_encoding.destruct Events.State_event.encoding (Ezjsonm.value_from_string json)
-              in
+                Json_encoding.destruct Events.State_event.encoding
+                  (Ezjsonm.value_from_string json) in
               match Events.State_event.get_event_content event with
               | Topic topic ->
                 Lwt.return_some (Events.Event_content.Topic.get_topic topic)
-              | _ -> Lwt.return_none
-          in
+              | _ -> Lwt.return_none) in
           (* retrieve the room's topic if any *)
           let%lwt avatar_url =
-            let%lwt json = Store.Tree.find room_tree @@ Store.Key.v ["state"; "m.room.avatar"] in
+            let%lwt json =
+              Store.Tree.find room_tree
+              @@ Store.Key.v ["state"; "m.room.avatar"] in
             match json with
             | None -> Lwt.return_none
-            | Some json ->
+            | Some json -> (
               let event =
-                Json_encoding.destruct Events.State_event.encoding (Ezjsonm.value_from_string json)
-              in
+                Json_encoding.destruct Events.State_event.encoding
+                  (Ezjsonm.value_from_string json) in
               match Events.State_event.get_event_content event with
               | Avatar avatar ->
                 Lwt.return_some (Events.Event_content.Avatar.get_url avatar)
-              | _ -> Lwt.return_none
-          in
+              | _ -> Lwt.return_none) in
           (* Notes:
-            - aliases are ignored for now
-            - as guests are totally ignored, world_readable guest_can_join are
-              set to false
-            - federate is not in the documentation, so set to false for now,
-              needs investigation in order to know what it means *)
+             - aliases are ignored for now
+             - as guests are totally ignored, world_readable guest_can_join are
+               set to false
+             - federate is not in the documentation, so set to false for now,
+               needs investigation in order to know what it means *)
           let room =
-            Response.Public_rooms_chunk.make ~aliases:[]
-              ?canonical_alias ?name
-              ~num_joined_members:0 ~room_id
-              ?topic ~world_readable:false
-              ~guest_can_join:false ?avatar_url
-              ~federate:false () in
+            Response.Public_rooms_chunk.make ~aliases:[] ?canonical_alias ?name
+              ~num_joined_members ~room_id ?topic ~world_readable:false
+              ~guest_can_join:false ?avatar_url ~federate:false () in
           Lwt.return room)
-        rooms
-    in
+        rooms in
     let response =
       Response.make ~chunk:public_rooms
         ~total_room_count_estimate:(List.length rooms) ()
@@ -175,7 +190,8 @@ let router (t : Common_routes.t) =
                       Dream.get "/make_leave/:room_id/:user_id" placeholder;
                       Dream.put "/send_leave/:room_id/:event_id" placeholder;
                       Dream.put "/exchange_third_party_invite/:room_id"
-                        placeholder; Dream.get "/publicRooms" (Public_rooms.get t);
+                        placeholder;
+                      Dream.get "/publicRooms" (Public_rooms.get t);
                       Dream.post "/publicRooms" placeholder;
                       Dream.scope "/query" []
                         [

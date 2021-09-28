@@ -1,7 +1,6 @@
 open Json_encoding
 
-module Obj =
-struct
+module Obj = struct
   type 'a t = {
     meth: string;
     uri: string;
@@ -22,8 +21,7 @@ struct
     conv to_tuple of_tuple with_tuple
 end
 
-module Str =
-struct
+module Str = struct
   type t = {
     meth: string;
     uri: string;
