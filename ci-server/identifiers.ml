@@ -63,7 +63,7 @@ module Server = struct
     | None -> fail "ipv6_addr"
 
   let ipv6_address_literal = string "IPv6:" *> ipv6_addr
-  let failf fmt = Fmt.kstrf fail fmt
+  let failf fmt = Fmt.kstr fail fmt
 
   let ldh_str =
     take_while1 (function
