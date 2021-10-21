@@ -78,13 +78,13 @@ module Server = struct
         (styled `Cyan (styled `Bold string))
         "Get public rooms:");
     let json =
-      Federation_request.make ~meth:"GET"
+      Federation_request.Obj.make ~meth:"GET"
         ~uri:"/_matrix/federation/v1/publicRooms" ~origin:"ocaml-matrix"
         ~destination:"my.domain.name" () in
     let obj_key = read_key "/home/gwenaelle/.ssh/ed25519key.pem" in
     let response =
       Json_encoding.construct
-        (Federation_request.encoding Response.encoding)
+        (Federation_request.Obj.encoding Response.encoding)
         json
       |> Json_encoding.canonize
       |> Ezjsonm.value_to_string in
@@ -117,12 +117,12 @@ module Server = struct
                 ~room_id ()))
         ~prev_events:[] ~depth:25 () in
     let json =
-      Federation_request.make ~meth:"PUT" ~uri ~origin:"ocaml-matrix"
+      Federation_request.Obj.make ~meth:"PUT" ~uri ~origin:"ocaml-matrix"
         ~destination:"my.domain.name" ~content () in
     let obj_key = read_key "/home/gwenaelle/.ssh/ed25519key.pem" in
     let response =
       Json_encoding.construct
-        (Federation_request.encoding Request.encoding)
+        (Federation_request.Obj.encoding Request.encoding)
         json
       |> Json_encoding.canonize
       |> Ezjsonm.value_to_string in
