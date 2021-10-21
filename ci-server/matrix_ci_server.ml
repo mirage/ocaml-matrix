@@ -11,11 +11,12 @@ let client_server info =
   @@ Client_routes.router info
   @@ Dream.not_found
 
-(* Fix the certificate and key paths for some command line args *)
+(* Fix the certificate and key paths for some command line args
+  Do it for the port as well *)
 let federation_server info =
   let interface = "0.0.0.0" in
   let scheme = "https" in
-  let port = 8448 in
+  let port = 8447 in
   let certificate_file = Unix.getenv "PWD" ^ "/server.crt" in
   let key_file = Unix.getenv "PWD" ^ "/server.key" in
   Dream.log "Running on %s:%i (%s://localhost:%i)" interface port scheme port;

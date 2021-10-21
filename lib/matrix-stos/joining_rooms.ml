@@ -12,49 +12,9 @@ module Make_join = struct
     "/_matrix/federation/v1/make_join/" ^ room_id ^ "/" ^ user_id
 
   module Response = struct
-    module Event_template = struct
-      type t = {
-        sender: string;
-        origin: string;
-        origin_server_ts: int;
-        event_type: string;
-        state_key: string;
-        room_id: string option; (* not really in documentation but w/e *)
-      }
-      [@@deriving accessor]
-
-      let encoding =
-        let to_tuple t =
-          ( t.sender,
-            t.origin,
-            t.origin_server_ts,
-            t.event_type,
-            t.state_key,
-            t.room_id,
-            () ) in
-        let of_tuple v =
-          let ( sender,
-                origin,
-                origin_server_ts,
-                event_type,
-                state_key,
-                room_id,
-                () ) =
-            v in
-          {sender; origin; origin_server_ts; event_type; state_key; room_id}
-        in
-        let with_tuple =
-          obj7 (req "sender" string) (req "origin" string)
-            (req "origin_server_ts" int)
-            (req "type" string) (req "state_key" string) (opt "room_id" string)
-            (req "content" (obj1 (req "membership" (constant "join")))) in
-        conv to_tuple of_tuple with_tuple
-    end
-
     type t = {
-      (* Not specified as 'required' in the documentation but synapse seems to want them anywy *)
       room_version: string option;
-      event_template: Event_template.t option;
+      event_template: Pdu.t option;
     }
     [@@deriving accessor]
 
@@ -64,7 +24,7 @@ module Make_join = struct
         let room_version, event_template = v in
         {room_version; event_template} in
       let with_tuple =
-        obj2 (opt "room_version" string) (opt "event" Event_template.encoding)
+        obj2 (opt "room_version" string) (opt "event" Pdu.encoding)
       in
       conv to_tuple of_tuple with_tuple
   end

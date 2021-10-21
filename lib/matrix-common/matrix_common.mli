@@ -751,11 +751,12 @@ module Events : sig
       | Forwarded_room_key of Forwarded_room_key.t
       | Dummy of unit
 
+    val get_type : t -> string
     val encoding : t encoding
   end
 
   module Event : sig
-    type%accessor t = {event_content: Event_content.t}
+    type%accessor t = {event_content: Event_content.t; signatures: (string * (string * string) list) list option}
 
     val encoding : t encoding
   end
@@ -799,9 +800,44 @@ module Events : sig
     | `State_event of State_event.t ]
 
   module Pdu : sig
-    type%accessor t = {event: event; prev_events: string list; depth: int}
+    module Hashes : sig
+      type%accessor t = {sha256: string}
+
+      val encoding : t encoding
+    end
+
+    module Unsigned : sig
+      type%accessor t = {
+        age: int option;
+        prev_object: Event_content.t option;
+        prev_sender: string option;
+        redacted_because: string option;
+        replaces_state: string option;
+      }
+
+      val encoding : t encoding
+    end
+
+    type%accessor t = {
+      auth_events: string list;
+      event_content: Event_content.t;
+      depth: int;
+      hashes: Hashes.t option;
+      origin: string;
+      origin_server_ts: int;
+      prev_events: string list;
+      prev_state: string list;
+      redacts: string option;
+      room_id: string;
+      sender: string;
+      signatures: (string * (string * string) list) list;
+      state_key: string option;
+      event_type: string;
+      unsigned: Unsigned.t option;
+    }
 
     val encoding : t encoding
-    val get_event : t -> event
+    val redact : t encoding
+    val get_event_content : t -> Event_content.t
   end
 end

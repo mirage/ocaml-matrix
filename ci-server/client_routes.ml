@@ -3,12 +3,13 @@ open Middleware
 open Matrix_common
 open Matrix_ctos
 open Common_routes
+open Helper
 
 (** Notes:
   - In need of adding the support of the get route in order to advertise
   which authentication mechanism is supported: at the moment, only password v2
   with user name identifiers
-  - Also, check out the difference between user_id and username
+  - Support both localpart only users and full user_id
   - Timing attacks should also be taken into consideration
 *)
 let login t request =
@@ -24,16 +25,19 @@ let login t request =
     match Authentication.Password.V2.get_identifier auth with
     | User user -> (
       (* check the user data *)
-      let username = Identifier.User.get_user user in
+      let user_id =
+        Identifiers.User_id.to_string
+          (Identifier.User.get_user user)
+          t.server_name in
       let%lwt pwd =
-        Store.find store (Store.Key.v ["users"; username; "password"]) in
+        Store.find store (Store.Key.v ["users"; user_id; "password"]) in
       match pwd with
       | None -> Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
       | Some pwd -> (
         (* Verify the username/password combination *)
         let password = Authentication.Password.V2.get_password auth in
         let%lwt salt =
-          Store.get store (Store.Key.v ["users"; username; "salt"]) in
+          Store.get store (Store.Key.v ["users"; user_id; "salt"]) in
         let digest = Digestif.BLAKE2B.hmac_string ~key:salt password in
         let pwd = Digestif.BLAKE2B.of_hex pwd in
         if not (Digestif.BLAKE2B.equal digest pwd) then
@@ -42,7 +46,7 @@ let login t request =
           let device =
             match Request.get_device_id login with
             | None -> Uuidm.(v `V4 |> to_string)
-            | Some device -> Fmt.str "%s:%s" device username in
+            | Some device -> Fmt.str "%s:%s" device user_id in
           let token = Uuidm.(v `V4 |> to_string) in
           let%lwt tree = Store.tree store in
           (* add token *)
@@ -58,14 +62,14 @@ let login t request =
           let%lwt tree =
             Store.Tree.add tree
               (Store.Key.v ["devices"; device; "user_id"])
-              username in
+              user_id in
           let%lwt tree =
             Store.Tree.add tree (Store.Key.v ["devices"; device; "token"]) token
           in
           (* update user *)
           let%lwt tree =
             Store.Tree.add tree
-              (Store.Key.v ["users"; username; "devices"; device])
+              (Store.Key.v ["users"; user_id; "devices"; device])
               device in
           (* saving new tree *)
           let%lwt return =
@@ -174,9 +178,8 @@ let create_room t request =
           {|{"errcode": "M_ROOM_IN_USE"; "error": "Room alias already in use"}|}
       | None -> (
         match Dream.local logged_user request with
-        | Some user -> (
+        | Some user_id -> (
           let%lwt tree = Store.tree store in
-          let user_id = user in
           let room_id = "!" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
           (* Create the head for the message feed *)
           let%lwt tree =
@@ -185,187 +188,278 @@ let create_room t request =
               "" in
           (* Create the state events of the room *)
           (* create *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
+          let event_content =
+            Events.Event_content.Create
+              (Events.Event_content.Create.make ~creator:user_id
+                ?room_version:(Some "6") ())
+          in
           let event =
-            Events.State_event.make
-              ~room_event:
-                (Events.Room_event.make
-                   ~event:
-                     (Events.Event.make
-                        ~event_content:
-                          (Events.Event_content.Create
-                             (Events.Event_content.Create.make ~creator:user_id
-                                ?room_version:(Some "4") ()))
-                        ())
-                   ~event_id:id ~sender:user_id ())
-              ~state_key:"" () in
+            Events.Pdu.make
+              ~auth_events:[]
+              ~event_content
+              ~depth:1
+              ~origin:t.server_name
+              ~origin_server_ts:(time ())
+              ~prev_events:[]
+              ~prev_state:[]
+              ~room_id
+              ~sender:user_id
+              ~signatures:[]
+              ~state_key:""
+              ~event_type:(Events.Event_content.get_type event_content)
+              ()
+          in
+          let event = compute_hash_and_sign t event in
+          let event_id = compute_event_reference_hash event in
+          let create_hash = "$" ^ event_id in
           let json_event =
-            Json_encoding.construct Events.State_event.encoding event
+            Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
           let%lwt tree =
             Store.Tree.add tree
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.create"])
-              json_event in
+              event_id in
+          let%lwt tree =
+          Store.Tree.add tree
+            (Store.Key.v ["events"; event_id])
+            json_event in
           (* member *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
+          let event_content =
+            Events.Event_content.Member
+            (Events.Event_content.Member.make ~avatar_url:None
+               ~displayname:(Some user_id) ~membership:Join ())
+          in
           let event =
-            Events.State_event.make
-              ~room_event:
-                (Events.Room_event.make
-                   ~event:
-                     (Events.Event.make
-                        ~event_content:
-                          (Events.Event_content.Member
-                             (Events.Event_content.Member.make ~avatar_url:None
-                                ~displayname:(Some user_id) ~membership:Join ()))
-                        ())
-                   ~event_id:id ~sender:user_id ())
-              ~state_key:user_id () in
+            Events.Pdu.make
+              ~auth_events:[create_hash]
+              ~event_content
+              ~depth:1
+              ~origin:t.server_name
+              ~origin_server_ts:(time ())
+              ~prev_events:[]
+              ~prev_state:[]
+              ~room_id
+              ~sender:user_id
+              ~signatures:[]
+              ~state_key:user_id
+              ~event_type:(Events.Event_content.get_type event_content)
+              ()
+          in
+          let event = compute_hash_and_sign t event in
+          let event_id = compute_event_reference_hash event in
+          let member_hash = "$" ^ event_id in
           let json_event =
-            Json_encoding.construct Events.State_event.encoding event
+            Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
           let%lwt tree =
             Store.Tree.add tree
-              (Store.Key.v
-                 ["rooms"; room_id; "state"; "m.room.member"; user_id])
+              (Store.Key.v ["rooms"; room_id; "state"; "m.room.member"; user_id])
+              event_id in
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v ["events"; event_id])
               json_event in
           (* power_level *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
-          let power_level =
-            match Request.get_power_level_content_override create_room with
-            | None ->
-              Events.Event_content.Power_levels.make
-                ?users:(Some [user_id, 100])
-                ?users_default:(Some (-1)) ()
-            | Some power_level ->
-              let user_default =
-                match
-                  Events.Event_content.Power_levels.get_users_default
-                    power_level
-                with
-                | Some _ as user_default -> user_default
-                | None -> Some (-1) in
-              let users =
-                match
-                  Events.Event_content.Power_levels.get_users power_level
-                with
-                | Some _ as users -> users
-                | None -> Some [user_id, 100] in
-              let power_level =
-                Events.Event_content.Power_levels.set_users_default power_level
-                  user_default in
-              Events.Event_content.Power_levels.set_users power_level users
+          let event_content =
+            Events.Event_content.Power_levels
+            (match Request.get_power_level_content_override create_room with
+              | None ->
+                Events.Event_content.Power_levels.make
+                  ?users:(Some [user_id, 100])
+                  ?users_default:(Some (-1)) ()
+              | Some power_level ->
+                let user_default =
+                  match
+                    Events.Event_content.Power_levels.get_users_default
+                      power_level
+                  with
+                  | Some _ as user_default -> user_default
+                  | None -> Some (-1) in
+                let users =
+                  match
+                    Events.Event_content.Power_levels.get_users power_level
+                  with
+                  | Some _ as users -> users
+                  | None -> Some [user_id, 100] in
+                let power_level =
+                  Events.Event_content.Power_levels.set_users_default power_level
+                    user_default in
+                Events.Event_content.Power_levels.set_users power_level users)
           in
           let event =
-            Events.State_event.make
-              ~room_event:
-                (Events.Room_event.make
-                   ~event:
-                     (Events.Event.make
-                        ~event_content:
-                          (Events.Event_content.Power_levels power_level) ())
-                   ~event_id:id ~sender:user_id ())
-              ~state_key:"" () in
+            Events.Pdu.make
+              ~auth_events:[create_hash; member_hash]
+              ~event_content
+              ~depth:1
+              ~origin:t.server_name
+              ~origin_server_ts:(time ())
+              ~prev_events:[]
+              ~prev_state:[]
+              ~room_id
+              ~sender:user_id
+              ~signatures:[]
+              ~state_key:""
+              ~event_type:(Events.Event_content.get_type event_content)
+              ()
+          in
+          let event = compute_hash_and_sign t event in
+          let event_id = compute_event_reference_hash event in
+          let power_level_hash = "$" ^ event_id in
           let json_event =
-            Json_encoding.construct Events.State_event.encoding event
+            Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
           let%lwt tree =
             Store.Tree.add tree
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.power_levels"])
-              json_event in
+              event_id in
+          let%lwt tree =
+          Store.Tree.add tree
+            (Store.Key.v ["events"; event_id])
+            json_event in
           (* join_rules *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
+
+          let event_content =
+            Events.Event_content.Join_rules
+              (Events.Event_content.Join_rules.make
+                 ~join_rule:Public ())
+          in
           let event =
-            Events.State_event.make
-              ~room_event:
-                (Events.Room_event.make
-                   ~event:
-                     (Events.Event.make
-                        ~event_content:
-                          (Events.Event_content.Join_rules
-                             (Events.Event_content.Join_rules.make
-                                ~join_rule:Public ()))
-                        ())
-                   ~event_id:id ~sender:user_id ())
-              ~state_key:"" () in
+            Events.Pdu.make
+              ~auth_events:[create_hash; member_hash; power_level_hash]
+              ~event_content
+              ~depth:1
+              ~origin:t.server_name
+              ~origin_server_ts:(time ())
+              ~prev_events:[]
+              ~prev_state:[]
+              ~room_id
+              ~sender:user_id
+              ~signatures:[]
+              ~state_key:""
+              ~event_type:(Events.Event_content.get_type event_content)
+              ()
+          in
+          let event = compute_hash_and_sign t event in
+          let event_id = compute_event_reference_hash event in
           let json_event =
-            Json_encoding.construct Events.State_event.encoding event
+            Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
           let%lwt tree =
             Store.Tree.add tree
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.join_rules"])
-              json_event in
+              event_id in
+          let%lwt tree =
+          Store.Tree.add tree
+            (Store.Key.v ["events"; event_id])
+            json_event in
           (* history_visibility *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
+          let event_content =
+            Events.Event_content.History_visibility
+              (Events.Event_content.History_visibility.make
+                ~visibility:Shared ())
+          in
           let event =
-            Events.State_event.make
-              ~room_event:
-                (Events.Room_event.make
-                   ~event:
-                     (Events.Event.make
-                        ~event_content:
-                          (Events.Event_content.History_visibility
-                             (Events.Event_content.History_visibility.make
-                                ~visibility:Shared ()))
-                        ())
-                   ~event_id:id ~sender:user_id ())
-              ~state_key:"" () in
+            Events.Pdu.make
+              ~auth_events:[create_hash; member_hash; power_level_hash]
+              ~event_content
+              ~depth:1
+              ~origin:t.server_name
+              ~origin_server_ts:(time ())
+              ~prev_events:[]
+              ~prev_state:[]
+              ~room_id
+              ~sender:user_id
+              ~signatures:[]
+              ~state_key:""
+              ~event_type:(Events.Event_content.get_type event_content)
+              ()
+          in
+          let event = compute_hash_and_sign t event in
+          let event_id = compute_event_reference_hash event in
           let json_event =
-            Json_encoding.construct Events.State_event.encoding event
+            Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
           let%lwt tree =
             Store.Tree.add tree
-              (Store.Key.v
-                 ["rooms"; room_id; "state"; "m.room.history_visibility"])
-              json_event in
+              (Store.Key.v ["rooms"; room_id; "state"; "m.room.history_visibility"])
+              event_id in
+          let%lwt tree =
+          Store.Tree.add tree
+            (Store.Key.v ["events"; event_id])
+            json_event in
           (* name *)
           let name =
             match Request.get_name create_room with
             | Some name -> name
             | None -> alias in
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
+          let event_content =
+            Events.Event_content.Name
+            (Events.Event_content.Name.make ~name ())
+          in
           let event =
-            Events.State_event.make
-              ~room_event:
-                (Events.Room_event.make
-                   ~event:
-                     (Events.Event.make
-                        ~event_content:
-                          (Events.Event_content.Name
-                             (Events.Event_content.Name.make ~name ()))
-                        ())
-                   ~event_id:id ~sender:user_id ())
-              ~state_key:"" () in
+            Events.Pdu.make
+              ~auth_events:[create_hash; member_hash; power_level_hash]
+              ~event_content
+              ~depth:1
+              ~origin:t.server_name
+              ~origin_server_ts:(time ())
+              ~prev_events:[]
+              ~prev_state:[]
+              ~room_id
+              ~sender:user_id
+              ~signatures:[]
+              ~state_key:""
+              ~event_type:(Events.Event_content.get_type event_content)
+              ()
+          in
+          let event = compute_hash_and_sign t event in
+          let event_id = compute_event_reference_hash event in
           let json_event =
-            Json_encoding.construct Events.State_event.encoding event
+            Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
           let%lwt tree =
             Store.Tree.add tree
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.name"])
-              json_event in
+              event_id in
+          let%lwt tree =
+          Store.Tree.add tree
+            (Store.Key.v ["events"; event_id])
+            json_event in
           (* canonical_alias *)
-          let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
+          let event_content =
+            Events.Event_content.Canonical_alias
+              (Events.Event_content.Canonical_alias.make
+              ~alias:(Some alias) ())
+          in
           let event =
-            Events.State_event.make
-              ~room_event:
-                (Events.Room_event.make
-                   ~event:
-                     (Events.Event.make
-                        ~event_content:
-                          (Events.Event_content.Canonical_alias
-                             (Events.Event_content.Canonical_alias.make
-                                ~alias:(Some alias) ()))
-                        ())
-                   ~event_id:id ~sender:user_id ())
-              ~state_key:"" () in
+            Events.Pdu.make
+              ~auth_events:[create_hash; member_hash; power_level_hash]
+              ~event_content
+              ~depth:1
+              ~origin:t.server_name
+              ~origin_server_ts:(time ())
+              ~prev_events:[]
+              ~prev_state:[]
+              ~room_id
+              ~sender:user_id
+              ~signatures:[]
+              ~state_key:""
+              ~event_type:(Events.Event_content.get_type event_content)
+              ()
+          in
+          let event = compute_hash_and_sign t event in
+          let event_id = compute_event_reference_hash event in
           let json_event =
-            Json_encoding.construct Events.State_event.encoding event
+            Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
           let%lwt tree =
             Store.Tree.add tree
-              (Store.Key.v
-                 ["rooms"; room_id; "state"; "m.room.canonical_alias"])
-              json_event in
+              (Store.Key.v ["rooms"; room_id; "state"; "m.room.canonical_alias"])
+              event_id in
+          let%lwt tree =
+          Store.Tree.add tree
+            (Store.Key.v ["events"; event_id])
+            json_event in
           (* Saving the alias in the aliases folder *)
           let%lwt tree =
             Store.Tree.add tree (Store.Key.v ["aliases"; alias]) room_id in
@@ -393,6 +487,7 @@ let create_room t request =
     Dream.json ~status:`Bad_Request
       {|{"errcode": "M_FORBIDDEN"; "error": "Current implementation only accepts public rooms"}|}
 
+(* FIXME: Rework this, it is broken, canonical alias is always parsed from json *)
 let state t request ~with_state_key =
   let open Room_event.Put.State_event in
   let%lwt body = Dream.body request in
@@ -400,10 +495,10 @@ let state t request ~with_state_key =
     Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
   in
   match Dream.local logged_user request with
-  | Some user ->
+  | Some user_id ->
     let room_id = Dream.param "room_id" request in
     let event_type = Dream.param "event_type" request in
-    let%lwt b = Helper.is_room_user room_id user in
+    let%lwt b = Helper.is_room_user room_id user_id in
     if b then (
       let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
       let event_content = Room_event.Put.State_event.Request.get_event state in
@@ -417,7 +512,7 @@ let state t request ~with_state_key =
           ~room_event:
             (Events.Room_event.make
                ~event:(Events.Event.make ~event_content ())
-               ~event_id:id ~sender:user
+               ~event_id:id ~sender:user_id
                ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
                ())
           ~state_key () in
@@ -456,9 +551,9 @@ let send t request =
     Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
   in
   match Dream.local logged_user request with
-  | Some user ->
+  | Some user_id ->
     let room_id = Dream.param "room_id" request in
-    let%lwt b = Helper.is_room_user room_id user in
+    let%lwt b = Helper.is_room_user room_id user_id in
     if b then
       let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
       let message_content = Request.get_event message in
@@ -467,7 +562,7 @@ let send t request =
           ~event:
             (Events.Event.make
                ~event_content:(Events.Event_content.Message message_content) ())
-          ~event_id:id ~sender:user
+          ~event_id:id ~sender:user_id
           ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
           () in
       let json_event =

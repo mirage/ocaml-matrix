@@ -94,6 +94,38 @@ module Server = struct
     | Error _ -> Fmt.invalid_arg "Invalid domain: %s" x
 end
 
+(* Notes:
+  - In need of a proper implementation
+  - Use encore instead of angstrom
+  *)
+module User_id = struct
+  let is_sep = function ':' -> true | _ -> false
+  let user_local = take_till is_sep
+  let user_id = ( and+ ) (char '@' *> user_local) (char ':' *> Server.server)
+
+  let of_string_exn x =
+    match parse_string ~consume:Consume.All user_id x with
+    | Ok v -> v
+    | Error _ -> Fmt.invalid_arg "Invalid user id: %s" x
+
+  let to_string user_local server = "@" ^ user_local ^ ":" ^ server
+end
+
+(* Notes:
+  - In need of a proper implementation
+  *)
+module Event_id = struct
+    let event_id = (char '$' *> take 43)
+
+    let of_string_exn x =
+      match parse_string ~consume:Consume.All event_id x with
+      | Ok v -> v
+      | Error _ -> Fmt.invalid_arg "Invalid event id: %s" x
+  end
+
+(* Notes:
+  - In need of a proper implementation
+  *)
 module Room_alias = struct
   let is_sep = function ':' -> true | _ -> false
   let room_local = take_till is_sep

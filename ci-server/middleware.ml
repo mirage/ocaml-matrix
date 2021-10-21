@@ -55,9 +55,10 @@ let is_logged handler request =
         | None -> unkown_token
         | Some device_tree -> (
           (* fetch the user *)
-          let%lwt user = Store.Tree.get device_tree @@ Store.Key.v ["user_id"] in
+          let%lwt user_id =
+            Store.Tree.get device_tree @@ Store.Key.v ["user_id"] in
           let%lwt user_tree =
-            Store.Tree.find_tree tree (Store.Key.v ["users"; user]) in
+            Store.Tree.find_tree tree (Store.Key.v ["users"; user_id]) in
           match user_tree with
           | None -> unkown_token
           | Some user_tree -> (
@@ -75,7 +76,7 @@ let is_logged handler request =
               else
                 handler
                   (Dream.with_local logged_device device
-                     (Dream.with_local logged_user user request))))))
+                     (Dream.with_local logged_user user_id request))))))
 
 let logged_server =
   Dream.new_local ~name:"logged_server" ~show_value:(fun s -> s) ()
@@ -125,12 +126,12 @@ let is_valid_signature origin destination signature key request =
   let meth = Dream.method_to_string @@ Dream.method_ request in
   let uri = Dream.target request in
   let%lwt body = Dream.body request in
+  let content =
+    if body = "" then None else Some (Ezjsonm.value_from_string body) in
   let json =
-    Federation_request.Str.make ~meth ~uri
-      ?content:(if body = "" then None else Some body)
-      ~origin ~destination ()
-    |> Json_encoding.construct Federation_request.Str.encoding
-    |> Json_encoding.canonize
+    Federation_request.make ~meth ~uri ?content ~origin ~destination ()
+    |> Json_encoding.construct Federation_request.encoding
+    |> Json_encoding.sort
     |> Ezjsonm.value_to_string in
   match Base64.decode ~pad:false key with
   | Error _ -> Lwt.return_false
@@ -150,7 +151,7 @@ let is_valid_signature origin destination signature key request =
 let fetching_key server_name key_id =
   let open Matrix_stos.Key.Direct_query in
   let uri =
-    Uri.make ~scheme:"https" ~port:8449 ~host:server_name
+    Uri.make ~scheme:"https" ~port:8448 ~host:server_name
       ~path:("/_matrix/key/v2/server/" ^ key_id)
       () in
   let tls_authenticator ~host:_ _ = Ok None in

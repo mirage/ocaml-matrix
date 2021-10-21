@@ -565,19 +565,23 @@ let destruct e v =
     Logs.err (fun m -> m "Json exception: %a" print_error e);
     raise e
 
+let rec sort = function
+  | `O l ->
+    let sorted = List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2) l in
+    `O (List.map (fun (k, v) -> k, sort v) sorted)
+  | `A l -> `A (List.map sort l)
+  | v -> v
+
+let strip_list = ["signatures"; "unsigned"]
+
 (** Ugly and not tail-recursive, should be fixed asap *)
 let rec canonize = function
   | `O l ->
-    let sorted = List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2) l in
-    let cleaned =
-      List.filter_map
-        (fun (k, v) -> Option.map (fun v -> k, v) (canonize v))
-        sorted in
-    (* match cleaned with [] -> None | l -> Some (`O l)) *)
-    Some (`O cleaned)
-  | `A l ->
-    (* match List.filter_map canonize l with [] -> None | l -> Some (`A l)) *)
-    Some (`A (List.filter_map canonize l))
-  | v -> Some v
-
-let canonize v = match canonize v with Some v -> v | None -> `Null
+    let stripped =
+      List.filter
+        (fun (k, _) -> not (List.exists (String.equal k) strip_list))
+        l in
+    let sorted = List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2) stripped in
+    `O (List.map (fun (k, v) -> k, sort v) sorted)
+  | `A l -> `A (List.map canonize l)
+  | v -> v

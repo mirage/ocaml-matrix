@@ -44,6 +44,30 @@ module Key : sig
       val encoding : t encoding
     end
   end
+
+  module Indirect_batch_query : sig
+    module Query = Empty.Query
+
+    module Request : sig
+      module Query_criteria : sig
+        type%accessor t = {minimum_valid_until_ts: int option}
+
+        val encoding : t encoding
+      end
+
+      type%accessor t = {
+        server_keys: (string * (string * Query_criteria.t) list) list;
+      }
+
+      val encoding : t encoding
+    end
+
+    module Response : sig
+      type%accessor t = {server_keys: Server_key.t list}
+
+      val encoding : t encoding
+    end
+  end
 end
 
 module Public_rooms : sig
@@ -122,22 +146,9 @@ module Joining_rooms : sig
     end
 
     module Response : sig
-      module Event_template : sig
-        type%accessor t = {
-          sender: string;
-          origin: string;
-          origin_server_ts: int;
-          event_type: string;
-          state_key: string;
-          room_id: string option;
-        }
-
-        val encoding : t encoding
-      end
-
       type%accessor t = {
         room_version: string option;
-        event_template: Event_template.t option;
+        event_template: Pdu.t option;
       }
 
       val encoding : t encoding
@@ -196,29 +207,15 @@ module Joining_rooms : sig
 end
 
 module Federation_request : sig
-  module Obj : sig
-    type%accessor 'a t = {
-      meth: string;
-      uri: string;
-      origin: string;
-      destination: string option;
-      content: 'a option;
-    }
+  type%accessor t = {
+    meth: string;
+    uri: string;
+    origin: string;
+    destination: string option;
+    content: Ezjsonm.value option;
+  }
 
-    val encoding : 'a encoding -> 'a t encoding
-  end
-
-  module Str : sig
-    type%accessor t = {
-      meth: string;
-      uri: string;
-      origin: string;
-      destination: string option;
-      content: string option;
-    }
-
-    val encoding : t encoding
-  end
+  val encoding : t encoding
 end
 
 module Signatures : sig

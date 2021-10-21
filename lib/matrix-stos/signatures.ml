@@ -2,7 +2,6 @@ open Json_encoding
 
 let gen_signature key encoding obj =
   let encoded = construct encoding obj |> canonize |> Ezjsonm.value_to_string in
-  Fmt.pr "XXX%sXXX\n" encoded;
   Rresult.R.error_msg_to_invalid_arg
   @@ Base64.encode ~pad:false
   @@ Cstruct.to_string

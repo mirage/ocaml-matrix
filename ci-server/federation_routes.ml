@@ -37,14 +37,56 @@ module Key = struct
                   Response.Verify_key.make ~key:base64_key () );
               ]
             ~old_verify_keys:[]
-            ~valid_until_ts:((time () + 60) * 1000)
+            ~valid_until_ts:(time () + 3600)
             ()
           |> Json_encoding.construct (sign t Response.encoding)
           |> Ezjsonm.value_to_string in
-        Dream.json response
+          Dream.json response
       | Error (`Msg s) ->
         Dream.error (fun m -> m "Base64 key encode error: %s" s);
         Dream.json ~status:`Internal_Server_Error {|{"errcode": "M_UNKOWN"}|}
+
+    (* Notes:
+       - Only fetching the key of the server for now
+       - Should query other keys as well
+       - Use a proper and appropriate validity time
+    *)
+    let indirect_query t request =
+      let open Key.Indirect_batch_query in
+      let%lwt body = Dream.body request in
+      let requested_keys =
+        Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
+        |> Request.get_server_keys in
+      let server_keys =
+        match List.assoc_opt t.server_name requested_keys with
+        | None -> []
+        | Some keys -> (
+          match List.assoc_opt ("ed25519:" ^ t.key_name) keys with
+          | None -> []
+          | Some _query_criteria -> (
+            match
+              Base64.encode ~pad:false
+                (Cstruct.to_string
+                @@ Mirage_crypto_ec.Ed25519.pub_to_cstruct t.pub_key)
+            with
+            | Ok base64_key ->
+              [
+                Key.Server_key.make ~server_name:t.server_name
+                  ~verify_keys:
+                    [
+                      ( "ed25519:" ^ t.key_name,
+                        Key.Server_key.Verify_key.make ~key:base64_key () );
+                    ]
+                  ~old_verify_keys:[]
+                  ~valid_until_ts:(time () + 3600)
+                  ();
+              ]
+            | Error (`Msg _s) -> [])) in
+      let response =
+        Response.make ~server_keys ()
+        |> Json_encoding.construct (sign t Response.encoding)
+        |> Ezjsonm.value_to_string in
+      Dream.json response
   end
 end
 
@@ -63,12 +105,13 @@ module Public_rooms = struct
         (fun (room_id, room_tree) ->
           (* retrieve the room's canonical_alias if any *)
           let%lwt canonical_alias =
-            let%lwt json =
+            let%lwt event_id =
               Store.Tree.find room_tree
               @@ Store.Key.v ["state"; "m.room.join_rules"] in
-            match json with
+            match event_id with
             | None -> Lwt.return_none
-            | Some json -> (
+            | Some event_id -> (
+              let%lwt json = Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
               let event =
                 Json_encoding.destruct Events.State_event.encoding
                   (Ezjsonm.value_from_string json) in
@@ -81,12 +124,13 @@ module Public_rooms = struct
               | _ -> Lwt.return_none) in
           (* retrieve the room's name if any *)
           let%lwt name =
-            let%lwt json =
+            let%lwt event_id =
               Store.Tree.find room_tree @@ Store.Key.v ["state"; "m.room.name"]
             in
-            match json with
+            match event_id with
             | None -> Lwt.return_none
-            | Some json -> (
+            | Some event_id -> (
+              let%lwt json = Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
               let event =
                 Json_encoding.destruct Events.State_event.encoding
                   (Ezjsonm.value_from_string json) in
@@ -100,7 +144,8 @@ module Public_rooms = struct
               Store.Tree.list room_tree
               @@ Store.Key.v ["state"; "m.room.member"] in
             let f n (_, member_tree) =
-              let%lwt json = Store.Tree.get member_tree @@ Store.Key.v [] in
+              let%lwt event_id = Store.Tree.get member_tree @@ Store.Key.v [] in
+              let%lwt json = Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
               let event =
                 Json_encoding.destruct Events.State_event.encoding
                   (Ezjsonm.value_from_string json) in
@@ -115,12 +160,13 @@ module Public_rooms = struct
             Lwt_list.fold_left_s f 0 members in
           (* retrieve the room's topic if any *)
           let%lwt topic =
-            let%lwt json =
+            let%lwt event_id =
               Store.Tree.find room_tree @@ Store.Key.v ["state"; "m.room.topic"]
             in
-            match json with
+            match event_id with
             | None -> Lwt.return_none
-            | Some json -> (
+            | Some event_id -> (
+              let%lwt json = Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
               let event =
                 Json_encoding.destruct Events.State_event.encoding
                   (Ezjsonm.value_from_string json) in
@@ -130,12 +176,13 @@ module Public_rooms = struct
               | _ -> Lwt.return_none) in
           (* retrieve the room's topic if any *)
           let%lwt avatar_url =
-            let%lwt json =
+            let%lwt event_id =
               Store.Tree.find room_tree
               @@ Store.Key.v ["state"; "m.room.avatar"] in
-            match json with
+            match event_id with
             | None -> Lwt.return_none
-            | Some json -> (
+            | Some event_id -> (
+              let%lwt json = Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
               let event =
                 Json_encoding.destruct Events.State_event.encoding
                   (Ezjsonm.value_from_string json) in
@@ -163,6 +210,149 @@ module Public_rooms = struct
     Dream.json response
 end
 
+module Join = struct
+  (* Notes:
+     - Work on the room versions !
+     - Maybe change make join so it uses a member state event ?
+     - Verify if the user if in the asking room ?
+  *)
+  let make t request =
+    let open Joining_rooms.Make_join in
+    let versions = Dream.queries "ver" request in
+    let user_id = Dream.param "user_id" request in
+    let room_id = Dream.param "room_id" request in
+    (* FIX-ME: Hardcoded room version to 6 *)
+    let room_version = "6" in
+    if List.exists (String.equal room_version) versions then
+      (* fetch the auth events *)
+      let%lwt state_tree =
+        Store.get_tree store (Store.Key.v ["rooms"; room_id; "state"]) in
+      let%lwt create_event = Store.Tree.get state_tree (Store.Key.v ["m.room.create"]) in
+      let%lwt power_level = Store.Tree.get state_tree (Store.Key.v ["m.room.power_levels"]) in
+      let%lwt join_rules = Store.Tree.get state_tree (Store.Key.v ["m.room.join_rules"]) in
+      let event_content =
+        Events.Event_content.Member
+          (Events.Event_content.Member.make ~membership:Join ())
+      in
+      let response =
+        Response.make ~room_version
+          ~event_template:
+            (
+              Events.Pdu.make
+              ~auth_events:["$" ^ create_event; "$" ^ power_level; "$" ^ join_rules]
+              ~event_content
+              ~depth:1
+              ~origin:t.server_name
+              ~origin_server_ts:(0) (* put me back *)
+              ~prev_events:[]
+              ~prev_state:[]
+              ~room_id
+              ~sender:user_id
+              ~signatures:[]
+              ~state_key:user_id
+              ~event_type:(Events.Event_content.get_type event_content)
+              ())
+            ()
+        |> Json_encoding.construct Response.encoding
+        |> Ezjsonm.value_to_string in
+      Dream.json response
+    else
+      Dream.json ~status:`Bad_Request
+        (Fmt.str
+           {|{"errcode": "M_INCOMPATIBLE_ROOM_VERSION", "error": "Your homeserver does not support the features required to join this room", "room_version": %s}|}
+           room_version)
+
+  (* Notes:
+     - check if the user comes from the server asking the request
+     - verify if the user is already in the room
+     - verify the event content !
+     - verify previous state
+     - see what has to be done for the authentication chain
+     - do something for the error prone generation of pdu
+     - verify the event signature
+     - verify the given event id
+  *)
+  let send t request =
+    let open Joining_rooms.Send_join.V2 in
+    let event_id = Dream.param "event_id" request in
+    let room_id = Dream.param "room_id" request in
+    let%lwt body = Dream.body request in
+    let member_event =
+      Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
+    in
+    (* need error handling *)
+    let state_key = Events.Pdu.get_state_key member_event |> Option.get in
+    let json_event =
+      Json_encoding.construct Events.Pdu.encoding member_event
+      |> Ezjsonm.value_to_string in
+    let%lwt tree = Store.tree store in
+    let%lwt tree =
+      Store.Tree.add tree
+        (Store.Key.v ["rooms"; room_id; "state"; "m.room.member"; state_key])
+        event_id in
+    let%lwt tree =
+      Store.Tree.add tree
+        (Store.Key.v ["events"; event_id])
+        json_event in
+    (* saving update tree *)
+    let%lwt return =
+      Store.set_tree
+        ~info:(Helper.info t ~message:"add joining member")
+        store (Store.Key.v []) tree in
+    match return with
+    | Ok () ->
+      (* fetch the state of the room *)
+      let%lwt tree = Store.tree store in
+      let%lwt state_tree =
+        Store.Tree.get_tree tree (Store.Key.v ["rooms"; room_id; "state"]) in
+      let%lwt state =
+        Store.Tree.fold
+          ~contents:(fun _ event_id events ->
+            let open Events in
+            let%lwt json = Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+            let event =
+              Ezjsonm.from_string json
+              |> Json_encoding.destruct Pdu.encoding in
+            Lwt.return (event :: events))
+          state_tree [] in
+      let response =
+        Response.make ~origin:t.server_name ~auth_chain:state ~state ()
+        |> Json_encoding.construct Response.encoding
+        |> Ezjsonm.value_to_string in
+      Dream.json response
+    | Error write_error ->
+      Dream.error (fun m ->
+          m "Write error: %a" (Irmin.Type.pp Store.write_error_t) write_error);
+      Dream.json ~status:`Internal_Server_Error {|{"errcode": "M_UNKNOWN"}|}
+end
+
+module Retrieve =
+struct
+  (* Notes:
+    - Verify if the room asking for the event is entitled to do so
+    - Needs a better error handling *)
+  let get_event t request =
+    let open Retrieve.Event in
+    let event_id = Dream.param "event_id" request in
+    let%lwt tree = Store.tree store in
+    let event_id = Identifiers.Event_id.of_string_exn event_id in
+    let%lwt json =
+      Store.Tree.find tree @@ Store.Key.v ["events"; event_id]
+    in
+    match json with
+    | None ->
+      Dream.json ~status:`Forbidden {|{"errcode": "M_UNKNOWN"}|}
+    | Some json ->
+      let event =
+        Json_encoding.destruct Events.Pdu.encoding
+          (Ezjsonm.value_from_string json) in
+      let response =
+        Response.make ~origin:t.server_name ~origin_server_ts:(0 (* put me back *)) ~pdus:[event] ()
+        |> Json_encoding.construct Response.encoding
+        |> Ezjsonm.value_to_string in
+      Dream.json response
+end
+
 let router (t : Common_routes.t) =
   Dream.router
     [
@@ -183,8 +373,8 @@ let router (t : Common_routes.t) =
                       Dream.post "/get_missing_events/:room_id" placeholder;
                       Dream.get "/state/:room_id" placeholder;
                       Dream.get "/state_ids/:room_id" placeholder;
-                      Dream.get "/event/:event_id" placeholder;
-                      Dream.get "/make_join/:room_id/:user_id" placeholder;
+                      Dream.get "/event/:event_id" (Retrieve.get_event t);
+                      Dream.get "/make_join/:room_id/:user_id" (Join.make t);
                       Dream.put "/send_join/:room_id/:event_id" placeholder;
                       Dream.put "/invite/:room_id/:event_id" placeholder;
                       Dream.get "/make_leave/:room_id/:user_id" placeholder;
@@ -214,7 +404,7 @@ let router (t : Common_routes.t) =
                 [
                   Dream.scope "" [is_logged_server t]
                     [
-                      Dream.put "/send_join/:room_id/:event_id" placeholder;
+                      Dream.put "/send_join/:room_id/:event_id" (Join.send t);
                       Dream.put "/invite/:room_id/:event_id" placeholder;
                       Dream.put "/send_leave/:room_id/:event_id" placeholder;
                     ];
@@ -225,7 +415,7 @@ let router (t : Common_routes.t) =
               Dream.get "/server" (Key.V2.direct_query t);
               Dream.get "/server/:key_id" (Key.V2.direct_query t);
               Dream.get "/query/:server_name/:key_id" placeholder;
-              Dream.post "/query" placeholder;
+              Dream.post "/query" (Key.V2.indirect_query t);
             ];
         ];
     ]
