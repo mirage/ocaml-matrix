@@ -83,3 +83,27 @@ let compute_event_reference_hash pdu =
     |> Base64.encode_string ~pad:false ~alphabet:(Base64.uri_safe_alphabet)
   in
   sha256
+
+(* Use older/replaced events once they are implemented *)
+let get_room_prev_events ?(limit=10) room_id =
+  let%lwt tree = Store.tree store in
+  let%lwt state_tree =
+    Store.Tree.get_tree tree (Store.Key.v ["rooms"; room_id; "state"]) in
+  let%lwt l =
+    Store.Tree.fold
+      ~contents:(fun _ event_id l ->
+        let open Events in
+        let%lwt json = Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+        let event =
+          Ezjsonm.from_string json
+          |> Json_encoding.destruct Pdu.encoding in
+        Lwt.return ((Pdu.get_depth event, "$" ^ event_id) :: l))
+      state_tree [] in
+  let prev_events =
+    List.sort (fun (d1, _) (d2, _) -> d2 - d1 ) l
+    |> List.filteri (fun i _ -> i < limit)
+  in
+  let max_depth, _ = List.hd prev_events in
+  let prev_events = List.split prev_events |> snd
+  in
+  Lwt.return (max_depth, prev_events)

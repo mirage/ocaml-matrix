@@ -234,6 +234,8 @@ module Join = struct
         Events.Event_content.Member
           (Events.Event_content.Member.make ~membership:Join ())
       in
+      let%lwt old_depth, prev_events = get_room_prev_events room_id in
+      let depth = old_depth + 1 in
       let response =
         Response.make ~room_version
           ~event_template:
@@ -241,10 +243,10 @@ module Join = struct
               Events.Pdu.make
               ~auth_events:["$" ^ create_event; "$" ^ power_level; "$" ^ join_rules]
               ~event_content
-              ~depth:1
+              ~depth
               ~origin:t.server_name
-              ~origin_server_ts:(0) (* put me back *)
-              ~prev_events:[]
+              ~origin_server_ts:(time ())
+              ~prev_events
               ~prev_state:[]
               ~room_id
               ~sender:user_id
@@ -274,12 +276,14 @@ module Join = struct
   *)
   let send t request =
     let open Joining_rooms.Send_join.V2 in
-    let event_id = Dream.param "event_id" request in
+    let _event_id = Dream.param "event_id" request in
     let room_id = Dream.param "room_id" request in
     let%lwt body = Dream.body request in
     let member_event =
       Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
     in
+    let member_event = compute_hash_and_sign t member_event in
+    let event_id = compute_event_reference_hash member_event in
     (* need error handling *)
     let state_key = Events.Pdu.get_state_key member_event |> Option.get in
     let json_event =
@@ -347,7 +351,7 @@ struct
         Json_encoding.destruct Events.Pdu.encoding
           (Ezjsonm.value_from_string json) in
       let response =
-        Response.make ~origin:t.server_name ~origin_server_ts:(0 (* put me back *)) ~pdus:[event] ()
+        Response.make ~origin:t.server_name ~origin_server_ts:(time ()) ~pdus:[event] ()
         |> Json_encoding.construct Response.encoding
         |> Ezjsonm.value_to_string in
       Dream.json response

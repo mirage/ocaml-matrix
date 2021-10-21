@@ -187,6 +187,9 @@ let create_room t request =
               (Store.Key.v ["rooms"; room_id; "messages_id"; "head"])
               "" in
           (* Create the state events of the room *)
+          let auth_events = [] in
+          let prev_events = [] in
+          let depth = 1 in
           (* create *)
           let event_content =
             Events.Event_content.Create
@@ -195,12 +198,12 @@ let create_room t request =
           in
           let event =
             Events.Pdu.make
-              ~auth_events:[]
+              ~auth_events
               ~event_content
-              ~depth:1
+              ~depth
               ~origin:t.server_name
               ~origin_server_ts:(time ())
-              ~prev_events:[]
+              ~prev_events
               ~prev_state:[]
               ~room_id
               ~sender:user_id
@@ -212,6 +215,9 @@ let create_room t request =
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
           let create_hash = "$" ^ event_id in
+          let auth_events = create_hash::auth_events in
+          let prev_events = create_hash::prev_events in
+          let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
@@ -231,12 +237,12 @@ let create_room t request =
           in
           let event =
             Events.Pdu.make
-              ~auth_events:[create_hash]
+              ~auth_events
               ~event_content
-              ~depth:1
+              ~depth
               ~origin:t.server_name
               ~origin_server_ts:(time ())
-              ~prev_events:[]
+              ~prev_events
               ~prev_state:[]
               ~room_id
               ~sender:user_id
@@ -248,6 +254,9 @@ let create_room t request =
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
           let member_hash = "$" ^ event_id in
+          let auth_events = member_hash::auth_events in
+          let prev_events = member_hash::prev_events in
+          let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
@@ -288,12 +297,12 @@ let create_room t request =
           in
           let event =
             Events.Pdu.make
-              ~auth_events:[create_hash; member_hash]
+              ~auth_events
               ~event_content
-              ~depth:1
+              ~depth
               ~origin:t.server_name
               ~origin_server_ts:(time ())
-              ~prev_events:[]
+              ~prev_events
               ~prev_state:[]
               ~room_id
               ~sender:user_id
@@ -305,6 +314,9 @@ let create_room t request =
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
           let power_level_hash = "$" ^ event_id in
+          let auth_events = power_level_hash::auth_events in
+          let prev_events = power_level_hash::prev_events in
+          let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
@@ -325,12 +337,12 @@ let create_room t request =
           in
           let event =
             Events.Pdu.make
-              ~auth_events:[create_hash; member_hash; power_level_hash]
+              ~auth_events
               ~event_content
-              ~depth:1
+              ~depth
               ~origin:t.server_name
               ~origin_server_ts:(time ())
-              ~prev_events:[]
+              ~prev_events
               ~prev_state:[]
               ~room_id
               ~sender:user_id
@@ -341,6 +353,8 @@ let create_room t request =
           in
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
+          let prev_events = ("$" ^ event_id)::prev_events in
+          let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
@@ -360,12 +374,12 @@ let create_room t request =
           in
           let event =
             Events.Pdu.make
-              ~auth_events:[create_hash; member_hash; power_level_hash]
+              ~auth_events
               ~event_content
-              ~depth:1
+              ~depth
               ~origin:t.server_name
               ~origin_server_ts:(time ())
-              ~prev_events:[]
+              ~prev_events
               ~prev_state:[]
               ~room_id
               ~sender:user_id
@@ -376,6 +390,8 @@ let create_room t request =
           in
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
+          let prev_events = ("$" ^ event_id)::prev_events in
+          let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
@@ -398,12 +414,12 @@ let create_room t request =
           in
           let event =
             Events.Pdu.make
-              ~auth_events:[create_hash; member_hash; power_level_hash]
+              ~auth_events
               ~event_content
-              ~depth:1
+              ~depth
               ~origin:t.server_name
               ~origin_server_ts:(time ())
-              ~prev_events:[]
+              ~prev_events
               ~prev_state:[]
               ~room_id
               ~sender:user_id
@@ -414,6 +430,8 @@ let create_room t request =
           in
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
+          let prev_events = ("$" ^ event_id)::prev_events in
+          let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
@@ -433,12 +451,12 @@ let create_room t request =
           in
           let event =
             Events.Pdu.make
-              ~auth_events:[create_hash; member_hash; power_level_hash]
+              ~auth_events
               ~event_content
-              ~depth:1
+              ~depth
               ~origin:t.server_name
               ~origin_server_ts:(time ())
-              ~prev_events:[]
+              ~prev_events
               ~prev_state:[]
               ~room_id
               ~sender:user_id
