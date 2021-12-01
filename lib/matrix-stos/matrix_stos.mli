@@ -309,3 +309,13 @@ module Retrieve : sig
     end
   end
 end
+
+module Version : sig
+  module Query = Matrix_common.Empty.Query
+
+  module Response : sig
+    type%accessor t = {name: string option; version: string option}
+
+    val encoding : t encoding
+  end
+end

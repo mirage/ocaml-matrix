@@ -11,9 +11,7 @@ module Response = struct
       let name, version = v in
       {name; version} in
     let with_tuple =
-      obj1
-        (req "server"
-           (obj2 (opt "versions" string) (opt "unstable_features" string)))
+      obj1 (req "server" (obj2 (opt "name" string) (opt "version" string)))
     in
     conv to_tuple of_tuple with_tuple
 end

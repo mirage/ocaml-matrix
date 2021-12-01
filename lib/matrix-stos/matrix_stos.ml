@@ -6,3 +6,4 @@ module Federation_request = Federation_request
 module Send = Send
 module Signatures = Signatures
 module Retrieve = Retrieve
+module Version = Version

@@ -12,6 +12,16 @@ let sign t encoding =
     [t.server_name, ["ed25519:" ^ t.key_name, t.priv_key]]
     encoding
 
+module Version = struct
+  let get _ =
+    let open Version in
+    let response =
+      Response.make ~name:"%%NAME%%" ~version:"%%VERSION%%" ()
+      |> Json_encoding.construct Response.encoding
+      |> Ezjsonm.value_to_string in
+    Dream.json response
+end
+
 module Key = struct
   module V2 = struct
     (* Notes:
@@ -462,14 +472,59 @@ module Backfill = struct
       Dream.json response
 end
 
+(* --- Deactivated endpoints --- *)
+(* The rights which we currently give to the joining users do not allow to
+   invite other users, therefore we simply forbid them to try to do it.
+*)
 module Invite = struct
-  (* Notes:
-     - We disable the invitation, because no user should ever be able to invite
-       someone in the room for now *)
   let invite _ =
-    Lwt.return
-      (Dream.response ~status:`Forbidden
-         {|{"errcode": "M_FORBIDDEN", "error": "User cannot invite the target user."}|})
+    Dream.json ~status:`Forbidden
+      {|{"errcode": "M_FORBIDDEN", "error": "User cannot invite the target user."}|}
+end
+
+(* The leave endpoints are only used when trying to refuse an invitation to a
+   room, if the user is already in the room he would use the send endpoint and
+   directly share his new member event to the other rooms. Therefore as we are
+   refusing any invitations, there is no point in implementing this for now
+*)
+module Leave = struct
+  let make _ =
+    Dream.json ~status:`Forbidden
+      {|{"errcode": "M_FORBIDDEN", "User is not in the room"}|}
+
+  let send _ =
+    Dream.json ~status:`Forbidden
+      {|{"errcode": "M_FORBIDDEN", "User is not in the room"}|}
+end
+
+(* All of our users are bots only, therefore thirdparty linking have no uses.
+   All the associated endpoints are disabled.
+*)
+module Thirdparty = struct
+  let onbind _ = Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
+
+  let exchange _ =
+    Dream.json ~status:`Forbidden
+      {|{"errcode": "M_FORBIDDEN", "User is not in the room"}|}
+end
+
+(* --- Deprecated endpoints --- *)
+(* Those endpoints are ancient endpoints registered under the v1 path. They are
+   only for version 1 and 2 rooms which we do not support at the moment,
+   therefore we are simply refusing them for now.
+*)
+module Deprecated = struct
+  let join _ =
+    Dream.json ~status:`Forbidden
+      {|{"errcode": "M_FORBIDDEN", "v1 is not supported, use v2 instead"}|}
+
+  let invite _ =
+    Dream.json ~status:`Forbidden
+      {|{"errcode": "M_FORBIDDEN", "v1 is not supported, use v2 instead"}|}
+
+  let leave _ =
+    Dream.json ~status:`Forbidden
+      {|{"errcode": "M_FORBIDDEN", "v1 is not supported, use v2 instead"}|}
 end
 
 let router (t : Common_routes.t) =
@@ -481,8 +536,8 @@ let router (t : Common_routes.t) =
             [
               Dream.scope "/v1" []
                 [
-                  Dream.get "/version" placeholder;
-                  Dream.put "/3pid/onbind" placeholder;
+                  Dream.get "/version" Version.get;
+                  Dream.put "/3pid/onbind" Thirdparty.onbind;
                   Dream.get "/openid/userinfo" placeholder;
                   Dream.scope "" [is_logged_server t]
                     [
@@ -494,12 +549,13 @@ let router (t : Common_routes.t) =
                       Dream.get "/state_ids/:room_id" placeholder;
                       Dream.get "/event/:event_id" (Retrieve.get_event t);
                       Dream.get "/make_join/:room_id/:user_id" (Join.make t);
-                      Dream.put "/send_join/:room_id/:event_id" placeholder;
-                      Dream.put "/invite/:room_id/:event_id" Invite.invite;
-                      Dream.get "/make_leave/:room_id/:user_id" placeholder;
-                      Dream.put "/send_leave/:room_id/:event_id" placeholder;
+                      Dream.put "/send_join/:room_id/:event_id" Deprecated.join;
+                      Dream.put "/invite/:room_id/:event_id" Deprecated.invite;
+                      Dream.get "/make_leave/:room_id/:user_id" Leave.make;
+                      Dream.put "/send_leave/:room_id/:event_id"
+                        Deprecated.leave;
                       Dream.put "/exchange_third_party_invite/:room_id"
-                        placeholder;
+                        Thirdparty.exchange;
                       Dream.get "/publicRooms" (Public_rooms.get t);
                       Dream.post "/publicRooms" placeholder;
                       Dream.scope "/query" []
@@ -524,8 +580,8 @@ let router (t : Common_routes.t) =
                   Dream.scope "" [is_logged_server t]
                     [
                       Dream.put "/send_join/:room_id/:event_id" (Join.send t);
-                      Dream.put "/invite/:room_id/:event_id" placeholder;
-                      Dream.put "/send_leave/:room_id/:event_id" placeholder;
+                      Dream.put "/invite/:room_id/:event_id" Invite.invite;
+                      Dream.put "/send_leave/:room_id/:event_id" Leave.send;
                     ];
                 ];
             ];
