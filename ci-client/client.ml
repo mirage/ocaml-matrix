@@ -3,8 +3,8 @@ open Lwt.Syntax
 open Matrix_ctos
 module Room = Matrix_ctos.Room
 
-(* When the server returns a 429 Too Many Requests, instead of failing the request 
-   is re-tried after a delay: either the value as specified by the error message or 1 
+(* When the server returns a 429 Too Many Requests, instead of failing the request
+   is re-tried after a delay: either the value as specified by the error message or 1
    second by default. *)
 let with_retry_loop fn =
   let rec loop () =
@@ -115,8 +115,7 @@ module Token = struct
               | None -> login_and_mutate ~job ~pool t
               | Some (token, n) ->
                 t.token <- Some (token, n + 1);
-                Lwt.return token)
-        in
+                Lwt.return token) in
         (* use token with the user function *)
         fn token)
       (fun () ->
@@ -232,16 +231,14 @@ let update_room
       () in
   let* () =
     send_state ~job ~pool server auth_token room_id
-      ("m.room.name", state_name, "")
-  in
+      ("m.room.name", state_name, "") in
   let state_topic =
     Room_event.Put.State_event.Request.make
       ~event:(Topic (Matrix_common.Events.Event_content.Topic.make ~topic ()))
       () in
   let* () =
     send_state ~job ~pool server auth_token room_id
-      ("m.room.topic", state_topic, "")
-  in
+      ("m.room.topic", state_topic, "") in
   let power_level_content_override =
     Option.value power_level_content_override
       ~default:(Matrix_common.Events.Event_content.Power_levels.make ()) in
@@ -261,17 +258,14 @@ let get_room ~job ~alias ~settings ctx =
       (fun () ->
         let+ alias =
           resolve_alias ~job ~pool ctx.server
-            ("#" ^ alias ^ ":" ^ ctx.server.host)
-        in
+            ("#" ^ alias ^ ":" ^ ctx.server.host) in
         Room.Resolve_alias.Response.get_room_id alias)
-      (fun _ -> Lwt.return_none)
-  in
+      (fun _ -> Lwt.return_none) in
   let+ room_id =
     match existing_room_alias with
     | None ->
       let+ create_room_response =
-        create_room ~job ~pool ctx.server (Some auth_token) alias settings
-      in
+        create_room ~job ~pool ctx.server (Some auth_token) alias settings in
       Room.Create.Response.get_room_id create_room_response
     | Some room_id ->
       Current.Job.log job
@@ -279,7 +273,6 @@ let get_room ~job ~alias ~settings ctx =
       let+ () =
         update_room ~job ~pool ctx.server (Some auth_token) room_id settings
       in
-      room_id
-  in
+      room_id in
   Current.Job.log job "Room id: %s" room_id;
   Ok room_id

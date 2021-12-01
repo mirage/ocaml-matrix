@@ -455,8 +455,7 @@ module Devices : sig
   end
 
   module Get : sig
-    module Query : Empty.QUERY
-    module Response = Device
+    module Query : Empty.QUERY module Response = Device
   end
 
   module Put : sig
@@ -728,8 +727,7 @@ module Filter : sig
   end
 
   module Get : sig
-    module Query : Empty.QUERY
-    module Response = Filter
+    module Query : Empty.QUERY module Response = Filter
   end
 end
 
@@ -1031,8 +1029,7 @@ module Leaving : sig
   end
 
   module Forget : sig
-    module Request : Empty.JSON
-    module Response : Empty.JSON
+    module Request : Empty.JSON module Response : Empty.JSON
   end
 
   module Kick : sig
@@ -1156,8 +1153,7 @@ module Media : sig
   end
 
   module Download_filename : sig
-    module Response = Download.Response
-    module Query = Download.Query
+    module Response = Download.Response module Query = Download.Query
   end
 
   module Thumbnail : sig
@@ -2309,8 +2305,7 @@ module Third_party_network : sig
   end
 
   module Get_protocol : sig
-    module Query : Empty.QUERY
-    module Response = Protocol
+    module Query : Empty.QUERY module Response = Protocol
   end
 
   module Get_location : sig

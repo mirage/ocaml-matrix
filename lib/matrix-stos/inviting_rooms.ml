@@ -4,9 +4,6 @@ open Matrix_common
 module V1 = struct
   module Query = Empty.Query
 
-  let path room_id event_id =
-    "/_matrix/federation/v1/invite/" ^ room_id ^ "/" ^ event_id
-
   module Request = struct
     module Unsigned = struct
       type t = {whatever: Ezjsonm.value} [@@deriving accessor]

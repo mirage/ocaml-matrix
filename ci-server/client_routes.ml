@@ -181,42 +181,25 @@ let create_room t request =
         | Some user_id -> (
           let%lwt tree = Store.tree store in
           let room_id = "!" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
-          (* Create the head for the message feed *)
-          let%lwt tree =
-            Store.Tree.add tree
-              (Store.Key.v ["rooms"; room_id; "messages_id"; "head"])
-              "" in
           (* Create the state events of the room *)
           let auth_events = [] in
-          let prev_events = [] in
           let depth = 1 in
           (* create *)
           let event_content =
             Events.Event_content.Create
               (Events.Event_content.Create.make ~creator:user_id
-                ?room_version:(Some "6") ())
-          in
+                 ?room_version:(Some "6") ()) in
           let event =
-            Events.Pdu.make
-              ~auth_events
-              ~event_content
-              ~depth
-              ~origin:t.server_name
-              ~origin_server_ts:(time ())
-              ~prev_events
-              ~prev_state:[]
-              ~room_id
-              ~sender:user_id
-              ~signatures:[]
+            Events.Pdu.make ~auth_events ~event_content ~depth
+              ~origin:t.server_name ~origin_server_ts:(time ()) ~prev_events:[]
+              ~prev_state:[] ~room_id ~sender:user_id ~signatures:[]
               ~state_key:""
               ~event_type:(Events.Event_content.get_type event_content)
-              ()
-          in
+              () in
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
           let create_hash = "$" ^ event_id in
-          let auth_events = create_hash::auth_events in
-          let prev_events = create_hash::prev_events in
+          let auth_events = create_hash :: auth_events in
           let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
@@ -226,52 +209,40 @@ let create_room t request =
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.create"])
               event_id in
           let%lwt tree =
-          Store.Tree.add tree
-            (Store.Key.v ["events"; event_id])
-            json_event in
+            Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+          in
           (* member *)
           let event_content =
             Events.Event_content.Member
-            (Events.Event_content.Member.make ~avatar_url:None
-               ~displayname:(Some user_id) ~membership:Join ())
-          in
+              (Events.Event_content.Member.make ~avatar_url:None
+                 ~displayname:(Some user_id) ~membership:Join ()) in
           let event =
-            Events.Pdu.make
-              ~auth_events
-              ~event_content
-              ~depth
-              ~origin:t.server_name
-              ~origin_server_ts:(time ())
-              ~prev_events
-              ~prev_state:[]
-              ~room_id
-              ~sender:user_id
-              ~signatures:[]
-              ~state_key:user_id
+            Events.Pdu.make ~auth_events ~event_content ~depth
+              ~origin:t.server_name ~origin_server_ts:(time ())
+              ~prev_events:[create_hash] ~prev_state:[] ~room_id ~sender:user_id
+              ~signatures:[] ~state_key:user_id
               ~event_type:(Events.Event_content.get_type event_content)
-              ()
-          in
+              () in
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
           let member_hash = "$" ^ event_id in
-          let auth_events = member_hash::auth_events in
-          let prev_events = member_hash::prev_events in
+          let auth_events = member_hash :: auth_events in
           let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
           let%lwt tree =
             Store.Tree.add tree
-              (Store.Key.v ["rooms"; room_id; "state"; "m.room.member"; user_id])
+              (Store.Key.v
+                 ["rooms"; room_id; "state"; "m.room.member"; user_id])
               event_id in
           let%lwt tree =
-            Store.Tree.add tree
-              (Store.Key.v ["events"; event_id])
-              json_event in
+            Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+          in
           (* power_level *)
           let event_content =
             Events.Event_content.Power_levels
-            (match Request.get_power_level_content_override create_room with
+              (match Request.get_power_level_content_override create_room with
               | None ->
                 Events.Event_content.Power_levels.make
                   ?users:(Some [user_id, 100])
@@ -291,31 +262,21 @@ let create_room t request =
                   | Some _ as users -> users
                   | None -> Some [user_id, 100] in
                 let power_level =
-                  Events.Event_content.Power_levels.set_users_default power_level
-                    user_default in
+                  Events.Event_content.Power_levels.set_users_default
+                    power_level user_default in
                 Events.Event_content.Power_levels.set_users power_level users)
           in
           let event =
-            Events.Pdu.make
-              ~auth_events
-              ~event_content
-              ~depth
-              ~origin:t.server_name
-              ~origin_server_ts:(time ())
-              ~prev_events
-              ~prev_state:[]
-              ~room_id
-              ~sender:user_id
-              ~signatures:[]
-              ~state_key:""
+            Events.Pdu.make ~auth_events ~event_content ~depth
+              ~origin:t.server_name ~origin_server_ts:(time ())
+              ~prev_events:[member_hash] ~prev_state:[] ~room_id ~sender:user_id
+              ~signatures:[] ~state_key:""
               ~event_type:(Events.Event_content.get_type event_content)
-              ()
-          in
+              () in
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
           let power_level_hash = "$" ^ event_id in
-          let auth_events = power_level_hash::auth_events in
-          let prev_events = power_level_hash::prev_events in
+          let auth_events = power_level_hash :: auth_events in
           let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
@@ -325,35 +286,22 @@ let create_room t request =
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.power_levels"])
               event_id in
           let%lwt tree =
-          Store.Tree.add tree
-            (Store.Key.v ["events"; event_id])
-            json_event in
-          (* join_rules *)
+            Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+          in
 
+          (* join_rules *)
           let event_content =
             Events.Event_content.Join_rules
-              (Events.Event_content.Join_rules.make
-                 ~join_rule:Public ())
-          in
+              (Events.Event_content.Join_rules.make ~join_rule:Public ()) in
           let event =
-            Events.Pdu.make
-              ~auth_events
-              ~event_content
-              ~depth
-              ~origin:t.server_name
-              ~origin_server_ts:(time ())
-              ~prev_events
-              ~prev_state:[]
-              ~room_id
-              ~sender:user_id
-              ~signatures:[]
-              ~state_key:""
+            Events.Pdu.make ~auth_events ~event_content ~depth
+              ~origin:t.server_name ~origin_server_ts:(time ())
+              ~prev_events:[power_level_hash] ~prev_state:[] ~room_id
+              ~sender:user_id ~signatures:[] ~state_key:""
               ~event_type:(Events.Event_content.get_type event_content)
-              ()
-          in
+              () in
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
-          let prev_events = ("$" ^ event_id)::prev_events in
           let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
@@ -363,74 +311,51 @@ let create_room t request =
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.join_rules"])
               event_id in
           let%lwt tree =
-          Store.Tree.add tree
-            (Store.Key.v ["events"; event_id])
-            json_event in
+            Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+          in
           (* history_visibility *)
           let event_content =
             Events.Event_content.History_visibility
-              (Events.Event_content.History_visibility.make
-                ~visibility:Shared ())
-          in
+              (Events.Event_content.History_visibility.make ~visibility:Shared
+                 ()) in
           let event =
-            Events.Pdu.make
-              ~auth_events
-              ~event_content
-              ~depth
-              ~origin:t.server_name
-              ~origin_server_ts:(time ())
-              ~prev_events
-              ~prev_state:[]
-              ~room_id
-              ~sender:user_id
-              ~signatures:[]
-              ~state_key:""
+            Events.Pdu.make ~auth_events ~event_content ~depth
+              ~origin:t.server_name ~origin_server_ts:(time ())
+              ~prev_events:["$" ^ event_id] ~prev_state:[] ~room_id
+              ~sender:user_id ~signatures:[] ~state_key:""
               ~event_type:(Events.Event_content.get_type event_content)
-              ()
-          in
+              () in
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
-          let prev_events = ("$" ^ event_id)::prev_events in
           let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
           let%lwt tree =
             Store.Tree.add tree
-              (Store.Key.v ["rooms"; room_id; "state"; "m.room.history_visibility"])
+              (Store.Key.v
+                 ["rooms"; room_id; "state"; "m.room.history_visibility"])
               event_id in
           let%lwt tree =
-          Store.Tree.add tree
-            (Store.Key.v ["events"; event_id])
-            json_event in
+            Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+          in
           (* name *)
           let name =
             match Request.get_name create_room with
             | Some name -> name
             | None -> alias in
           let event_content =
-            Events.Event_content.Name
-            (Events.Event_content.Name.make ~name ())
+            Events.Event_content.Name (Events.Event_content.Name.make ~name ())
           in
           let event =
-            Events.Pdu.make
-              ~auth_events
-              ~event_content
-              ~depth
-              ~origin:t.server_name
-              ~origin_server_ts:(time ())
-              ~prev_events
-              ~prev_state:[]
-              ~room_id
-              ~sender:user_id
-              ~signatures:[]
-              ~state_key:""
+            Events.Pdu.make ~auth_events ~event_content ~depth
+              ~origin:t.server_name ~origin_server_ts:(time ())
+              ~prev_events:["$" ^ event_id] ~prev_state:[] ~room_id
+              ~sender:user_id ~signatures:[] ~state_key:""
               ~event_type:(Events.Event_content.get_type event_content)
-              ()
-          in
+              () in
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
-          let prev_events = ("$" ^ event_id)::prev_events in
           let depth = succ depth in
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
@@ -440,31 +365,20 @@ let create_room t request =
               (Store.Key.v ["rooms"; room_id; "state"; "m.room.name"])
               event_id in
           let%lwt tree =
-          Store.Tree.add tree
-            (Store.Key.v ["events"; event_id])
-            json_event in
+            Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+          in
           (* canonical_alias *)
           let event_content =
             Events.Event_content.Canonical_alias
-              (Events.Event_content.Canonical_alias.make
-              ~alias:(Some alias) ())
+              (Events.Event_content.Canonical_alias.make ~alias:(Some alias) ())
           in
           let event =
-            Events.Pdu.make
-              ~auth_events
-              ~event_content
-              ~depth
-              ~origin:t.server_name
-              ~origin_server_ts:(time ())
-              ~prev_events
-              ~prev_state:[]
-              ~room_id
-              ~sender:user_id
-              ~signatures:[]
-              ~state_key:""
+            Events.Pdu.make ~auth_events ~event_content ~depth
+              ~origin:t.server_name ~origin_server_ts:(time ())
+              ~prev_events:["$" ^ event_id] ~prev_state:[] ~room_id
+              ~sender:user_id ~signatures:[] ~state_key:""
               ~event_type:(Events.Event_content.get_type event_content)
-              ()
-          in
+              () in
           let event = compute_hash_and_sign t event in
           let event_id = compute_event_reference_hash event in
           let json_event =
@@ -472,12 +386,19 @@ let create_room t request =
             |> Ezjsonm.value_to_string in
           let%lwt tree =
             Store.Tree.add tree
-              (Store.Key.v ["rooms"; room_id; "state"; "m.room.canonical_alias"])
+              (Store.Key.v
+                 ["rooms"; room_id; "state"; "m.room.canonical_alias"])
               event_id in
           let%lwt tree =
-          Store.Tree.add tree
-            (Store.Key.v ["events"; event_id])
-            json_event in
+            Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+          in
+          (* Save the most recent event id *)
+          let json =
+            Json_encoding.(construct (list string) [event_id])
+            |> Ezjsonm.value_to_string in
+          let%lwt tree =
+            Store.Tree.add tree (Store.Key.v ["rooms"; room_id; "head"]) json
+          in
           (* Saving the alias in the aliases folder *)
           let%lwt tree =
             Store.Tree.add tree (Store.Key.v ["aliases"; alias]) room_id in
@@ -561,6 +482,8 @@ let state t request ~with_state_key =
 
 (** Notes:
     - Properly use the ID
+    - Support all message type
+    - Ensure indempotency
   *)
 let send t request =
   let open Room_event.Put.Message_event in
@@ -572,65 +495,59 @@ let send t request =
   | Some user_id ->
     let room_id = Dream.param "room_id" request in
     let%lwt b = Helper.is_room_user room_id user_id in
-    if b then
-      let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
+    if b then (
+      let%lwt tree = Store.tree store in
+      let%lwt state_tree =
+        Store.Tree.get_tree tree (Store.Key.v ["rooms"; room_id; "state"]) in
+      let%lwt create_event =
+        Store.Tree.get state_tree (Store.Key.v ["m.room.create"]) in
+      let%lwt power_level =
+        Store.Tree.get state_tree (Store.Key.v ["m.room.power_levels"]) in
+      let%lwt member =
+        Store.Tree.get state_tree (Store.Key.v ["m.room.member"; user_id]) in
       let message_content = Request.get_event message in
+      let event_content = Events.Event_content.Message message_content in
+      let%lwt old_depth, prev_events = get_room_prev_events room_id in
+      let depth = old_depth + 1 in
       let event =
-        Events.Room_event.make
-          ~event:
-            (Events.Event.make
-               ~event_content:(Events.Event_content.Message message_content) ())
-          ~event_id:id ~sender:user_id
-          ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
+        Events.Pdu.make
+          ~auth_events:["$" ^ create_event; "$" ^ power_level; "$" ^ member]
+          ~event_content ~depth ~origin:t.server_name
+          ~origin_server_ts:(time ()) ~prev_events ~prev_state:[] ~room_id
+          ~sender:user_id ~signatures:[]
+          ~event_type:(Events.Event_content.get_type event_content)
           () in
+      let event = compute_hash_and_sign t event in
+      let event_id = compute_event_reference_hash event in
       let json_event =
-        Json_encoding.construct Events.Room_event.encoding event
+        Json_encoding.construct Events.Pdu.encoding event
         |> Ezjsonm.value_to_string in
-      let%lwt prev_head =
-        Store.find store (Store.Key.v ["rooms"; room_id; "messages_id"; "head"])
-      in
-      match prev_head with
-      | None ->
-        let error =
-          Errors.Error.make ~errcode:"M_UNKNOWN"
-            ~error:"Internal storage failure" ()
-          |> Json_encoding.construct Errors.Error.encoding
+      let%lwt tree =
+        Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event in
+      (* save the new head of the events *)
+      let json =
+        Json_encoding.(construct (list string) [event_id])
+        |> Ezjsonm.value_to_string in
+      let%lwt tree =
+        Store.Tree.add tree (Store.Key.v ["rooms"; room_id; "head"]) json in
+      (* saving update tree *)
+      let%lwt return =
+        Store.set_tree
+          ~info:(Helper.info t ~message:"set message")
+          store (Store.Key.v []) tree in
+      match return with
+      | Ok () ->
+        let%lwt () = notify_room_servers t room_id [event] in
+        let event_id = "$" ^ event_id ^ ":" ^ t.server_name in
+        let response =
+          Response.make ~event_id ()
+          |> Json_encoding.construct Response.encoding
           |> Ezjsonm.value_to_string in
-        Dream.json ~status:`Internal_Server_Error error
-      | Some prev_head -> (
-        let%lwt tree = Store.tree store in
-        let%lwt tree =
-          Store.Tree.add tree
-            (Store.Key.v ["rooms"; room_id; "messages"; id])
-            json_event in
-        let%lwt tree =
-          Store.Tree.add tree
-            (Store.Key.v ["rooms"; room_id; "messages_id"; id])
-            prev_head in
-        let%lwt tree =
-          Store.Tree.add tree
-            (Store.Key.v ["rooms"; room_id; "messages_id"; "head"])
-            id in
-        (* saving update tree *)
-        let%lwt return =
-          Store.set_tree
-            ~info:(Helper.info t ~message:"set message")
-            store (Store.Key.v []) tree in
-        match return with
-        | Ok () ->
-          let event_id = "$" ^ id ^ ":" ^ t.server_name in
-          let response =
-            Response.make ~event_id ()
-            |> Json_encoding.construct Response.encoding
-            |> Ezjsonm.value_to_string in
-          Dream.json response
-        | Error write_error ->
-          Dream.error (fun m ->
-              m "Write error: %a"
-                (Irmin.Type.pp Store.write_error_t)
-                write_error);
-          Dream.json ~status:`Internal_Server_Error {|{"errcode": "M_UNKNOWN"}|}
-        )
+        Dream.json response
+      | Error write_error ->
+        Dream.error (fun m ->
+            m "Write error: %a" (Irmin.Type.pp Store.write_error_t) write_error);
+        Dream.json ~status:`Internal_Server_Error {|{"errcode": "M_UNKNOWN"}|})
     else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
   | None -> assert false
 (* Should obviously return a 401 instead: If this case

@@ -11,8 +11,6 @@ module Query = struct
     l
 end
 
-let path room_id = "/_matrix/federation/v1/backfill/" ^ room_id
-
 module Response = struct
   type t = {origin: string; origin_server_ts: int; pdus: Pdu.t list}
   [@@deriving accessor]

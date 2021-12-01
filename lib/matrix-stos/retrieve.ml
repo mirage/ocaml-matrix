@@ -8,8 +8,6 @@ module State = struct
     let args t = ["event_id", [t.event_id]]
   end
 
-  let path room_id = "/_matrix/federation/v1/state/" ^ room_id
-
   module Response = struct
     type t = {
       auth_chain: Events.State_event.t list;
@@ -37,8 +35,6 @@ module State_ids = struct
     let args t = ["event_id", [t.event_id]]
   end
 
-  let path room_id = "/_matrix/federation/v1/state/" ^ room_id
-
   module Response = struct
     type t = {auth_chain_ids: string list; pdus_ids: string list}
     [@@deriving accessor]
@@ -57,8 +53,6 @@ end
 
 module Event = struct
   module Query = Empty.Query
-
-  let path event_id = "/_matrix/federation/v1/event/" ^ event_id
 
   module Response = struct
     type t = {origin: string; origin_server_ts: int; pdus: Pdu.t list}

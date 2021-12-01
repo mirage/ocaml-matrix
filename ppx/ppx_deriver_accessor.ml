@@ -116,11 +116,10 @@ let from_td ~loc {ptype_name; ptype_kind; ptype_loc; ptype_manifest; _} =
     match ptype_kind with
     | Ptype_record labels ->
       create_fun ~loc labels
-      ::
-      List.flatten
-        (List.map
-           (from_label ~loc ~single:(List.length labels = 1) type_name)
-           labels)
+      :: List.flatten
+           (List.map
+              (from_label ~loc ~single:(List.length labels = 1) type_name)
+              labels)
     | Ptype_abstract -> [from_abstract ~loc ptype_manifest]
     | _ -> errorf ~loc:ptype_loc "unhandled type kind" in
   pstr_value ~loc Nonrecursive values

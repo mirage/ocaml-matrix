@@ -103,8 +103,7 @@ module Room = struct
        and> topic = topic
        and> alias = alias
        and> power_level_content_override =
-         Current.option_seq power_level_content_override
-       in
+         Current.option_seq power_level_content_override in
        RC.set ctx alias {name; topic; power_level_content_override}
 end
 

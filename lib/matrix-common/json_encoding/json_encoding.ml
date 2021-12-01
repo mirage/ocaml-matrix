@@ -581,7 +581,8 @@ let rec canonize = function
       List.filter
         (fun (k, _) -> not (List.exists (String.equal k) strip_list))
         l in
-    let sorted = List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2) stripped in
+    let sorted =
+      List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2) stripped in
     `O (List.map (fun (k, v) -> k, sort v) sorted)
   | `A l -> `A (List.map canonize l)
   | v -> v

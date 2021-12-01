@@ -2,9 +2,6 @@ open Json_encoding
 open Matrix_common
 module Query = Empty.Query
 
-let path room_id event_id =
-  "/_matrix/federation/v1/event_auth/" ^ room_id ^ "/" ^ event_id
-
 module Response = struct
   type t = {auth_chain: Events.State_event.t list} [@@deriving accessor]
 

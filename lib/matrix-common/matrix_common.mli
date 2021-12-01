@@ -1,8 +1,7 @@
 open Json_encoding
 
 module Null : sig
-  val string : string option encoding
-  val int : int option encoding
+  val string : string option encoding val int : int option encoding
 end
 
 module Empty : sig
@@ -756,7 +755,10 @@ module Events : sig
   end
 
   module Event : sig
-    type%accessor t = {event_content: Event_content.t; signatures: (string * (string * string) list) list option}
+    type%accessor t = {
+      event_content: Event_content.t;
+      signatures: (string * (string * string) list) list option;
+    }
 
     val encoding : t encoding
   end

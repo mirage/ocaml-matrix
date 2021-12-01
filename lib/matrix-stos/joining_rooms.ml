@@ -8,14 +8,8 @@ module Make_join = struct
     let args t = match t.ver with None -> [] | Some ver -> ["ver", ver]
   end
 
-  let path room_id user_id =
-    "/_matrix/federation/v1/make_join/" ^ room_id ^ "/" ^ user_id
-
   module Response = struct
-    type t = {
-      room_version: string option;
-      event_template: Pdu.t option;
-    }
+    type t = {room_version: string option; event_template: Pdu.t option}
     [@@deriving accessor]
 
     let encoding =
@@ -24,8 +18,7 @@ module Make_join = struct
         let room_version, event_template = v in
         {room_version; event_template} in
       let with_tuple =
-        obj2 (opt "room_version" string) (opt "event" Pdu.encoding)
-      in
+        obj2 (opt "room_version" string) (opt "event" Pdu.encoding) in
       conv to_tuple of_tuple with_tuple
   end
 end
@@ -34,9 +27,6 @@ module Send_join = (* à revoir avec un room_event peut-être *)
 struct
   module V1 = struct
     module Query = Empty.Query
-
-    let path room_id event_id =
-      "/_matrix/federation/v1/send_join/" ^ room_id ^ "/" ^ event_id
 
     module Request = struct
       type t = {
@@ -109,10 +99,6 @@ struct
 
   module V2 = struct
     module Query = Empty.Query
-
-    let path room_id event_id =
-      "/_matrix/federation/v2/send_join/" ^ room_id ^ "/" ^ event_id
-
     module Request = Matrix_common.Events.Pdu
 
     module Response = struct

@@ -1,6 +1,20 @@
 open Json_encoding
 open Matrix_common
 
+module Backfill : sig
+  module Query : sig
+    type%accessor t = {v: string list; limit: int}
+
+    val args : t -> (string * string list) list
+  end
+
+  module Response : sig
+    type%accessor t = {origin: string; origin_server_ts: int; pdus: Pdu.t list}
+
+    val encoding : t encoding
+  end
+end
+
 module Key : sig
   module Server_key : sig
     module Verify_key : sig
@@ -27,8 +41,7 @@ module Key : sig
   end
 
   module Direct_query : sig
-    module Query = Empty.Query
-    module Response = Server_key
+    module Query = Empty.Query module Response = Server_key
   end
 
   module Indirect_query : sig
@@ -218,6 +231,31 @@ module Federation_request : sig
   val encoding : t encoding
 end
 
+module Send : sig
+  module Request : sig
+    type%accessor t = {
+      origin: string;
+      origin_server_ts: int;
+      pdus: Pdu.t list;
+      edus: Edu.t list option;
+    }
+
+    val encoding : t encoding
+  end
+
+  module Response : sig
+    module Pdu_processing_result : sig
+      type%accessor t = {error: string option}
+
+      val encoding : t encoding
+    end
+
+    type%accessor t = {pdus: (string * Pdu_processing_result.t) list}
+
+    val encoding : t encoding
+  end
+end
+
 module Signatures : sig
   val encoding :
     (string * (string * Mirage_crypto_ec.Ed25519.priv) list) list ->
@@ -250,8 +288,6 @@ module Retrieve : sig
       val args : t -> (string * string list) list
     end
 
-    val path : string -> string
-
     module Response : sig
       type%accessor t = {auth_chain_ids: string list; pdus_ids: string list}
 
@@ -261,8 +297,6 @@ module Retrieve : sig
 
   module Event : sig
     module Query = Matrix_common.Empty.Query
-
-    val path : string -> string
 
     module Response : sig
       type%accessor t = {

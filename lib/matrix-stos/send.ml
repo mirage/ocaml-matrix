@@ -2,8 +2,6 @@ open Json_encoding
 open Matrix_common
 module Query = Empty.Query
 
-let path txn_id = "/_matrix/federation/v1/send/" ^ txn_id
-
 module Request = struct
   type t = {
     origin: string;

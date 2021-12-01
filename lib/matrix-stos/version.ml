@@ -2,8 +2,6 @@ open Json_encoding
 open Matrix_common
 module Query = Empty.Query
 
-let path = "/_matrix/federation/v1/version"
-
 module Response = struct
   type t = {name: string option; version: string option} [@@deriving accessor]
 

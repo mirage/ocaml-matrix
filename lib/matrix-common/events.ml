@@ -80,8 +80,7 @@ module Event_content = struct
     let redact =
       let to_tuple t = t.creator in
       let of_tuple _ = assert false in
-      let with_tuple =
-        obj1 (req "creator" string) in
+      let with_tuple = obj1 (req "creator" string) in
       conv to_tuple of_tuple with_tuple
   end
 
@@ -182,8 +181,7 @@ module Event_content = struct
     let redact =
       let to_tuple t = t.membership in
       let of_tuple _ = assert false in
-      let with_tuple =
-        obj1 (req "membership" Membership.encoding) in
+      let with_tuple = obj1 (req "membership" Membership.encoding) in
       conv to_tuple of_tuple with_tuple
   end
 
@@ -262,20 +260,20 @@ module Event_content = struct
 
     let redact =
       let to_tuple t =
-        t.ban,
-        t.events,
-        t.events_default,
-        t.kick,
-        t.redact,
-        t.state_default,
-        t.users,
-        t.users_default in
+        ( t.ban,
+          t.events,
+          t.events_default,
+          t.kick,
+          t.redact,
+          t.state_default,
+          t.users,
+          t.users_default ) in
       let of_tuple _ = assert false in
       let with_tuple =
         obj8 (opt "ban" int)
           (opt "events" (assoc int))
-          (opt "events_default" int) (opt "kick" int)
-          (opt "redact" int) (opt "state_default" int)
+          (opt "events_default" int) (opt "kick" int) (opt "redact" int)
+          (opt "state_default" int)
           (opt "users" (assoc int))
           (opt "users_default" int) in
       conv to_tuple of_tuple with_tuple
@@ -1521,195 +1519,202 @@ module Event_content = struct
 end
 
 (* Notes:
-  - Temporary patch of the signatures by adding them here as optional.
-    This way, we do not loose the signatures when the event is sent by an other server.
-    A better solution should be found in the long term. (maybe creatin a "signed event" object around the events)
-  *)
-  module Event = struct
-  type t = {event_content: Event_content.t; signatures: (string * (string * string) list) list option} [@@deriving accessor]
+   - Temporary patch of the signatures by adding them here as optional.
+     This way, we do not loose the signatures when the event is sent by an other server.
+     A better solution should be found in the long term. (maybe creatin a "signed event" object around the events)
+*)
+module Event = struct
+  type t = {
+    event_content: Event_content.t;
+    signatures: (string * (string * string) list) list option;
+  }
+  [@@deriving accessor]
 
   let encoding =
-    let to_tuple t = (Event_content.get_type t.event_content, t.event_content), t.signatures in
+    let to_tuple t =
+      (Event_content.get_type t.event_content, t.event_content), t.signatures
+    in
     let of_tuple v =
       let (_, event_content), signatures = v in
       {event_content; signatures} in
     let with_tuple =
       merge_objs
-      (cond
-        (obj1 (req "type" string))
-        [
-          ( "m.room.aliases",
-            case
-              (Content.content Event_content.Aliases.encoding)
-              (function Event_content.Aliases t -> Some t | _ -> None)
-              (fun t -> Aliases t) );
-          ( "m.room.canonical_alias",
-            case
-              (Content.content Event_content.Canonical_alias.encoding)
-              (function Event_content.Canonical_alias t -> Some t | _ -> None)
-              (fun t -> Canonical_alias t) );
-          ( "m.room.create",
-            case
-              (Content.content Event_content.Create.encoding)
-              (function Event_content.Create t -> Some t | _ -> None)
-              (fun t -> Create t) );
-          ( "m.room.join_rules",
-            case
-              (Content.content Event_content.Join_rules.encoding)
-              (function Event_content.Join_rules t -> Some t | _ -> None)
-              (fun t -> Join_rules t) );
-          ( "m.room.member",
-            case
-              (Content.content Event_content.Member.encoding)
-              (function Event_content.Member t -> Some t | _ -> None)
-              (fun t -> Member t) );
-          ( "m.room.power_levels",
-            case
-              (Content.content Event_content.Power_levels.encoding)
-              (function Event_content.Power_levels t -> Some t | _ -> None)
-              (fun t -> Power_levels t) );
-          ( "m.room.history_visibility",
-            case
-              (Content.content Event_content.History_visibility.encoding)
-              (function
-                | Event_content.History_visibility t -> Some t | _ -> None)
-              (fun t -> History_visibility t) );
-          ( "m.room.third_party_invite",
-            case
-              (Content.content Event_content.Third_party_invite.encoding)
-              (function
-                | Event_content.Third_party_invite t -> Some t | _ -> None)
-              (fun t -> Third_party_invite t) );
-          ( "m.room.guest_access",
-            case
-              (Content.content Event_content.Guest_access.encoding)
-              (function Event_content.Guest_access t -> Some t | _ -> None)
-              (fun t -> Guest_access t) );
-          ( "m.room.server_acl",
-            case
-              (Content.content Event_content.Server_acl.encoding)
-              (function Event_content.Server_acl t -> Some t | _ -> None)
-              (fun t -> Server_acl t) );
-          ( "m.room.tombstone",
-            case
-              (Content.content Event_content.Tombstone.encoding)
-              (function Event_content.Tombstone t -> Some t | _ -> None)
-              (fun t -> Tombstone t) );
-          ( "m.room.encryption",
-            case
-              (Content.content Event_content.Encryption.encoding)
-              (function Event_content.Encryption t -> Some t | _ -> None)
-              (fun t -> Encryption t) );
-          ( "m.room.encrypted",
-            case
-              (Content.content Event_content.Encrypted.encoding)
-              (function Event_content.Encrypted t -> Some t | _ -> None)
-              (fun t -> Encrypted t) );
-          ( "m.room.message",
-            case
-              (Content.content Event_content.Message.encoding)
-              (function Event_content.Message t -> Some t | _ -> None)
-              (fun t -> Message t) );
-          ( "m.room.name",
-            case
-              (Content.content Event_content.Name.encoding)
-              (function Event_content.Name t -> Some t | _ -> None)
-              (fun t -> Name t) );
-          ( "m.room.topic",
-            case
-              (Content.content Event_content.Topic.encoding)
-              (function Event_content.Topic t -> Some t | _ -> None)
-              (fun t -> Topic t) );
-          ( "m.room.avatar",
-            case
-              (Content.content Event_content.Avatar.encoding)
-              (function Event_content.Avatar t -> Some t | _ -> None)
-              (fun t -> Avatar t) );
-          ( "m.room.pinned_events",
-            case
-              (Content.content Event_content.Pinned_events.encoding)
-              (function Event_content.Pinned t -> Some t | _ -> None)
-              (fun t -> Pinned t) );
-          ( "m.call.invite",
-            case
-              (Content.content Event_content.Call.Invite.encoding)
-              (function Event_content.Invite t -> Some t | _ -> None)
-              (fun t -> Invite t) );
-          ( "m.call.candidates",
-            case
-              (Content.content Event_content.Call.Candidates.encoding)
-              (function Event_content.Candidates t -> Some t | _ -> None)
-              (fun t -> Candidates t) );
-          ( "m.call.answer",
-            case
-              (Content.content Event_content.Call.Answer.encoding)
-              (function Event_content.Answer t -> Some t | _ -> None)
-              (fun t -> Answer t) );
-          ( "m.call.hangup",
-            case
-              (Content.content Event_content.Call.Hangup.encoding)
-              (function Event_content.Hangup t -> Some t | _ -> None)
-              (fun t -> Hangup t) );
-          ( "m.presence",
-            case
-              (Content.content Event_content.Presence.encoding)
-              (function Event_content.Presence t -> Some t | _ -> None)
-              (fun t -> Presence t) );
-          ( "m.push_rules",
-            case
-              (Content.content Event_content.Push_rules.encoding)
-              (function Event_content.Push_rules t -> Some t | _ -> None)
-              (fun t -> Push_rules t) );
-          ( "m.typing",
-            case
-              (Content.content Event_content.Typing.encoding)
-              (function Event_content.Typing t -> Some t | _ -> None)
-              (fun t -> Typing t) );
-          ( "m.receipt",
-            case
-              (Content.content Event_content.Receipt.encoding)
-              (function Event_content.Receipt t -> Some t | _ -> None)
-              (fun t -> Receipt t) );
-          ( "m.fully_read",
-            case
-              (Content.content Event_content.Fully_read.encoding)
-              (function Event_content.Fully_read t -> Some t | _ -> None)
-              (fun t -> Fully_read t) );
-          ( "m.tag",
-            case
-              (Content.content Event_content.Tag.encoding)
-              (function Event_content.Tag t -> Some t | _ -> None)
-              (fun t -> Tag t) );
-          ( "m.direct",
-            case
-              (Content.content Event_content.Direct.encoding)
-              (function Event_content.Direct t -> Some t | _ -> None)
-              (fun t -> Direct t) );
-          ( "m.room_key",
-            case
-              (Content.content Event_content.Room_key.encoding)
-              (function Event_content.Room_key t -> Some t | _ -> None)
-              (fun t -> Room_key t) );
-          ( "m.room_key_request",
-            case
-              (Content.content Event_content.Room_key_request.encoding)
-              (function
-                | Event_content.Room_key_request t -> Some t | _ -> None)
-              (fun t -> Room_key_request t) );
-          ( "m.forwarded_room_key",
-            case
-              (Content.content Event_content.Forwarded_room_key.encoding)
-              (function
-                | Event_content.Forwarded_room_key t -> Some t | _ -> None)
-              (fun t -> Forwarded_room_key t) );
-          ( "m.dummy",
-            case
-              (Content.content Event_content.Dummy.encoding)
-              (function Event_content.Dummy t -> Some t | _ -> None)
-              (fun t -> Dummy t) );
-        ])
+        (cond
+           (obj1 (req "type" string))
+           [
+             ( "m.room.aliases",
+               case
+                 (Content.content Event_content.Aliases.encoding)
+                 (function Event_content.Aliases t -> Some t | _ -> None)
+                 (fun t -> Aliases t) );
+             ( "m.room.canonical_alias",
+               case
+                 (Content.content Event_content.Canonical_alias.encoding)
+                 (function
+                   | Event_content.Canonical_alias t -> Some t | _ -> None)
+                 (fun t -> Canonical_alias t) );
+             ( "m.room.create",
+               case
+                 (Content.content Event_content.Create.encoding)
+                 (function Event_content.Create t -> Some t | _ -> None)
+                 (fun t -> Create t) );
+             ( "m.room.join_rules",
+               case
+                 (Content.content Event_content.Join_rules.encoding)
+                 (function Event_content.Join_rules t -> Some t | _ -> None)
+                 (fun t -> Join_rules t) );
+             ( "m.room.member",
+               case
+                 (Content.content Event_content.Member.encoding)
+                 (function Event_content.Member t -> Some t | _ -> None)
+                 (fun t -> Member t) );
+             ( "m.room.power_levels",
+               case
+                 (Content.content Event_content.Power_levels.encoding)
+                 (function Event_content.Power_levels t -> Some t | _ -> None)
+                 (fun t -> Power_levels t) );
+             ( "m.room.history_visibility",
+               case
+                 (Content.content Event_content.History_visibility.encoding)
+                 (function
+                   | Event_content.History_visibility t -> Some t | _ -> None)
+                 (fun t -> History_visibility t) );
+             ( "m.room.third_party_invite",
+               case
+                 (Content.content Event_content.Third_party_invite.encoding)
+                 (function
+                   | Event_content.Third_party_invite t -> Some t | _ -> None)
+                 (fun t -> Third_party_invite t) );
+             ( "m.room.guest_access",
+               case
+                 (Content.content Event_content.Guest_access.encoding)
+                 (function Event_content.Guest_access t -> Some t | _ -> None)
+                 (fun t -> Guest_access t) );
+             ( "m.room.server_acl",
+               case
+                 (Content.content Event_content.Server_acl.encoding)
+                 (function Event_content.Server_acl t -> Some t | _ -> None)
+                 (fun t -> Server_acl t) );
+             ( "m.room.tombstone",
+               case
+                 (Content.content Event_content.Tombstone.encoding)
+                 (function Event_content.Tombstone t -> Some t | _ -> None)
+                 (fun t -> Tombstone t) );
+             ( "m.room.encryption",
+               case
+                 (Content.content Event_content.Encryption.encoding)
+                 (function Event_content.Encryption t -> Some t | _ -> None)
+                 (fun t -> Encryption t) );
+             ( "m.room.encrypted",
+               case
+                 (Content.content Event_content.Encrypted.encoding)
+                 (function Event_content.Encrypted t -> Some t | _ -> None)
+                 (fun t -> Encrypted t) );
+             ( "m.room.message",
+               case
+                 (Content.content Event_content.Message.encoding)
+                 (function Event_content.Message t -> Some t | _ -> None)
+                 (fun t -> Message t) );
+             ( "m.room.name",
+               case
+                 (Content.content Event_content.Name.encoding)
+                 (function Event_content.Name t -> Some t | _ -> None)
+                 (fun t -> Name t) );
+             ( "m.room.topic",
+               case
+                 (Content.content Event_content.Topic.encoding)
+                 (function Event_content.Topic t -> Some t | _ -> None)
+                 (fun t -> Topic t) );
+             ( "m.room.avatar",
+               case
+                 (Content.content Event_content.Avatar.encoding)
+                 (function Event_content.Avatar t -> Some t | _ -> None)
+                 (fun t -> Avatar t) );
+             ( "m.room.pinned_events",
+               case
+                 (Content.content Event_content.Pinned_events.encoding)
+                 (function Event_content.Pinned t -> Some t | _ -> None)
+                 (fun t -> Pinned t) );
+             ( "m.call.invite",
+               case
+                 (Content.content Event_content.Call.Invite.encoding)
+                 (function Event_content.Invite t -> Some t | _ -> None)
+                 (fun t -> Invite t) );
+             ( "m.call.candidates",
+               case
+                 (Content.content Event_content.Call.Candidates.encoding)
+                 (function Event_content.Candidates t -> Some t | _ -> None)
+                 (fun t -> Candidates t) );
+             ( "m.call.answer",
+               case
+                 (Content.content Event_content.Call.Answer.encoding)
+                 (function Event_content.Answer t -> Some t | _ -> None)
+                 (fun t -> Answer t) );
+             ( "m.call.hangup",
+               case
+                 (Content.content Event_content.Call.Hangup.encoding)
+                 (function Event_content.Hangup t -> Some t | _ -> None)
+                 (fun t -> Hangup t) );
+             ( "m.presence",
+               case
+                 (Content.content Event_content.Presence.encoding)
+                 (function Event_content.Presence t -> Some t | _ -> None)
+                 (fun t -> Presence t) );
+             ( "m.push_rules",
+               case
+                 (Content.content Event_content.Push_rules.encoding)
+                 (function Event_content.Push_rules t -> Some t | _ -> None)
+                 (fun t -> Push_rules t) );
+             ( "m.typing",
+               case
+                 (Content.content Event_content.Typing.encoding)
+                 (function Event_content.Typing t -> Some t | _ -> None)
+                 (fun t -> Typing t) );
+             ( "m.receipt",
+               case
+                 (Content.content Event_content.Receipt.encoding)
+                 (function Event_content.Receipt t -> Some t | _ -> None)
+                 (fun t -> Receipt t) );
+             ( "m.fully_read",
+               case
+                 (Content.content Event_content.Fully_read.encoding)
+                 (function Event_content.Fully_read t -> Some t | _ -> None)
+                 (fun t -> Fully_read t) );
+             ( "m.tag",
+               case
+                 (Content.content Event_content.Tag.encoding)
+                 (function Event_content.Tag t -> Some t | _ -> None)
+                 (fun t -> Tag t) );
+             ( "m.direct",
+               case
+                 (Content.content Event_content.Direct.encoding)
+                 (function Event_content.Direct t -> Some t | _ -> None)
+                 (fun t -> Direct t) );
+             ( "m.room_key",
+               case
+                 (Content.content Event_content.Room_key.encoding)
+                 (function Event_content.Room_key t -> Some t | _ -> None)
+                 (fun t -> Room_key t) );
+             ( "m.room_key_request",
+               case
+                 (Content.content Event_content.Room_key_request.encoding)
+                 (function
+                   | Event_content.Room_key_request t -> Some t | _ -> None)
+                 (fun t -> Room_key_request t) );
+             ( "m.forwarded_room_key",
+               case
+                 (Content.content Event_content.Forwarded_room_key.encoding)
+                 (function
+                   | Event_content.Forwarded_room_key t -> Some t | _ -> None)
+                 (fun t -> Forwarded_room_key t) );
+             ( "m.dummy",
+               case
+                 (Content.content Event_content.Dummy.encoding)
+                 (function Event_content.Dummy t -> Some t | _ -> None)
+                 (fun t -> Dummy t) );
+           ])
         (obj1 (opt "signatures" (assoc (assoc string)))) in
-        conv to_tuple of_tuple with_tuple
+    conv to_tuple of_tuple with_tuple
 end
 
 (* Room *)
@@ -1810,9 +1815,9 @@ let encoding : event encoding =
 
 (* Persistent data unit *)
 (* This is a newer version of the PDU: Simply wrapping the events inside a PDU
-  was not the answer due to some keys not being required in PDUs. For now, this
-  should suffice, but adding some conversion functions asking for the additional
-  arguments could be usefull. *)
+   was not the answer due to some keys not being required in PDUs. For now, this
+   should suffice, but adding some conversion functions asking for the additional
+   arguments could be usefull. *)
 module Pdu = struct
   module Hashes = struct
     type t = {sha256: string} [@@deriving accessor]
@@ -1877,31 +1882,31 @@ module Pdu = struct
 
   let encoding =
     let to_tuple t =
-      (t.event_type, t.event_content),
-      ( ( t.auth_events,
-          t.depth,
-          t.hashes,
-          t.origin,
-          t.origin_server_ts,
-          t.prev_events,
-          t.prev_state,
-          t.redacts,
-          t.room_id,
-          t.sender),
-        (t.signatures, t.state_key, t.unsigned) ) in
+      ( (t.event_type, t.event_content),
+        ( ( t.auth_events,
+            t.depth,
+            t.hashes,
+            t.origin,
+            t.origin_server_ts,
+            t.prev_events,
+            t.prev_state,
+            t.redacts,
+            t.room_id,
+            t.sender ),
+          (t.signatures, t.state_key, t.unsigned) ) ) in
     let of_tuple v =
-      let (event_type, event_content),
-          ( ( auth_events,
-              depth,
-              hashes,
-              origin,
-              origin_server_ts,
-              prev_events,
-              prev_state,
-              redacts,
-              room_id,
-              sender),
-            (signatures, state_key, unsigned) ) =
+      let ( (event_type, event_content),
+            ( ( auth_events,
+                depth,
+                hashes,
+                origin,
+                origin_server_ts,
+                prev_events,
+                prev_state,
+                redacts,
+                room_id,
+                sender ),
+              (signatures, state_key, unsigned) ) ) =
         v in
       {
         auth_events;
@@ -1922,199 +1927,200 @@ module Pdu = struct
       } in
     let with_tuple =
       merge_objs
-      (cond
-        (obj1 (req "type" string))
-        [
-          ( "m.room.aliases",
-            case
-              (Content.content Event_content.Aliases.encoding)
-              (function Event_content.Aliases t -> Some t | _ -> None)
-              (fun t -> Aliases t) );
-          ( "m.room.canonical_alias",
-            case
-              (Content.content Event_content.Canonical_alias.encoding)
-              (function Event_content.Canonical_alias t -> Some t | _ -> None)
-              (fun t -> Canonical_alias t) );
-          ( "m.room.create",
-            case
-              (Content.content Event_content.Create.encoding)
-              (function Event_content.Create t -> Some t | _ -> None)
-              (fun t -> Create t) );
-          ( "m.room.join_rules",
-            case
-              (Content.content Event_content.Join_rules.encoding)
-              (function Event_content.Join_rules t -> Some t | _ -> None)
-              (fun t -> Join_rules t) );
-          ( "m.room.member",
-            case
-              (Content.content Event_content.Member.encoding)
-              (function Event_content.Member t -> Some t | _ -> None)
-              (fun t -> Member t) );
-          ( "m.room.power_levels",
-            case
-              (Content.content Event_content.Power_levels.encoding)
-              (function Event_content.Power_levels t -> Some t | _ -> None)
-              (fun t -> Power_levels t) );
-          ( "m.room.history_visibility",
-            case
-              (Content.content Event_content.History_visibility.encoding)
-              (function
-                | Event_content.History_visibility t -> Some t | _ -> None)
-              (fun t -> History_visibility t) );
-          ( "m.room.third_party_invite",
-            case
-              (Content.content Event_content.Third_party_invite.encoding)
-              (function
-                | Event_content.Third_party_invite t -> Some t | _ -> None)
-              (fun t -> Third_party_invite t) );
-          ( "m.room.guest_access",
-            case
-              (Content.content Event_content.Guest_access.encoding)
-              (function Event_content.Guest_access t -> Some t | _ -> None)
-              (fun t -> Guest_access t) );
-          ( "m.room.server_acl",
-            case
-              (Content.content Event_content.Server_acl.encoding)
-              (function Event_content.Server_acl t -> Some t | _ -> None)
-              (fun t -> Server_acl t) );
-          ( "m.room.tombstone",
-            case
-              (Content.content Event_content.Tombstone.encoding)
-              (function Event_content.Tombstone t -> Some t | _ -> None)
-              (fun t -> Tombstone t) );
-          ( "m.room.encryption",
-            case
-              (Content.content Event_content.Encryption.encoding)
-              (function Event_content.Encryption t -> Some t | _ -> None)
-              (fun t -> Encryption t) );
-          ( "m.room.encrypted",
-            case
-              (Content.content Event_content.Encrypted.encoding)
-              (function Event_content.Encrypted t -> Some t | _ -> None)
-              (fun t -> Encrypted t) );
-          ( "m.room.message",
-            case
-              (Content.content Event_content.Message.encoding)
-              (function Event_content.Message t -> Some t | _ -> None)
-              (fun t -> Message t) );
-          ( "m.room.name",
-            case
-              (Content.content Event_content.Name.encoding)
-              (function Event_content.Name t -> Some t | _ -> None)
-              (fun t -> Name t) );
-          ( "m.room.topic",
-            case
-              (Content.content Event_content.Topic.encoding)
-              (function Event_content.Topic t -> Some t | _ -> None)
-              (fun t -> Topic t) );
-          ( "m.room.avatar",
-            case
-              (Content.content Event_content.Avatar.encoding)
-              (function Event_content.Avatar t -> Some t | _ -> None)
-              (fun t -> Avatar t) );
-          ( "m.room.pinned_events",
-            case
-              (Content.content Event_content.Pinned_events.encoding)
-              (function Event_content.Pinned t -> Some t | _ -> None)
-              (fun t -> Pinned t) );
-          ( "m.call.invite",
-            case
-              (Content.content Event_content.Call.Invite.encoding)
-              (function Event_content.Invite t -> Some t | _ -> None)
-              (fun t -> Invite t) );
-          ( "m.call.candidates",
-            case
-              (Content.content Event_content.Call.Candidates.encoding)
-              (function Event_content.Candidates t -> Some t | _ -> None)
-              (fun t -> Candidates t) );
-          ( "m.call.answer",
-            case
-              (Content.content Event_content.Call.Answer.encoding)
-              (function Event_content.Answer t -> Some t | _ -> None)
-              (fun t -> Answer t) );
-          ( "m.call.hangup",
-            case
-              (Content.content Event_content.Call.Hangup.encoding)
-              (function Event_content.Hangup t -> Some t | _ -> None)
-              (fun t -> Hangup t) );
-          ( "m.presence",
-            case
-              (Content.content Event_content.Presence.encoding)
-              (function Event_content.Presence t -> Some t | _ -> None)
-              (fun t -> Presence t) );
-          ( "m.push_rules",
-            case
-              (Content.content Event_content.Push_rules.encoding)
-              (function Event_content.Push_rules t -> Some t | _ -> None)
-              (fun t -> Push_rules t) );
-          ( "m.typing",
-            case
-              (Content.content Event_content.Typing.encoding)
-              (function Event_content.Typing t -> Some t | _ -> None)
-              (fun t -> Typing t) );
-          ( "m.receipt",
-            case
-              (Content.content Event_content.Receipt.encoding)
-              (function Event_content.Receipt t -> Some t | _ -> None)
-              (fun t -> Receipt t) );
-          ( "m.fully_read",
-            case
-              (Content.content Event_content.Fully_read.encoding)
-              (function Event_content.Fully_read t -> Some t | _ -> None)
-              (fun t -> Fully_read t) );
-          ( "m.tag",
-            case
-              (Content.content Event_content.Tag.encoding)
-              (function Event_content.Tag t -> Some t | _ -> None)
-              (fun t -> Tag t) );
-          ( "m.direct",
-            case
-              (Content.content Event_content.Direct.encoding)
-              (function Event_content.Direct t -> Some t | _ -> None)
-              (fun t -> Direct t) );
-          ( "m.room_key",
-            case
-              (Content.content Event_content.Room_key.encoding)
-              (function Event_content.Room_key t -> Some t | _ -> None)
-              (fun t -> Room_key t) );
-          ( "m.room_key_request",
-            case
-              (Content.content Event_content.Room_key_request.encoding)
-              (function
-                | Event_content.Room_key_request t -> Some t | _ -> None)
-              (fun t -> Room_key_request t) );
-          ( "m.forwarded_room_key",
-            case
-              (Content.content Event_content.Forwarded_room_key.encoding)
-              (function
-                | Event_content.Forwarded_room_key t -> Some t | _ -> None)
-              (fun t -> Forwarded_room_key t) );
-          ( "m.dummy",
-            case
-              (Content.content Event_content.Dummy.encoding)
-              (function Event_content.Dummy t -> Some t | _ -> None)
-              (fun t -> Dummy t) );
-        ])
+        (cond
+           (obj1 (req "type" string))
+           [
+             ( "m.room.aliases",
+               case
+                 (Content.content Event_content.Aliases.encoding)
+                 (function Event_content.Aliases t -> Some t | _ -> None)
+                 (fun t -> Aliases t) );
+             ( "m.room.canonical_alias",
+               case
+                 (Content.content Event_content.Canonical_alias.encoding)
+                 (function
+                   | Event_content.Canonical_alias t -> Some t | _ -> None)
+                 (fun t -> Canonical_alias t) );
+             ( "m.room.create",
+               case
+                 (Content.content Event_content.Create.encoding)
+                 (function Event_content.Create t -> Some t | _ -> None)
+                 (fun t -> Create t) );
+             ( "m.room.join_rules",
+               case
+                 (Content.content Event_content.Join_rules.encoding)
+                 (function Event_content.Join_rules t -> Some t | _ -> None)
+                 (fun t -> Join_rules t) );
+             ( "m.room.member",
+               case
+                 (Content.content Event_content.Member.encoding)
+                 (function Event_content.Member t -> Some t | _ -> None)
+                 (fun t -> Member t) );
+             ( "m.room.power_levels",
+               case
+                 (Content.content Event_content.Power_levels.encoding)
+                 (function Event_content.Power_levels t -> Some t | _ -> None)
+                 (fun t -> Power_levels t) );
+             ( "m.room.history_visibility",
+               case
+                 (Content.content Event_content.History_visibility.encoding)
+                 (function
+                   | Event_content.History_visibility t -> Some t | _ -> None)
+                 (fun t -> History_visibility t) );
+             ( "m.room.third_party_invite",
+               case
+                 (Content.content Event_content.Third_party_invite.encoding)
+                 (function
+                   | Event_content.Third_party_invite t -> Some t | _ -> None)
+                 (fun t -> Third_party_invite t) );
+             ( "m.room.guest_access",
+               case
+                 (Content.content Event_content.Guest_access.encoding)
+                 (function Event_content.Guest_access t -> Some t | _ -> None)
+                 (fun t -> Guest_access t) );
+             ( "m.room.server_acl",
+               case
+                 (Content.content Event_content.Server_acl.encoding)
+                 (function Event_content.Server_acl t -> Some t | _ -> None)
+                 (fun t -> Server_acl t) );
+             ( "m.room.tombstone",
+               case
+                 (Content.content Event_content.Tombstone.encoding)
+                 (function Event_content.Tombstone t -> Some t | _ -> None)
+                 (fun t -> Tombstone t) );
+             ( "m.room.encryption",
+               case
+                 (Content.content Event_content.Encryption.encoding)
+                 (function Event_content.Encryption t -> Some t | _ -> None)
+                 (fun t -> Encryption t) );
+             ( "m.room.encrypted",
+               case
+                 (Content.content Event_content.Encrypted.encoding)
+                 (function Event_content.Encrypted t -> Some t | _ -> None)
+                 (fun t -> Encrypted t) );
+             ( "m.room.message",
+               case
+                 (Content.content Event_content.Message.encoding)
+                 (function Event_content.Message t -> Some t | _ -> None)
+                 (fun t -> Message t) );
+             ( "m.room.name",
+               case
+                 (Content.content Event_content.Name.encoding)
+                 (function Event_content.Name t -> Some t | _ -> None)
+                 (fun t -> Name t) );
+             ( "m.room.topic",
+               case
+                 (Content.content Event_content.Topic.encoding)
+                 (function Event_content.Topic t -> Some t | _ -> None)
+                 (fun t -> Topic t) );
+             ( "m.room.avatar",
+               case
+                 (Content.content Event_content.Avatar.encoding)
+                 (function Event_content.Avatar t -> Some t | _ -> None)
+                 (fun t -> Avatar t) );
+             ( "m.room.pinned_events",
+               case
+                 (Content.content Event_content.Pinned_events.encoding)
+                 (function Event_content.Pinned t -> Some t | _ -> None)
+                 (fun t -> Pinned t) );
+             ( "m.call.invite",
+               case
+                 (Content.content Event_content.Call.Invite.encoding)
+                 (function Event_content.Invite t -> Some t | _ -> None)
+                 (fun t -> Invite t) );
+             ( "m.call.candidates",
+               case
+                 (Content.content Event_content.Call.Candidates.encoding)
+                 (function Event_content.Candidates t -> Some t | _ -> None)
+                 (fun t -> Candidates t) );
+             ( "m.call.answer",
+               case
+                 (Content.content Event_content.Call.Answer.encoding)
+                 (function Event_content.Answer t -> Some t | _ -> None)
+                 (fun t -> Answer t) );
+             ( "m.call.hangup",
+               case
+                 (Content.content Event_content.Call.Hangup.encoding)
+                 (function Event_content.Hangup t -> Some t | _ -> None)
+                 (fun t -> Hangup t) );
+             ( "m.presence",
+               case
+                 (Content.content Event_content.Presence.encoding)
+                 (function Event_content.Presence t -> Some t | _ -> None)
+                 (fun t -> Presence t) );
+             ( "m.push_rules",
+               case
+                 (Content.content Event_content.Push_rules.encoding)
+                 (function Event_content.Push_rules t -> Some t | _ -> None)
+                 (fun t -> Push_rules t) );
+             ( "m.typing",
+               case
+                 (Content.content Event_content.Typing.encoding)
+                 (function Event_content.Typing t -> Some t | _ -> None)
+                 (fun t -> Typing t) );
+             ( "m.receipt",
+               case
+                 (Content.content Event_content.Receipt.encoding)
+                 (function Event_content.Receipt t -> Some t | _ -> None)
+                 (fun t -> Receipt t) );
+             ( "m.fully_read",
+               case
+                 (Content.content Event_content.Fully_read.encoding)
+                 (function Event_content.Fully_read t -> Some t | _ -> None)
+                 (fun t -> Fully_read t) );
+             ( "m.tag",
+               case
+                 (Content.content Event_content.Tag.encoding)
+                 (function Event_content.Tag t -> Some t | _ -> None)
+                 (fun t -> Tag t) );
+             ( "m.direct",
+               case
+                 (Content.content Event_content.Direct.encoding)
+                 (function Event_content.Direct t -> Some t | _ -> None)
+                 (fun t -> Direct t) );
+             ( "m.room_key",
+               case
+                 (Content.content Event_content.Room_key.encoding)
+                 (function Event_content.Room_key t -> Some t | _ -> None)
+                 (fun t -> Room_key t) );
+             ( "m.room_key_request",
+               case
+                 (Content.content Event_content.Room_key_request.encoding)
+                 (function
+                   | Event_content.Room_key_request t -> Some t | _ -> None)
+                 (fun t -> Room_key_request t) );
+             ( "m.forwarded_room_key",
+               case
+                 (Content.content Event_content.Forwarded_room_key.encoding)
+                 (function
+                   | Event_content.Forwarded_room_key t -> Some t | _ -> None)
+                 (fun t -> Forwarded_room_key t) );
+             ( "m.dummy",
+               case
+                 (Content.content Event_content.Dummy.encoding)
+                 (function Event_content.Dummy t -> Some t | _ -> None)
+                 (fun t -> Dummy t) );
+           ])
         (merge_objs
-          (obj10
-             (req "auth_events" (list string))
-             (req "depth" int)
-             (opt "hashes" Hashes.encoding)
-             (req "origin" string)
-             (req "origin_server_ts" int)
-             (req "prev_events" (list string))
-             (req "prev_state" (list string))
-             (opt "redacts" string) (req "room_id" string)
-             (req "sender" string))
-          (obj3
-             (req "signatures" (assoc (assoc string)))
-             (opt "state_key" string)
-             (opt "unsigned" Unsigned.encoding))) in
+           (obj10
+              (req "auth_events" (list string))
+              (req "depth" int)
+              (opt "hashes" Hashes.encoding)
+              (req "origin" string)
+              (req "origin_server_ts" int)
+              (req "prev_events" (list string))
+              (req "prev_state" (list string))
+              (opt "redacts" string) (req "room_id" string)
+              (req "sender" string))
+           (obj3
+              (req "signatures" (assoc (assoc string)))
+              (opt "state_key" string)
+              (opt "unsigned" Unsigned.encoding))) in
     conv to_tuple of_tuple with_tuple
 
-    let redact =
-      let to_tuple t =
-        (t.event_type, t.event_content),
+  let redact =
+    let to_tuple t =
+      ( (t.event_type, t.event_content),
         ( ( t.auth_events,
             t.depth,
             t.hashes,
@@ -2124,10 +2130,10 @@ module Pdu = struct
             t.prev_state,
             t.redacts,
             t.room_id,
-            t.sender),
-          (t.signatures, t.state_key, t.unsigned) ) in
-      let of_tuple v =
-        let (event_type, event_content),
+            t.sender ),
+          (t.signatures, t.state_key, t.unsigned) ) ) in
+    let of_tuple v =
+      let ( (event_type, event_content),
             ( ( auth_events,
                 depth,
                 hashes,
@@ -2137,217 +2143,191 @@ module Pdu = struct
                 prev_state,
                 redacts,
                 room_id,
-                sender),
-              (signatures, state_key, unsigned) ) =
-          v in
-        {
-          auth_events;
-          event_content;
-          depth;
-          hashes;
-          origin;
-          origin_server_ts;
-          prev_events;
-          prev_state;
-          redacts;
-          room_id;
-          sender;
-          signatures;
-          state_key;
-          event_type;
-          unsigned;
-        } in
-        let with_tuple =
-          merge_objs
-          (cond
-            (obj1 (req "type" string))
-            [
-              ( "m.room.aliases",
-                case
-                  (Content.content unit)
-                  (function Event_content.Aliases _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room.canonical_alias",
-                case
-                (Content.content unit)
-                (function Event_content.Canonical_alias _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room.create",
-                case
-                  (Content.content Event_content.Create.redact)
-                  (function Event_content.Create t -> Some t | _ -> None)
-                  (fun t -> Create t) );
-              ( "m.room.join_rules",
-                case
-                  (Content.content Event_content.Join_rules.redact)
-                  (function Event_content.Join_rules t -> Some t | _ -> None)
-                  (fun t -> Join_rules t) );
-              ( "m.room.member",
-                case
-                  (Content.content Event_content.Member.redact)
-                  (function Event_content.Member t -> Some t | _ -> None)
-                  (fun t -> Member t) );
-              ( "m.room.power_levels",
-                case
-                  (Content.content Event_content.Power_levels.redact)
-                  (function Event_content.Power_levels t -> Some t | _ -> None)
-                  (fun t -> Power_levels t) );
-              ( "m.room.history_visibility",
-                case
-                  (Content.content Event_content.History_visibility.redact)
-                  (function
-                    | Event_content.History_visibility t -> Some t | _ -> None)
-                  (fun t -> History_visibility t) );
-              ( "m.room.third_party_invite",
-                case
-                (Content.content unit)
-                (function
-                    | Event_content.Third_party_invite _ -> Some () | _ -> None)
-                    (fun _ -> assert false) );
-              ( "m.room.guest_access",
-                case
-                (Content.content unit)
-                (function Event_content.Guest_access _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room.server_acl",
-                case
-                  (Content.content unit)
-                  (function Event_content.Server_acl _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room.tombstone",
-                case
-                (Content.content unit)
-                  (function Event_content.Tombstone _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room.encryption",
-                case
-                (Content.content unit)
-                  (function Event_content.Encryption _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room.encrypted",
-                case
-                (Content.content unit)
-                  (function Event_content.Encrypted _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room.message",
-                case
-                (Content.content unit)
-                  (function Event_content.Message _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room.name",
-                case
-                (Content.content unit)
-                  (function Event_content.Name _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room.topic",
-                case
-                (Content.content unit)
-                  (function Event_content.Topic _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room.avatar",
-                case
-                (Content.content unit)
-                  (function Event_content.Avatar _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room.pinned_events",
-                case
-                (Content.content unit)
-                  (function Event_content.Pinned _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.call.invite",
-                case
-                (Content.content unit)
-                  (function Event_content.Invite _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.call.candidates",
-                case
-                (Content.content unit)
-                  (function Event_content.Candidates _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.call.answer",
-                case
-                (Content.content unit)
-                  (function Event_content.Answer _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.call.hangup",
-                case
-                (Content.content unit)
-                  (function Event_content.Hangup _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.presence",
-                case
-                (Content.content unit)
-                  (function Event_content.Presence _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.push_rules",
-                case
-                (Content.content unit)
-                  (function Event_content.Push_rules _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.typing",
-                case
-                (Content.content unit)
-                  (function Event_content.Typing _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.receipt",
-                case
-                (Content.content unit)
-                  (function Event_content.Receipt _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.fully_read",
-                case
-                (Content.content unit)
-                  (function Event_content.Fully_read _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.tag",
-                case
-                (Content.content unit)
-                  (function Event_content.Tag _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.direct",
-                case
-                (Content.content unit)
-                  (function Event_content.Direct _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room_key",
-                case
-                (Content.content unit)
-                  (function Event_content.Room_key _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-              ( "m.room_key_request",
-                case
-                (Content.content unit)
-                  (function
-                    | Event_content.Room_key_request _ -> Some () | _ -> None)
-                    (fun _ -> assert false) );
-                    ( "m.forwarded_room_key",
-                case
-                (Content.content unit)
-                  (function
-                    | Event_content.Forwarded_room_key _ -> Some () | _ -> None)
-                    (fun _ -> assert false) );
-                    ( "m.dummy",
-                case
-                (Content.content unit)
-                  (function Event_content.Dummy _ -> Some () | _ -> None)
-                  (fun _ -> assert false) );
-            ])
+                sender ),
+              (signatures, state_key, unsigned) ) ) =
+        v in
+      {
+        auth_events;
+        event_content;
+        depth;
+        hashes;
+        origin;
+        origin_server_ts;
+        prev_events;
+        prev_state;
+        redacts;
+        room_id;
+        sender;
+        signatures;
+        state_key;
+        event_type;
+        unsigned;
+      } in
+    let with_tuple =
+      merge_objs
+        (cond
+           (obj1 (req "type" string))
+           [
+             ( "m.room.aliases",
+               case (Content.content unit)
+                 (function Event_content.Aliases _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.canonical_alias",
+               case (Content.content unit)
+                 (function
+                   | Event_content.Canonical_alias _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.create",
+               case
+                 (Content.content Event_content.Create.redact)
+                 (function Event_content.Create t -> Some t | _ -> None)
+                 (fun t -> Create t) );
+             ( "m.room.join_rules",
+               case
+                 (Content.content Event_content.Join_rules.redact)
+                 (function Event_content.Join_rules t -> Some t | _ -> None)
+                 (fun t -> Join_rules t) );
+             ( "m.room.member",
+               case
+                 (Content.content Event_content.Member.redact)
+                 (function Event_content.Member t -> Some t | _ -> None)
+                 (fun t -> Member t) );
+             ( "m.room.power_levels",
+               case
+                 (Content.content Event_content.Power_levels.redact)
+                 (function Event_content.Power_levels t -> Some t | _ -> None)
+                 (fun t -> Power_levels t) );
+             ( "m.room.history_visibility",
+               case
+                 (Content.content Event_content.History_visibility.redact)
+                 (function
+                   | Event_content.History_visibility t -> Some t | _ -> None)
+                 (fun t -> History_visibility t) );
+             ( "m.room.third_party_invite",
+               case (Content.content unit)
+                 (function
+                   | Event_content.Third_party_invite _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.guest_access",
+               case (Content.content unit)
+                 (function
+                   | Event_content.Guest_access _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.server_acl",
+               case (Content.content unit)
+                 (function Event_content.Server_acl _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.tombstone",
+               case (Content.content unit)
+                 (function Event_content.Tombstone _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.encryption",
+               case (Content.content unit)
+                 (function Event_content.Encryption _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.encrypted",
+               case (Content.content unit)
+                 (function Event_content.Encrypted _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.message",
+               case (Content.content unit)
+                 (function Event_content.Message _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.name",
+               case (Content.content unit)
+                 (function Event_content.Name _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.topic",
+               case (Content.content unit)
+                 (function Event_content.Topic _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.avatar",
+               case (Content.content unit)
+                 (function Event_content.Avatar _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room.pinned_events",
+               case (Content.content unit)
+                 (function Event_content.Pinned _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.call.invite",
+               case (Content.content unit)
+                 (function Event_content.Invite _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.call.candidates",
+               case (Content.content unit)
+                 (function Event_content.Candidates _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.call.answer",
+               case (Content.content unit)
+                 (function Event_content.Answer _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.call.hangup",
+               case (Content.content unit)
+                 (function Event_content.Hangup _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.presence",
+               case (Content.content unit)
+                 (function Event_content.Presence _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.push_rules",
+               case (Content.content unit)
+                 (function Event_content.Push_rules _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.typing",
+               case (Content.content unit)
+                 (function Event_content.Typing _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.receipt",
+               case (Content.content unit)
+                 (function Event_content.Receipt _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.fully_read",
+               case (Content.content unit)
+                 (function Event_content.Fully_read _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.tag",
+               case (Content.content unit)
+                 (function Event_content.Tag _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.direct",
+               case (Content.content unit)
+                 (function Event_content.Direct _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room_key",
+               case (Content.content unit)
+                 (function Event_content.Room_key _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.room_key_request",
+               case (Content.content unit)
+                 (function
+                   | Event_content.Room_key_request _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.forwarded_room_key",
+               case (Content.content unit)
+                 (function
+                   | Event_content.Forwarded_room_key _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+             ( "m.dummy",
+               case (Content.content unit)
+                 (function Event_content.Dummy _ -> Some () | _ -> None)
+                 (fun _ -> assert false) );
+           ])
         (merge_objs
-          (obj10
-             (req "auth_events" (list string))
-             (req "depth" int)
-             (opt "hashes" Hashes.encoding)
-             (req "origin" string)
-             (req "origin_server_ts" int)
-             (req "prev_events" (list string))
-             (req "prev_state" (list string))
-             (opt "redacts" string) (req "room_id" string)
-             (req "sender" string))
-          (obj3
-             (req "signatures" (assoc (assoc string)))
-             (opt "state_key" string)
-             (opt "unsigned" Unsigned.encoding))) in
-      conv to_tuple of_tuple with_tuple
+           (obj10
+              (req "auth_events" (list string))
+              (req "depth" int)
+              (opt "hashes" Hashes.encoding)
+              (req "origin" string)
+              (req "origin_server_ts" int)
+              (req "prev_events" (list string))
+              (req "prev_state" (list string))
+              (opt "redacts" string) (req "room_id" string)
+              (req "sender" string))
+           (obj3
+              (req "signatures" (assoc (assoc string)))
+              (opt "state_key" string)
+              (opt "unsigned" Unsigned.encoding))) in
+    conv to_tuple of_tuple with_tuple
 
   let get_event_content t = t.event_content
 end

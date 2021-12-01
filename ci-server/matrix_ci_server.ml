@@ -12,7 +12,7 @@ let client_server info =
   @@ Dream.not_found
 
 (* Fix the certificate and key paths for some command line args
-  Do it for the port as well *)
+   Do it for the port as well *)
 let federation_server info =
   let interface = "0.0.0.0" in
   let scheme = "https" in
