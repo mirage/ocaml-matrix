@@ -2,7 +2,7 @@ open Json_encoding
 
 let gen_signature key encoding obj =
   let encoded = construct encoding obj |> canonize |> Ezjsonm.value_to_string in
-  Rresult.R.error_msg_to_invalid_arg
+  Result.get_ok
   @@ Base64.encode ~pad:false
   @@ Cstruct.to_string
   @@ Mirage_crypto_ec.Ed25519.sign ~key (Cstruct.of_string encoded)

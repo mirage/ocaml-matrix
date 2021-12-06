@@ -154,7 +154,7 @@ let fetching_key server_name key_id =
     Uri.make ~scheme:"https" ~port:8448 ~host:server_name
       ~path:("/_matrix/key/v2/server/" ^ key_id)
       () in
-  let tls_authenticator ~host:_ _ = Ok None in
+  let tls_authenticator ?ip:_ ~host:_ _ = Ok None in
   let%lwt ctx = Conduit_lwt_unix.init ~tls_authenticator () in
   let ctx = Cohttp_lwt_unix.Net.init ~ctx () in
   let%lwt _resp, body = Cohttp_lwt_unix.Client.get ~ctx uri in

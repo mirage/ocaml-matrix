@@ -1,4 +1,4 @@
-opam-version: "2.1"
+opam-version: "2.0"
 version: "0.1"
 synopsis: "Library for the server to server endpoints of matrix protocole"
 maintainer: ["Gwenaëlle Lecat <charles-edouard@tarides.com>"]
