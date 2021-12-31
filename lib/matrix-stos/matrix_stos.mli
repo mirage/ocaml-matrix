@@ -15,6 +15,35 @@ module Backfill : sig
   end
 end
 
+module Get_missing_events : sig
+  module Request : sig
+    type%accessor t = {
+      limit: int option;
+      min_depth: int option;
+      earliest_events: string list;
+      lastest_events: string list;
+    }
+
+    val encoding : t encoding
+  end
+
+  module Response : sig
+    type%accessor t = {events: Pdu.t list}
+
+    val encoding : t encoding
+  end
+end
+
+module Event_auth : sig
+  module Query = Empty.Query
+
+  module Response : sig
+    type%accessor t = {auth_chain: Events.Pdu.t list}
+
+    val encoding : t encoding
+  end
+end
+
 module Key : sig
   module Server_key : sig
     module Verify_key : sig
@@ -147,6 +176,24 @@ module Public_rooms : sig
     end
 
     module Response = Get_public_rooms.Response
+  end
+end
+
+module Query : sig
+  module Directory : sig
+    module Response : sig
+      type%accessor t = {room_id: string; servers: string list}
+
+      val encoding : t encoding
+    end
+  end
+
+  module Profile : sig
+    module Response : sig
+      type%accessor t = {avatar_url: string option; displayname: string option}
+
+      val encoding : t encoding
+    end
   end
 end
 
@@ -303,6 +350,55 @@ module Retrieve : sig
         origin: string;
         origin_server_ts: int;
         pdus: Pdu.t list;
+      }
+
+      val encoding : t encoding
+    end
+  end
+end
+
+module User : sig
+  module Devices : sig
+    module Response : sig
+      module User_device : sig
+        module Device_keys : sig
+          type%accessor t = {
+            algorithms: string list;
+            device_id: string;
+            keys: (string * string) list;
+            signatures: (string * (string * string) list) list;
+            user_id: string;
+          }
+
+          val encoding : t encoding
+        end
+
+        type%accessor t = {
+          device_display_name: string option;
+          device_id: string;
+          keys: Device_keys.t;
+        }
+
+        val encoding : t encoding
+      end
+
+      module Cross_signing_key : sig
+        type%accessor t = {
+          keys: (string * string) list;
+          signatures: (string * (string * string) list) list;
+          usage: string list;
+          user_id: string;
+        }
+
+        val encoding : t encoding
+      end
+
+      type%accessor t = {
+        devices: User_device.t list;
+        master_key: Cross_signing_key.t option;
+        self_signing_key: Cross_signing_key.t option;
+        stream_id: int;
+        user_id: string;
       }
 
       val encoding : t encoding

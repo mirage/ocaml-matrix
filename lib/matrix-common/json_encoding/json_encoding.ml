@@ -23,9 +23,7 @@
  *)
 
 module Path = struct
-  type path = path_item list
-
-  and path_item = [ `Field of string | `Index of int ]
+  type path = path_item list and path_item = [ `Field of string | `Index of int ]
 
   let print_path_item ppf = function
     | `Field s -> Fmt.pf ppf "/%s" s

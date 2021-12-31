@@ -1,10 +1,7 @@
-(executable
- (modes byte exe)
+(library
  (name matrix_ci_server)
  (public_name matrix-ci-server)
- (package matrix-ci-server)
  (modules
-  matrix_ci_server
   consts
   common_routes
   client_routes
@@ -12,8 +9,31 @@
   middleware
   identifiers
   helper
-  store)
- (libraries dream matrix-ctos matrix-stos irmin-unix uuidm)
+  store
+  paf_cohttp)
+ (libraries
+  dream-mirage
+  matrix-ctos
+  matrix-stos
+  irmin-unix
+  uuidm
+  mirage-time
+  mirage-stack)
+ (preprocess
+  (pps lwt_ppx)))
+
+(executable
+ (modes byte exe)
+ (name matrix_ci_server)
+ (public_name matrix-ci-server-bin)
+ (package matrix-ci-server)
+ (modules matrix_ci_server)
+ (libraries
+  matrix_ci_server
+  mirage-clock-unix
+  mirage-time-unix
+  tcpip.stack-socket
+  mirage-crypto-rng-mirage)
  (preprocess
   (pps lwt_ppx)))
 

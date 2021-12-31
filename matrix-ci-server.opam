@@ -21,6 +21,7 @@ depends: [
   "irmin-unix"
   "logs"
   "mirage-crypto-ec"
+  "mirage-time"
   "mirage-kv"
   "ppxlib"
   "uuidm"

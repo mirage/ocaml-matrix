@@ -10,6 +10,17 @@ module Request = struct
     lastest_events: string list;
   }
   [@@deriving accessor]
+
+  let encoding =
+    let to_tuple t = t.limit, t.min_depth, t.earliest_events, t.lastest_events in
+    let of_tuple v =
+      let limit, min_depth, earliest_events, lastest_events = v in
+      {limit; min_depth; earliest_events; lastest_events} in
+    let with_tuple =
+      obj4 (opt "limit" int) (opt "min_depth" int)
+        (req "earliest_events" (list string))
+        (req "lastest_events" (list string)) in
+    conv to_tuple of_tuple with_tuple
 end
 
 module Response = struct

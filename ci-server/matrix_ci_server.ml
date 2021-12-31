@@ -1,30 +1,20 @@
 open Cmdliner
+open Matrix_ci_server
+module Stack = Tcpip_stack_socket.V4V6
+module Dream = Dream__mirage.Mirage.Make (Pclock) (Time) (Stack)
+module Client_routes = Client_routes.Make (Pclock) (Time) (Stack)
+module Federation_routes = Federation_routes.Make (Pclock) (Time) (Stack)
 
-let client_server info =
-  let interface = "0.0.0.0" in
-  let scheme = "http" in
+let client_server stack info =
   let port = 8008 in
-  Dream.log "Running on %s:%i (%s://localhost:%i)" interface port scheme port;
-  Dream.log "Type Ctrl+C to stop";
-  Dream.serve ~interface ~port
-  @@ Dream.logger
-  @@ Client_routes.router info
-  @@ Dream.not_found
+  let router = Dream.logger @@ Client_routes.router info @@ Dream.not_found in
+  Dream.http ~port (Stack.tcp stack) router
 
-(* Fix the certificate and key paths for some command line args
-   Do it for the port as well *)
-let federation_server info =
-  let interface = "0.0.0.0" in
-  let scheme = "https" in
+let federation_server stack info =
   let port = 8447 in
-  let certificate_file = Unix.getenv "PWD" ^ "/server.crt" in
-  let key_file = Unix.getenv "PWD" ^ "/server.key" in
-  Dream.log "Running on %s:%i (%s://localhost:%i)" interface port scheme port;
-  Dream.log "Type Ctrl+C to stop";
-  Dream.serve ~interface ~port ~https:true ~certificate_file ~key_file
-  @@ Dream.logger
-  @@ Federation_routes.router info
-  @@ Dream.not_found
+  let router =
+    Dream.logger @@ Federation_routes.router info @@ Dream.not_found in
+  Dream.https ~port (Stack.tcp stack) router
 
 (* Rework the function for something cleaner (especially the rais part) *)
 let read_key file =
@@ -39,10 +29,89 @@ let read_key file =
   | `ED25519 key -> key, Mirage_crypto_ec.Ed25519.pub_of_priv key
   | _ -> raise @@ Invalid_argument "Not an ED25519 key"
 
-let main server_name (key_name, key_path) () =
+module TLS = struct
+  include Tls_mirage.Make (Tcpip_stack_socket.V4V6.TCP)
+  open Lwt.Infix
+
+  let ( >>? ) = Lwt_result.bind
+
+  type endpoint =
+    Tcpip_stack_socket.V4V6.TCP.t
+    * Tls.Config.client
+    * [ `host ] Domain_name.t option
+    * Ipaddr.t
+    * int
+
+  let connect (stack, tls, host, ipaddr, port) =
+    let open Tcpip_stack_socket.V4V6 in
+    TCP.create_connection stack (ipaddr, port)
+    >|= Rresult.R.reword_error (fun err -> `Read err)
+    >>? fun flow ->
+    client_of_flow tls ?host flow >>= fun flow -> Lwt.return flow
+end
+
+let tls_edn, tls_protocol = Mimic.register ~priority:10 ~name:"tls" (module TLS)
+let witness_stack = Mimic.make ~name:"stack"
+
+let fill ctx =
+  let open Mimic in
+  let k0 stack scheme port domain_name =
+    match scheme with
+    | `HTTP -> Lwt.return_none
+    | `HTTPS -> (
+      match Unix.gethostbyname (Domain_name.to_string domain_name) with
+      | {Unix.h_addr_list; _} when Array.length h_addr_list > 0 ->
+        let ipaddr = Ipaddr_unix.of_inet_addr h_addr_list.(0) in
+        let authenticator ?ip:_ ~host:_ _ = Ok None in
+        let cfg = Tls.Config.client ~authenticator () in
+        Lwt.return_some (Stack.tcp stack, cfg, Some domain_name, ipaddr, port)
+      | _ -> Lwt.return_none) in
+  let k1 stack scheme port ipaddr =
+    match scheme with
+    | `HTTP -> Lwt.return_none
+    | `HTTPS ->
+      let authenticator ?ip:_ ~host:_ _ = Ok None in
+      let cfg = Tls.Config.client ~authenticator () in
+      Lwt.return_some (Stack.tcp stack, cfg, None, ipaddr, port) in
+  let ctx =
+    Mimic.fold tls_edn
+      Fun.
+        [
+          req witness_stack; req Paf_cohttp.scheme; dft Paf_cohttp.port 8448;
+          req Paf_cohttp.domain_name;
+        ]
+      ~k:k0 ctx in
+  let ctx =
+    Mimic.fold tls_edn
+      Fun.
+        [
+          req witness_stack; req Paf_cohttp.scheme; dft Paf_cohttp.port 8448;
+          req Paf_cohttp.ipaddr;
+        ]
+      ~k:k1 ctx in
+  ctx
+
+let sleep v = Lwt_unix.sleep (Int64.to_float v)
+
+let stack_of_addr addr =
+  let interface = Ipaddr.V4.Prefix.of_string_exn addr in
+  let%lwt udp_socket =
+    Udpv4v6_socket.connect ~ipv4_only:false ~ipv6_only:false interface None
+  in
+  let%lwt tcp_socket =
+    Tcpv4v6_socket.connect ~ipv4_only:false ~ipv6_only:false interface None
+  in
+  Stack.connect udp_socket tcp_socket
+
+let main server_name (key_name, key_path) addr () =
   let priv_key, pub_key = read_key key_path in
-  let info = Common_routes.{server_name; key_name; priv_key; pub_key} in
-  Lwt_main.run (Lwt.join [client_server info; federation_server info])
+  Lwt_main.run
+    (let%lwt stack = stack_of_addr addr in
+     let ctx = Mimic.empty in
+     let ctx = Mimic.add witness_stack stack ctx in
+     let ctx = fill Mimic.(add Paf_cohttp.sleep sleep ctx) in
+     let info = Common_routes.{server_name; key_name; priv_key; pub_key; ctx} in
+     Lwt.join [client_server stack info; federation_server stack info])
 
 let setup level =
   let style_renderer = `Ansi_tty in
@@ -63,6 +132,13 @@ let server_key =
     & info [] ~docv:"server_key"
         ~doc:"the key name and it's path, separated by a ','")
 
+let addr =
+  Arg.(
+    value
+    & opt string "0.0.0.0/0"
+    & info ["addr"] ~docv:"ip address + mask"
+        ~doc:"the ip address and it's mask")
+
 let () =
   let info =
     let doc = "poc of a matrix server" in
@@ -73,5 +149,6 @@ let () =
            const main
            $ server_name
            $ server_key
+           $ addr
            $ Term.(const setup $ Logs_cli.level ())),
          info )
