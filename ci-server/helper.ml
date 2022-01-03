@@ -133,46 +133,43 @@ struct
     Lwt_list.fold_left_s f [] members
 
   (* Notes:
-     - Very dirty, clean that up
      - Error handling
      - Use less hardcoded strings *)
-  let notify_room_servers (_t : Common_routes.t) _room_id _events =
+  let notify_room_servers (t : Common_routes.t) room_id events =
     (* fetch the servers participating in the room *)
-    Lwt.return_unit
-  (* let open Matrix_stos.Send in
-     let%lwt origins = fetch_joined_servers room_id in
-     let origins =
-       List.filter (fun s -> not @@ String.equal t.server_name s) origins in
-     let f server_name =
-       let body =
-         Request.make ~origin:server_name ~origin_server_ts:(time ()) ~pdus:events
-           ()
-         |> Json_encoding.construct Request.encoding in
-       let content = Some body in
-       let txn_id = Uuidm.(v `V4 |> to_string) in
-       let path = "/_matrix/federation/v1/send/" ^ txn_id in
-       let uri = Uri.make ~scheme:"https" ~port:8448 ~host:server_name ~path () in
-       let tls_authenticator ?ip:_ ~host:_ _ = Ok None in
-       let%lwt ctx = Conduit_lwt_unix.init ~tls_authenticator () in
-       let ctx = Cohttp_lwt_unix.Net.init ~ctx () in
-       let headers = Cohttp.Header.init () in
-       let json =
-         Matrix_stos.Federation_request.make ~meth:"PUT" ~uri:path ?content
-           ~origin:t.server_name ~destination:"my.domain.name" ()
-         |> Json_encoding.construct Matrix_stos.Federation_request.encoding
-         |> Json_encoding.sort
-         |> Ezjsonm.value_to_string in
-       let signature =
-         Mirage_crypto_ec.Ed25519.sign ~key:t.priv_key (Cstruct.of_string json)
-         |> Cstruct.to_string
-         |> Base64.encode_string ~pad:false in
-       let headers =
-         Cohttp.Header.add headers "Authorization"
-           ({|X-Matrix origin=matrix.egar.im,key="ed25519:foo_bar",sig="|}
-           ^ signature
-           ^ {|"|}) in
-       let body = Cohttp_lwt.Body.of_string (Ezjsonm.value_to_string body) in
-       let%lwt _ = Cohttp_lwt_unix.Client.put ~ctx ~body ~headers uri in
-       Lwt.return_unit in
-     Lwt_list.iter_p f origins *)
+    let open Matrix_stos.Send in
+    let%lwt origins = fetch_joined_servers room_id in
+    let origins =
+      List.filter (fun s -> not @@ String.equal t.server_name s) origins in
+    let f server_name =
+      let body =
+        Request.make ~origin:server_name ~origin_server_ts:(time ()) ~pdus:events
+          ()
+        |> Json_encoding.construct Request.encoding in
+      let content = Some body in
+      let txn_id = Uuidm.(v `V4 |> to_string) in
+      let path = "/_matrix/federation/v1/send/" ^ txn_id in
+      let uri = Uri.make ~scheme:"https" ~port:8448 ~host:server_name ~path () in
+      let headers = Cohttp.Header.init () in
+      let json =
+        Matrix_stos.Federation_request.make ~meth:"PUT" ~uri:path ?content
+          ~origin:t.server_name ~destination:"my.domain.name" ()
+        |> Json_encoding.construct Matrix_stos.Federation_request.encoding
+        |> Json_encoding.sort
+        |> Ezjsonm.value_to_string in
+      let signature =
+        Mirage_crypto_ec.Ed25519.sign ~key:t.priv_key (Cstruct.of_string json)
+        |> Cstruct.to_string
+        |> Base64.encode_string ~pad:false in
+      let headers =
+        Cohttp.Header.add headers "Authorization"
+          ({|X-Matrix origin=matrix.egar.im,key="ed25519:foo_bar",sig="|}
+          ^ signature
+          ^ {|"|}) in
+      let body = Cohttp_lwt.Body.of_string (Ezjsonm.value_to_string body) in
+      let%lwt body_length, body = Cohttp_lwt.Body.length body in
+      let headers = Cohttp.Header.add headers "Content-length" (Int64.to_string body_length) in
+      let%lwt _resp, _body = Paf_cohttp.put ~headers ~ctx:t.ctx ~body uri in
+        Lwt.return_unit in
+      Lwt_list.iter_p f origins
 end
