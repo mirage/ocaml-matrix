@@ -11,6 +11,7 @@ depends: [
   "odoc" {with-doc}
   "matrix-ctos" {= version}
   "matrix-stos" {= version}
+  "lwt_ppx"
   "astring"
   "base64"
   "bheap"
