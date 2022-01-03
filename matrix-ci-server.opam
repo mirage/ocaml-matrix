@@ -11,6 +11,7 @@ depends: [
   "odoc" {with-doc}
   "matrix-ctos" {= version}
   "matrix-stos" {= version}
+  "dream-mirage"
   "lwt_ppx"
   "astring"
   "base64"
@@ -27,6 +28,11 @@ depends: [
   "ppxlib"
   "uuidm"
   "x509"
+]
+pin-depends: [
+  ["dream.~dev"         "git+https://github.com/clecat/dream.git"]
+  ["dream-mirage.~dev"  "git+https://github.com/clecat/dream.git"]
+  ["dream-pure.~dev"    "git+https://github.com/clecat/dream.git"]
 ]
 build: [
   ["dune" "subst"] {dev}
