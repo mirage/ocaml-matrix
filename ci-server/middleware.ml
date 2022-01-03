@@ -136,13 +136,6 @@ struct
          {|{"errcode": "M_UNAUTHORIZED", "error": "Failed to find any valid key for [%s]"}|}
          key)
 
-  let is_valid_key key_tree =
-    let%lwt valid_until =
-      Store.Tree.get key_tree @@ Store.Key.v ["valid_until"] in
-    let expires_at = Float.of_string valid_until in
-    let current_time = Unix.gettimeofday () in
-    Lwt.return (expires_at > current_time)
-
   (** Notes:
     - Use the right key type
   *)
@@ -173,27 +166,6 @@ struct
               ~msg:(Cstruct.of_string json) in
           Lwt.return (request, verify)))
 
-  let fetching_key (t : Common_routes.t) server_name key_id =
-    let open Matrix_stos.Key.Direct_query in
-    let uri =
-      Uri.make ~scheme:"https" ~port:8448 ~host:server_name
-        ~path:("/_matrix/key/v2/server/" ^ key_id)
-        () in
-    let headers = Cohttp.Header.of_list ["Content-length", "0"] in
-    let%lwt _resp, body = Paf_cohttp.get ~headers ~ctx:t.ctx uri in
-    let%lwt body = Cohttp_lwt.Body.to_string body in
-    let direct_keys =
-      Json_encoding.destruct Response.encoding (Ezjsonm.value_from_string body)
-    in
-    (* we should use the signatures *)
-    let verify_keys = Response.get_verify_keys direct_keys in
-    let valid_until = Response.get_valid_until_ts direct_keys in
-    match List.assoc_opt key_id verify_keys, valid_until with
-    | Some key, Some valid_until ->
-      let key = Response.Verify_key.get_key key in
-      Lwt.return_some (key, valid_until)
-    | _ -> Lwt.return_none
-
   (** Notes:
     - Maybe do some server name resolution in order to avoid false negatives
     - Upgrade the key fetching with proper retries and using several notary
@@ -211,7 +183,7 @@ struct
         Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id] in
       let%lwt key_tree =
         if key_tree = None then
-          let%lwt key_s = fetching_key t origin key_id in
+          let%lwt key_s = Helper.fetching_key t origin key_id in
           match key_s with
           | Some (key_s, valid_until) -> (
             let%lwt tree =
@@ -240,7 +212,7 @@ struct
       match key_tree with
       | None -> unkown_key key_id
       | Some key_tree ->
-        let%lwt is_valid = is_valid_key key_tree in
+        let%lwt is_valid = Helper.is_valid_key key_tree in
         if not is_valid then unkown_key key_id
         else
           let%lwt key = Store.Tree.get key_tree (Store.Key.v ["key"]) in

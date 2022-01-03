@@ -401,9 +401,7 @@ struct
 
   module Join = struct
     (* Notes:
-       - Work on the room versions !
-       - Maybe change make join so it uses a member state event ?
-       - Verify if the user if in the asking room ?
+       - Work on supporting other room versions in the future ?
     *)
     let make t request =
       let open Joining_rooms.Make_join in
@@ -452,14 +450,9 @@ struct
              room_version)
 
     (* Notes:
-       - check if the user comes from the server asking the request
-       - verify if the user is already in the room
-       - verify the event content !
        - verify previous state
-       - see what has to be done for the authentication chain
-       - do something for the error prone generation of pdu
-       - verify the event signature
        - verify the given event id
+       - better error returns
     *)
     let send t request =
       let open Joining_rooms.Send_join.V2 in
@@ -470,63 +463,93 @@ struct
       let member_event =
         Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
       in
-      let member_event = compute_hash_and_sign t member_event in
-      let event_id = compute_event_reference_hash member_event in
-      (* need error handling *)
-      let state_key = Events.Pdu.get_state_key member_event |> Option.get in
-      let json_event =
-        Json_encoding.construct Events.Pdu.encoding member_event
-        |> Ezjsonm.value_to_string in
-      let%lwt tree = Store.tree store in
-      let%lwt tree =
-        Store.Tree.add tree
-          (Store.Key.v ["rooms"; room_id; "state"; "m.room.member"; state_key])
-          event_id in
-      let%lwt tree =
-        Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event in
-      (* save the new previous event id*)
-      let json =
-        Json_encoding.(construct (list string) [event_id])
-        |> Ezjsonm.value_to_string in
-      let%lwt tree =
-        Store.Tree.add tree (Store.Key.v ["rooms"; room_id; "head"]) json in
-      (* saving update tree *)
-      let%lwt return =
-        Store.set_tree
-          ~info:(Helper.info t ~message:"add joining member")
-          store (Store.Key.v []) tree in
-      match return with
-      | Ok () ->
-        (* fetch the state of the room *)
-        let%lwt tree = Store.tree store in
-        let%lwt state_tree =
-          Store.Tree.get_tree tree (Store.Key.v ["rooms"; room_id; "state"])
-        in
-        let%lwt state =
-          Store.Tree.fold
-            ~contents:(fun _ event_id events ->
-              let open Events in
-              let%lwt json =
-                Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
-              let event =
-                Ezjsonm.from_string json |> Json_encoding.destruct Pdu.encoding
-              in
-              Lwt.return (event :: events))
-            state_tree [] in
-        let response =
-          Response.make ~origin:t.server_name ~auth_chain:state ~state ()
-          |> Json_encoding.construct Response.encoding
-          |> Ezjsonm.value_to_string in
-        Dream.json response
-      | Error write_error ->
-        Dream.error (fun m ->
-            m "Write error: %a" (Irmin.Type.pp Store.write_error_t) write_error);
-        Dream.json ~status:`Internal_Server_Error {|{"errcode": "M_UNKNOWN"}|}
+      (* Verify if the event really comes from the server *)
+      let origin = Option.get @@ Dream.local Middleware.logged_server request in
+      let%lwt verify = Helper.check_event_signature t origin member_event in
+      if not verify then
+        Dream.json ~status:`Forbidden {|{"errcode": "M_UNKNOWN"}|}
+      else
+        (* Verify that we have a member event *)
+        match Events.Pdu.get_event_content member_event with
+        | Events.Event_content.Member _ -> (
+          let event_origin = Events.Pdu.get_origin member_event in
+          if event_origin <> origin then
+            Dream.json ~status:`Forbidden {|{"errcode": "M_UNKNOWN"}|}
+          else
+            let member_event = compute_hash_and_sign t member_event in
+            let event_id = compute_event_reference_hash member_event in
+            (* need error handling *)
+            let state_key =
+              Events.Pdu.get_state_key member_event |> Option.get in
+            (* Check if the user is not already in the room *)
+            let%lwt presence = Helper.is_room_user room_id state_key in
+            if presence then
+              Dream.json ~status:`Bad_Request
+                {|{"errcode": "M_UNKNOWN"; "error": "User is already in the room"}|}
+            else
+              let json_event =
+                Json_encoding.construct Events.Pdu.encoding member_event
+                |> Ezjsonm.value_to_string in
+              let%lwt tree = Store.tree store in
+              let%lwt tree =
+                Store.Tree.add tree
+                  (Store.Key.v
+                     ["rooms"; room_id; "state"; "m.room.member"; state_key])
+                  event_id in
+              let%lwt tree =
+                Store.Tree.add tree
+                  (Store.Key.v ["events"; event_id])
+                  json_event in
+              (* save the new previous event id*)
+              let json =
+                Json_encoding.(construct (list string) [event_id])
+                |> Ezjsonm.value_to_string in
+              let%lwt tree =
+                Store.Tree.add tree
+                  (Store.Key.v ["rooms"; room_id; "head"])
+                  json in
+              (* saving update tree *)
+              let%lwt return =
+                Store.set_tree
+                  ~info:(Helper.info t ~message:"add joining member")
+                  store (Store.Key.v []) tree in
+              match return with
+              | Ok () ->
+                (* fetch the state of the room *)
+                let%lwt tree = Store.tree store in
+                let%lwt state_tree =
+                  Store.Tree.get_tree tree
+                    (Store.Key.v ["rooms"; room_id; "state"]) in
+                let%lwt state =
+                  Store.Tree.fold
+                    ~contents:(fun _ event_id events ->
+                      let open Events in
+                      let%lwt json =
+                        Store.Tree.get tree @@ Store.Key.v ["events"; event_id]
+                      in
+                      let event =
+                        Ezjsonm.from_string json
+                        |> Json_encoding.destruct Pdu.encoding in
+                      Lwt.return (event :: events))
+                    state_tree [] in
+                let response =
+                  Response.make ~origin:t.server_name ~auth_chain:state ~state
+                    ()
+                  |> Json_encoding.construct Response.encoding
+                  |> Ezjsonm.value_to_string in
+                Dream.json response
+              | Error write_error ->
+                Dream.error (fun m ->
+                    m "Write error: %a"
+                      (Irmin.Type.pp Store.write_error_t)
+                      write_error);
+                Dream.json ~status:`Internal_Server_Error
+                  {|{"errcode": "M_UNKNOWN"}|})
+        | _ -> Dream.json ~status:`Forbidden {|{"errcode": "M_UNKNOWN"}|}
   end
 
   module Retrieve = struct
     (* Notes:
-       - Verify if the room asking for the event is entitled to do so
        - Needs a better error handling *)
     let get_event t request =
       let open Retrieve.Event in
@@ -540,12 +563,20 @@ struct
         let event =
           Json_encoding.destruct Events.Pdu.encoding
             (Ezjsonm.value_from_string json) in
-        let response =
-          Response.make ~origin:t.server_name ~origin_server_ts:(time ())
-            ~pdus:[event] ()
-          |> Json_encoding.construct Response.encoding
-          |> Ezjsonm.value_to_string in
-        Dream.json response
+        let room_id = Events.Pdu.get_room_id event in
+        let server_name =
+          Option.get @@ Dream.local Middleware.logged_server request in
+        let%lwt b = is_room_participant server_name room_id in
+        (* check if the server is in the room *)
+        if not b then
+          Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
+        else
+          let response =
+            Response.make ~origin:t.server_name ~origin_server_ts:(time ())
+              ~pdus:[event] ()
+            |> Json_encoding.construct Response.encoding
+            |> Ezjsonm.value_to_string in
+          Dream.json response
   end
 
   module Transaction = struct
@@ -611,17 +642,20 @@ struct
 
   module Backfill = struct
     (* Notes:
-       - Verify if the room asking for the event is entitled to do so
        - Use the limit/do the pagination
        - Error handling
        - It's way too bad, needs a lot of rework in order to do less operations
     *)
     let get t request =
       let open Backfill in
-      let _room_id = Dream.param "room_id" request in
+      let room_id = Dream.param "room_id" request in
       let v = Dream.queries "v" request in
       let _limit = Dream.query "limit" request in
-      if List.length v == 0 then
+      let server_name =
+        Option.get @@ Dream.local Middleware.logged_server request in
+      let%lwt b = is_room_participant server_name room_id in
+      (* check if the server is in the room or if no events were asked for *)
+      if (not b) || List.length v == 0 then
         Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
       else
         let%lwt tree = Store.tree store in
@@ -638,10 +672,14 @@ struct
               let event =
                 Json_encoding.destruct Events.Pdu.encoding
                   (Ezjsonm.value_from_string json) in
-              let prev_event = Events.Pdu.get_prev_events event in
-              Lwt_list.fold_left_s f
-                (event_id :: event_ids, event :: events)
-                prev_event in
+              (* check if the event is in the room *)
+              if room_id <> Events.Pdu.get_room_id event then
+                Lwt.return (event_ids, events)
+              else
+                let prev_event = Events.Pdu.get_prev_events event in
+                Lwt_list.fold_left_s f
+                  (event_id :: event_ids, event :: events)
+                  prev_event in
         let%lwt _, events = Lwt_list.fold_left_s f ([], []) v in
         let response =
           Response.make ~origin:t.server_name ~origin_server_ts:(time ())
@@ -651,89 +689,106 @@ struct
         Dream.json response
 
     (* Notes:
-       - Verify if the room asking for the event is entitled to do so
        - Use the limit/do the pagination
        - Error handling
        - It's way too bad, needs a lot of rework in order to do less operations
     *)
     let get_missing_event request =
       let open Get_missing_events in
-      let%lwt request, body = Middleware.body request in
-      let%lwt body = body in
-      let missing_events =
-        Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
-      in
-      let _room_id = Dream.param "room_id" request in
-      let earliest_events = Request.get_earliest_events missing_events in
-      let lastest_events = Request.get_lastest_events missing_events in
-      let _limit =
-        Option.value ~default:10 @@ Request.get_limit missing_events in
-      let _min_depth =
-        Option.value ~default:0 @@ Request.get_min_depth missing_events in
+      let room_id = Dream.param "room_id" request in
+      let server_name =
+        Option.get @@ Dream.local Middleware.logged_server request in
+      let%lwt b = is_room_participant server_name room_id in
+      (* check if the server is in the room *)
+      if not b then Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
+      else
+        let%lwt _request, body = Middleware.body request in
+        let%lwt body = body in
+        let missing_events =
+          Json_encoding.destruct Request.encoding
+            (Ezjsonm.value_from_string body) in
+        let earliest_events = Request.get_earliest_events missing_events in
+        let lastest_events = Request.get_lastest_events missing_events in
+        let _limit =
+          Option.value ~default:10 @@ Request.get_limit missing_events in
+        let _min_depth =
+          Option.value ~default:0 @@ Request.get_min_depth missing_events in
 
-      let%lwt tree = Store.tree store in
-      let rec f (event_ids, events) event_id =
-        let event_id = Identifiers.Event_id.of_string_exn event_id in
-        if List.exists (String.equal event_id) event_ids then
-          Lwt.return (event_ids, events)
-        else
-          let%lwt json =
-            Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
-          match json with
-          | None -> Lwt.return (event_ids, events)
-          | Some json ->
-            let event =
-              Json_encoding.destruct Events.Pdu.encoding
-                (Ezjsonm.value_from_string json) in
-            let prev_event = Events.Pdu.get_prev_events event in
-            Lwt_list.fold_left_s f
-              (event_id :: event_ids, event :: events)
-              prev_event in
-      let%lwt _, events =
-        Lwt_list.fold_left_s f (earliest_events, []) lastest_events in
-      let response =
-        Response.make ~events ()
-        |> Json_encoding.construct Response.encoding
-        |> Ezjsonm.value_to_string in
-      Dream.json response
-  end
-
-  module Event_auth = struct
-    (* Notes:
-       - Verify if the room asking for the event is entitled to do so
-    *)
-    let get request =
-      let open Event_auth in
-      let _room_id = Dream.param "room_id" request in
-      let event_id = Dream.param "event_id" request in
-      (* fetch the event *)
-      let event_id = Identifiers.Event_id.of_string_exn event_id in
-      let%lwt tree = Store.tree store in
-      let%lwt json = Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
-      match json with
-      | None -> Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
-      | Some json ->
-        let event =
-          Json_encoding.destruct Events.Pdu.encoding
-            (Ezjsonm.value_from_string json) in
-        let auth_events = Events.Pdu.get_auth_events event in
-        let f l event_id =
+        let%lwt tree = Store.tree store in
+        let rec f (event_ids, events) event_id =
           let event_id = Identifiers.Event_id.of_string_exn event_id in
-          let%lwt json =
-            Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
-          match json with
-          | None -> Lwt.return l
-          | Some json ->
-            let event =
-              Json_encoding.destruct Events.Pdu.encoding
-                (Ezjsonm.value_from_string json) in
-            Lwt.return (event :: l) in
-        let%lwt auth_chain = Lwt_list.fold_left_s f [] auth_events in
+          if List.exists (String.equal event_id) event_ids then
+            Lwt.return (event_ids, events)
+          else
+            let%lwt json =
+              Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
+            match json with
+            | None -> Lwt.return (event_ids, events)
+            | Some json ->
+              let event =
+                Json_encoding.destruct Events.Pdu.encoding
+                  (Ezjsonm.value_from_string json) in
+              (* check if the event is in the room *)
+              if room_id <> Events.Pdu.get_room_id event then
+                Lwt.return (event_ids, events)
+              else
+                let prev_event = Events.Pdu.get_prev_events event in
+                Lwt_list.fold_left_s f
+                  (event_id :: event_ids, event :: events)
+                  prev_event in
+        let%lwt _, events =
+          Lwt_list.fold_left_s f (earliest_events, []) lastest_events in
         let response =
-          Response.make ~auth_chain ()
+          Response.make ~events ()
           |> Json_encoding.construct Response.encoding
           |> Ezjsonm.value_to_string in
         Dream.json response
+  end
+
+  module Event_auth = struct
+    let get request =
+      let open Event_auth in
+      let room_id = Dream.param "room_id" request in
+      let server_name =
+        Option.get @@ Dream.local Middleware.logged_server request in
+      let%lwt b = is_room_participant server_name room_id in
+      (* check if the server is in the room or if no events were asked for *)
+      if not b then Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
+      else
+        let event_id = Dream.param "event_id" request in
+        (* fetch the event *)
+        let event_id = Identifiers.Event_id.of_string_exn event_id in
+        let%lwt tree = Store.tree store in
+        let%lwt json =
+          Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
+        match json with
+        | None -> Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
+        | Some json ->
+          let event =
+            Json_encoding.destruct Events.Pdu.encoding
+              (Ezjsonm.value_from_string json) in
+          (* check if the event is in the room *)
+          if room_id <> Events.Pdu.get_room_id event then
+            Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
+          else
+            let auth_events = Events.Pdu.get_auth_events event in
+            let f l event_id =
+              let event_id = Identifiers.Event_id.of_string_exn event_id in
+              let%lwt json =
+                Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
+              match json with
+              | None -> Lwt.return l
+              | Some json ->
+                let event =
+                  Json_encoding.destruct Events.Pdu.encoding
+                    (Ezjsonm.value_from_string json) in
+                Lwt.return (event :: l) in
+            let%lwt auth_chain = Lwt_list.fold_left_s f [] auth_events in
+            let response =
+              Response.make ~auth_chain ()
+              |> Json_encoding.construct Response.encoding
+              |> Ezjsonm.value_to_string in
+            Dream.json response
   end
 
   module State = struct
@@ -781,7 +836,8 @@ struct
 
   module Query = struct
     (* Notes:
-       - Verify if the server is in the room
+       - Do we want to give the participants to foreign servers ? The spec
+         doesnt seem to consider it.
     *)
     let directory _t request =
       let open Query.Directory in

@@ -90,6 +90,107 @@ struct
       |> Base64.encode_string ~pad:false ~alphabet in
     sha256
 
+  let is_valid_key key_tree =
+    let%lwt valid_until =
+      Store.Tree.get key_tree @@ Store.Key.v ["valid_until"] in
+    let expires_at = Float.of_string valid_until in
+    let current_time = Unix.gettimeofday () in
+    Lwt.return (expires_at > current_time)
+
+  let fetching_key (t : Common_routes.t) server_name key_id =
+    let open Matrix_stos.Key.Direct_query in
+    let uri =
+      Uri.make ~scheme:"https" ~port:8448 ~host:server_name
+        ~path:("/_matrix/key/v2/server/" ^ key_id)
+        () in
+    let headers = Cohttp.Header.of_list ["Content-length", "0"] in
+    let%lwt _resp, body = Paf_cohttp.get ~headers ~ctx:t.ctx uri in
+    let%lwt body = Cohttp_lwt.Body.to_string body in
+    let direct_keys =
+      Json_encoding.destruct Response.encoding (Ezjsonm.value_from_string body)
+    in
+    (* we should use the signatures *)
+    let verify_keys = Response.get_verify_keys direct_keys in
+    let valid_until = Response.get_valid_until_ts direct_keys in
+    match List.assoc_opt key_id verify_keys, valid_until with
+    | Some key, Some valid_until ->
+      let key = Response.Verify_key.get_key key in
+      Lwt.return_some (key, valid_until)
+    | _ -> Lwt.return_none
+
+  let is_valid_event_signature signature event key =
+    let open Events in
+    let string_pdu =
+      Json_encoding.construct Pdu.redact event
+      |> Json_encoding.canonize
+      |> Ezjsonm.value_to_string in
+    match Base64.decode ~pad:false key with
+    | Error _ -> Lwt.return false
+    | Ok key -> (
+      match Mirage_crypto_ec.Ed25519.pub_of_cstruct (Cstruct.of_string key) with
+      | Error _ -> Lwt.return false
+      | Ok key -> (
+        match Base64.decode ~pad:false signature with
+        | Error _ -> Lwt.return false
+        | Ok signature ->
+          let verify =
+            Mirage_crypto_ec.Ed25519.verify ~key
+              (Cstruct.of_string signature)
+              ~msg:(Cstruct.of_string string_pdu) in
+          Lwt.return verify))
+
+  let check_event_signature (t : Common_routes.t) origin event =
+    let open Events in
+    let signatures = Pdu.get_signatures event in
+    match List.assoc_opt origin signatures with
+    | None -> Lwt.return_false
+    | Some signatures ->
+      let f (key_id, signature) =
+        (* check if we have the key, if not, try to fetch it *)
+        let%lwt tree = Store.tree store in
+        let%lwt key_tree =
+          Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id]
+        in
+        let%lwt key_tree =
+          if key_tree = None then
+            let%lwt key_s = fetching_key t origin key_id in
+            match key_s with
+            | Some (key_s, valid_until) -> (
+              let%lwt tree =
+                Store.Tree.add tree
+                  (Store.Key.v ["keys"; origin; key_id; "key"])
+                  key_s in
+              let%lwt tree =
+                Store.Tree.add tree
+                  (Store.Key.v ["keys"; origin; key_id; "valid_until"])
+                  (Int.to_string valid_until) in
+              let%lwt return =
+                Store.set_tree
+                  ~info:(info t ~message:"add server key")
+                  store (Store.Key.v []) tree in
+              match return with
+              | Ok () ->
+                Store.Tree.find_tree tree
+                @@ Store.Key.v ["keys"; origin; key_id]
+              | Error write_error ->
+                Dream.error (fun m ->
+                    m "Write error: %a"
+                      (Irmin.Type.pp Store.write_error_t)
+                      write_error);
+                Lwt.return_none)
+            | None -> Lwt.return_none
+          else Lwt.return key_tree in
+        match key_tree with
+        | None -> Lwt.return_false
+        | Some key_tree ->
+          let%lwt is_valid = is_valid_key key_tree in
+          if not is_valid then Lwt.return_false
+          else
+            let%lwt key = Store.Tree.get key_tree (Store.Key.v ["key"]) in
+            is_valid_event_signature signature event key in
+      let%lwt checks = Lwt_list.map_p f signatures in
+      Lwt.return @@ not @@ List.exists (Bool.equal false) checks
+
   (* Use older/replaced events once they are implemented *)
   let get_room_prev_events room_id =
     let%lwt tree = Store.tree store in
@@ -133,6 +234,16 @@ struct
     Lwt_list.fold_left_s f [] members
 
   (* Notes:
+     - In the future we will want to have a finer approach, by not only checking
+       if the server is in the room but if it's users are allow to do precise
+       operations. As they are not really allowed to do anything for now however,
+       this implemention will suffice.
+  *)
+  let is_room_participant server_name room_id =
+    let%lwt joined_servers = fetch_joined_servers room_id in
+    Lwt.return (List.exists (String.equal server_name) joined_servers)
+
+  (* Notes:
      - Error handling
      - Use less hardcoded strings *)
   let notify_room_servers (t : Common_routes.t) room_id events =
@@ -143,8 +254,8 @@ struct
       List.filter (fun s -> not @@ String.equal t.server_name s) origins in
     let f server_name =
       let body =
-        Request.make ~origin:server_name ~origin_server_ts:(time ()) ~pdus:events
-          ()
+        Request.make ~origin:server_name ~origin_server_ts:(time ())
+          ~pdus:events ()
         |> Json_encoding.construct Request.encoding in
       let content = Some body in
       let txn_id = Uuidm.(v `V4 |> to_string) in
@@ -168,8 +279,10 @@ struct
           ^ {|"|}) in
       let body = Cohttp_lwt.Body.of_string (Ezjsonm.value_to_string body) in
       let%lwt body_length, body = Cohttp_lwt.Body.length body in
-      let headers = Cohttp.Header.add headers "Content-length" (Int64.to_string body_length) in
+      let headers =
+        Cohttp.Header.add headers "Content-length" (Int64.to_string body_length)
+      in
       let%lwt _resp, _body = Paf_cohttp.put ~headers ~ctx:t.ctx ~body uri in
-        Lwt.return_unit in
-      Lwt_list.iter_p f origins
+      Lwt.return_unit in
+    Lwt_list.iter_p f origins
 end
