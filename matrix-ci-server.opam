@@ -25,6 +25,8 @@ depends: [
   "mirage-crypto-ec"
   "mirage-time"
   "mirage-time-unix"
+  "mirage-clock-unix"
+  "mirage-crypto-rng-mirage"
   "mirage-kv"
   "ppxlib"
   "uuidm"
