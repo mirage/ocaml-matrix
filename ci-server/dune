@@ -18,7 +18,7 @@
   irmin-unix
   uuidm
   mirage-time
-  mirage-stack)
+  tcpip)
  (preprocess
   (pps lwt_ppx)))
 

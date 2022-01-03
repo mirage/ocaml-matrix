@@ -22,6 +22,7 @@ depends: [
   "irmin-fs"
   "irmin-unix"
   "logs"
+  "tcpip" {>= "7.0.0"}
   "mirage-crypto-ec"
   "mirage-time"
   "mirage-time-unix"
