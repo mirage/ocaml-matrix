@@ -24,6 +24,7 @@ depends: [
   "logs"
   "mirage-crypto-ec"
   "mirage-time"
+  "mirage-time-unix"
   "mirage-kv"
   "ppxlib"
   "uuidm"
