@@ -757,6 +757,7 @@ module Events : sig
   module Event : sig
     type%accessor t = {
       event_content: Event_content.t;
+      event_type: string;
       signatures: (string * (string * string) list) list option;
     }
 

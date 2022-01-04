@@ -1526,17 +1526,16 @@ end
 module Event = struct
   type t = {
     event_content: Event_content.t;
+    event_type: string;
     signatures: (string * (string * string) list) list option;
   }
   [@@deriving accessor]
 
   let encoding =
-    let to_tuple t =
-      (Event_content.get_type t.event_content, t.event_content), t.signatures
-    in
+    let to_tuple t = (t.event_type, t.event_content), t.signatures in
     let of_tuple v =
-      let (_, event_content), signatures = v in
-      {event_content; signatures} in
+      let (event_type, event_content), signatures = v in
+      {event_type; event_content; signatures} in
     let with_tuple =
       merge_objs
         (cond
@@ -1802,15 +1801,15 @@ type event =
 let encoding : event encoding =
   union
     [
-      case Event.encoding
-        (function `Event t -> Some t | _ -> None)
-        (fun t -> `Event t);
-      case Room_event.encoding
-        (function `Room_event t -> Some t | _ -> None)
-        (fun t -> `Room_event t);
       case State_event.encoding
         (function `State_event t -> Some t | _ -> None)
         (fun t -> `State_event t);
+      case Room_event.encoding
+        (function `Room_event t -> Some t | _ -> None)
+        (fun t -> `Room_event t);
+      case Event.encoding
+        (function `Event t -> Some t | _ -> None)
+        (fun t -> `Event t);
     ]
 
 (* Persistent data unit *)

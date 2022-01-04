@@ -449,66 +449,170 @@ struct
       Dream.json ~status:`Bad_Request
         {|{"errcode": "M_FORBIDDEN"; "error": "Current implementation only accepts public rooms"}|}
 
-  (* FIXME: Rework this, it is broken, canonical alias is always parsed from json *)
+  (* Note:
+     - Work on the event decoding
+     - Check previous state ?
+     - Do some actions depending on the state (aliases ?)
+  *)
   let state t request ~with_state_key =
     let open Room_event.Put.State_event in
     let%lwt request, body = Middleware.body request in
     let%lwt body = body in
+    let room_id = Dream.param "room_id" request in
+    let event_type = Dream.param "event_type" request in
+    let json = Ezjsonm.value_from_string body in
+    let open Events.Event_content in
     let state =
-      Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
-    in
-    match Dream.local Middleware.logged_user request with
-    | Some user_id ->
-      let room_id = Dream.param "room_id" request in
-      let event_type = Dream.param "event_type" request in
-      let%lwt b = Helper.is_room_user room_id user_id in
-      if b then (
-        let id = "$" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
-        let event_content = Room_event.Put.State_event.Request.get_event state in
-        let state_key, store_key =
-          if with_state_key then
-            let state_key = Dream.param "state_key" request in
-            state_key, ["rooms"; room_id; "state"; event_type; state_key]
-          else "", ["rooms"; room_id; "state"; event_type] in
-        let event =
-          Events.State_event.make
-            ~room_event:
-              (Events.Room_event.make
-                 ~event:(Events.Event.make ~event_content ())
-                 ~event_id:id ~sender:user_id
-                 ~origin_server_ts:((Unix.time () |> Float.to_int) * 1000)
-                 ())
-            ~state_key () in
-        let json_event =
-          Json_encoding.construct Events.State_event.encoding event
-          |> Ezjsonm.value_to_string in
-        let%lwt tree = Store.tree store in
-        let%lwt tree = Store.Tree.add tree (Store.Key.v store_key) json_event in
-        (* saving update tree *)
-        let%lwt return =
-          Store.set_tree
-            ~info:(Helper.info t ~message:"set room state")
-            store (Store.Key.v []) tree in
-        match return with
-        | Ok () ->
-          let event_id = "$" ^ id ^ ":" ^ t.server_name in
-          let response =
-            Response.make ~event_id ()
-            |> Json_encoding.construct Response.encoding
+      match event_type with
+      | "m.room.aliases" ->
+        Ok (Aliases (Json_encoding.destruct Aliases.encoding json))
+      | "m.room.canonical_alias" ->
+        Ok
+          (Canonical_alias
+             (Json_encoding.destruct Canonical_alias.encoding json))
+      | "m.room.create" ->
+        Ok (Create (Json_encoding.destruct Create.encoding json))
+      | "m.room.join_rules" ->
+        Ok (Join_rules (Json_encoding.destruct Join_rules.encoding json))
+      | "m.room.member" ->
+        Ok (Member (Json_encoding.destruct Member.encoding json))
+      | "m.room.power_levels" ->
+        Ok (Power_levels (Json_encoding.destruct Power_levels.encoding json))
+      | "m.room.history_visibility" ->
+        Ok
+          (History_visibility
+             (Json_encoding.destruct History_visibility.encoding json))
+      | "m.room.third_party_invite" ->
+        Ok
+          (Third_party_invite
+             (Json_encoding.destruct Third_party_invite.encoding json))
+      | "m.room.guest_access" ->
+        Ok (Guest_access (Json_encoding.destruct Guest_access.encoding json))
+      | "m.room.server_acl" ->
+        Ok (Server_acl (Json_encoding.destruct Server_acl.encoding json))
+      | "m.room.tombstone" ->
+        Ok (Tombstone (Json_encoding.destruct Tombstone.encoding json))
+      | "m.room.encryption" ->
+        Ok (Encryption (Json_encoding.destruct Encryption.encoding json))
+      | "m.room.encrypted" ->
+        Ok (Encrypted (Json_encoding.destruct Encrypted.encoding json))
+      | "m.room.message" ->
+        Ok (Message (Json_encoding.destruct Message.encoding json))
+      | "m.room.name" -> Ok (Name (Json_encoding.destruct Name.encoding json))
+      | "m.room.topic" ->
+        Ok (Topic (Json_encoding.destruct Topic.encoding json))
+      | "m.room.avatar" ->
+        Ok (Avatar (Json_encoding.destruct Avatar.encoding json))
+      | "m.room.pinned_events" ->
+        Ok (Pinned (Json_encoding.destruct Pinned_events.encoding json))
+      | "m.call.invite" ->
+        Ok (Invite (Json_encoding.destruct Call.Invite.encoding json))
+      | "m.call.candidates" ->
+        Ok (Candidates (Json_encoding.destruct Call.Candidates.encoding json))
+      | "m.call.answer" ->
+        Ok (Answer (Json_encoding.destruct Call.Answer.encoding json))
+      | "m.call.hangup" ->
+        Ok (Hangup (Json_encoding.destruct Call.Hangup.encoding json))
+      | "m.presence" ->
+        Ok (Presence (Json_encoding.destruct Presence.encoding json))
+      | "m.push_rules" ->
+        Ok (Push_rules (Json_encoding.destruct Push_rules.encoding json))
+      | "m.typing" -> Ok (Typing (Json_encoding.destruct Typing.encoding json))
+      | "m.receipt" ->
+        Ok (Receipt (Json_encoding.destruct Receipt.encoding json))
+      | "m.fully_read" ->
+        Ok (Fully_read (Json_encoding.destruct Fully_read.encoding json))
+      | "m.tag" -> Ok (Tag (Json_encoding.destruct Tag.encoding json))
+      | "m.direct" -> Ok (Direct (Json_encoding.destruct Direct.encoding json))
+      | "m.room_key" ->
+        Ok (Room_key (Json_encoding.destruct Room_key.encoding json))
+      | "m.room_key_request" ->
+        Ok
+          (Room_key_request
+             (Json_encoding.destruct Room_key_request.encoding json))
+      | "m.forwarded_room_key" ->
+        Ok
+          (Forwarded_room_key
+             (Json_encoding.destruct Forwarded_room_key.encoding json))
+      | s -> Error s in
+    match state with
+    | Error _ -> Dream.json ~status:`Bad_Request {|{"errcode": "M_UNKNOWN"}|}
+    | Ok event_content -> (
+      match Dream.local Middleware.logged_user request with
+      | Some user_id ->
+        let%lwt b = Helper.is_room_user room_id user_id in
+        if b then (
+          let state_key, store_key =
+            if with_state_key then
+              let state_key = Dream.param "state_key" request in
+              state_key, ["rooms"; room_id; "state"; event_type; state_key]
+            else "", ["rooms"; room_id; "state"; event_type] in
+          let%lwt tree = Store.tree store in
+          let%lwt state_tree =
+            Store.Tree.get_tree tree (Store.Key.v ["rooms"; room_id; "state"])
+          in
+          let%lwt create_event =
+            Store.Tree.get state_tree (Store.Key.v ["m.room.create"]) in
+          let%lwt power_level =
+            Store.Tree.get state_tree (Store.Key.v ["m.room.power_levels"])
+          in
+          let%lwt member =
+            Store.Tree.get state_tree (Store.Key.v ["m.room.member"; user_id])
+          in
+          let%lwt old_depth, prev_events = get_room_prev_events room_id in
+          let depth = old_depth + 1 in
+          let event =
+            Events.Pdu.make
+              ~auth_events:["$" ^ create_event; "$" ^ power_level; "$" ^ member]
+              ~event_content ~depth ~origin:t.server_name
+              ~origin_server_ts:(time ()) ~prev_events ~prev_state:[] ~room_id
+              ~sender:user_id ~signatures:[]
+              ~event_type:(Events.Event_content.get_type event_content)
+              ~state_key () in
+          let event = compute_hash_and_sign t event in
+          let event_id = compute_event_reference_hash event in
+          let json_event =
+            Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
-          Dream.json response
-        | Error write_error ->
-          Dream.error (fun m ->
-              m "Write error: %a"
-                (Irmin.Type.pp Store.write_error_t)
-                write_error);
-          Dream.json ~status:`Internal_Server_Error {|{"errcode": "M_UNKNOWN"}|})
-      else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
-    | None -> assert false
+          let%lwt tree =
+            Store.Tree.add tree
+              (Store.Key.v store_key)
+              event_id in
+          let%lwt tree =
+            Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+          in
+          (* save the new head of the events *)
+          let json =
+            Json_encoding.(construct (list string) [event_id])
+            |> Ezjsonm.value_to_string in
+          let%lwt tree =
+            Store.Tree.add tree (Store.Key.v ["rooms"; room_id; "head"]) json
+          in
+          (* saving update tree *)
+          let%lwt return =
+            Store.set_tree
+              ~info:(Helper.info t ~message:"set state")
+              store (Store.Key.v []) tree in
+          match return with
+          | Ok () ->
+            let event_id = "$" ^ event_id ^ ":" ^ t.server_name in
+            let response =
+              Response.make ~event_id ()
+              |> Json_encoding.construct Response.encoding
+              |> Ezjsonm.value_to_string in
+            Dream.json response
+          | Error write_error ->
+            Dream.error (fun m ->
+                m "Write error: %a"
+                  (Irmin.Type.pp Store.write_error_t)
+                  write_error);
+            Dream.json ~status:`Internal_Server_Error
+              {|{"errcode": "M_UNKNOWN"}|})
+        else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
+      | None -> assert false)
 
   (** Notes:
       - Properly use the ID
-      - Support all message type
       - Ensure indempotency
     *)
   let send t request =
