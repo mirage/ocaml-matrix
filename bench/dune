@@ -5,6 +5,7 @@
  (libraries matrix-current shexp.process))
 
 
-(alias
- (name bench)
- (deps ./bench.exe matrix-ci-server-setup matrix-ci-server-bin))
+(rule
+ (alias bench)
+ (deps ./bench.exe %{bin:matrix-ci-server-setup} %{bin:matrix-ci-server-bin})
+ (action (run bench)))
