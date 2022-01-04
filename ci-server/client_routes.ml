@@ -39,7 +39,7 @@ struct
             (Identifier.User.get_user user)
             t.server_name in
         let%lwt pwd =
-          Store.find store (Store.Key.v ["users"; user_id; "password"]) in
+          Store.find t.store (Store.Key.v ["users"; user_id; "password"]) in
         match pwd with
         | None ->
           Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
@@ -47,7 +47,7 @@ struct
           (* Verify the username/password combination *)
           let password = Authentication.Password.V2.get_password auth in
           let%lwt salt =
-            Store.get store (Store.Key.v ["users"; user_id; "salt"]) in
+            Store.get t.store (Store.Key.v ["users"; user_id; "salt"]) in
           let digest = Digestif.BLAKE2B.hmac_string ~key:salt password in
           let pwd = Digestif.BLAKE2B.of_hex pwd in
           if not (Digestif.BLAKE2B.equal digest pwd) then
@@ -58,7 +58,7 @@ struct
               | None -> Uuidm.(v `V4 |> to_string)
               | Some device -> Fmt.str "%s:%s" device user_id in
             let token = Uuidm.(v `V4 |> to_string) in
-            let%lwt tree = Store.tree store in
+            let%lwt tree = Store.tree t.store in
             (* add token *)
             let%lwt tree =
               Store.Tree.add tree
@@ -88,7 +88,7 @@ struct
             let%lwt return =
               Store.set_tree
                 ~info:(Helper.info t ~message:"login user")
-                store (Store.Key.v []) tree in
+                t.store (Store.Key.v []) tree in
             match return with
             | Ok () ->
               let response =
@@ -122,9 +122,9 @@ struct
       with
       | Some username, Some device -> (
         let%lwt token =
-          Store.get store (Store.Key.v ["devices"; device; "token"]) in
+          Store.get t.store (Store.Key.v ["devices"; device; "token"]) in
         (* remove the device data and the associated token *)
-        let%lwt tree = Store.tree store in
+        let%lwt tree = Store.tree t.store in
         let%lwt tree =
           Store.Tree.remove tree
             (Store.Key.v ["users"; username; "devices"; device]) in
@@ -134,7 +134,7 @@ struct
         let%lwt return =
           Store.set_tree
             ~info:(Helper.info t ~message:"logout user")
-            store (Store.Key.v []) tree in
+            t.store (Store.Key.v []) tree in
         match return with
         | Ok () -> Lwt.return_unit
         | Error write_error ->
@@ -156,11 +156,11 @@ struct
         want a minimalist server.
       - At least verify if the server part of the alias is the right one
     *)
-  let resolve_alias request =
+  let resolve_alias t request =
     let open Room.Resolve_alias in
     let alias = Dream.param "alias" request in
     let room_alias, _ = Identifiers.Room_alias.of_string_exn alias in
-    let%lwt room_id = Store.find store (Store.Key.v ["aliases"; room_alias]) in
+    let%lwt room_id = Store.find t.store (Store.Key.v ["aliases"; room_alias]) in
     match room_id with
     | None ->
       Dream.json ~status:`Not_Found
@@ -189,7 +189,7 @@ struct
         Dream.json ~status:`Bad_Request
           {|{"errcode": "M_INVALID_ROOM_STATE"; "error": "Room alias is mandatory for a public room"}|}
       | Some alias -> (
-        let%lwt s_alias = Store.find store (Store.Key.v ["aliases"; alias]) in
+        let%lwt s_alias = Store.find t.store (Store.Key.v ["aliases"; alias]) in
         match s_alias with
         | Some _ ->
           Dream.json ~status:`Bad_Request
@@ -197,7 +197,7 @@ struct
         | None -> (
           match Dream.local Middleware.logged_user request with
           | Some user_id -> (
-            let%lwt tree = Store.tree store in
+            let%lwt tree = Store.tree t.store in
             let room_id =
               "!" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
             (* Create the state events of the room *)
@@ -429,7 +429,7 @@ struct
             let%lwt return =
               Store.set_tree
                 ~info:(Helper.info t ~message:"create room")
-                store (Store.Key.v []) tree in
+                t.store (Store.Key.v []) tree in
             match return with
             | Ok () ->
               let response =
@@ -540,14 +540,14 @@ struct
     | Ok event_content -> (
       match Dream.local Middleware.logged_user request with
       | Some user_id ->
-        let%lwt b = Helper.is_room_user room_id user_id in
+        let%lwt b = Helper.is_room_user t room_id user_id in
         if b then (
           let state_key, store_key =
             if with_state_key then
               let state_key = Dream.param "state_key" request in
               state_key, ["rooms"; room_id; "state"; event_type; state_key]
             else "", ["rooms"; room_id; "state"; event_type] in
-          let%lwt tree = Store.tree store in
+          let%lwt tree = Store.tree t.store in
           let%lwt state_tree =
             Store.Tree.get_tree tree (Store.Key.v ["rooms"; room_id; "state"])
           in
@@ -559,7 +559,7 @@ struct
           let%lwt member =
             Store.Tree.get state_tree (Store.Key.v ["m.room.member"; user_id])
           in
-          let%lwt old_depth, prev_events = get_room_prev_events room_id in
+          let%lwt old_depth, prev_events = get_room_prev_events t room_id in
           let depth = old_depth + 1 in
           let event =
             Events.Pdu.make
@@ -592,7 +592,7 @@ struct
           let%lwt return =
             Store.set_tree
               ~info:(Helper.info t ~message:"set state")
-              store (Store.Key.v []) tree in
+              t.store (Store.Key.v []) tree in
           match return with
           | Ok () ->
             let event_id = "$" ^ event_id ^ ":" ^ t.server_name in
@@ -625,9 +625,9 @@ struct
     match Dream.local Middleware.logged_user request with
     | Some user_id ->
       let room_id = Dream.param "room_id" request in
-      let%lwt b = Helper.is_room_user room_id user_id in
+      let%lwt b = Helper.is_room_user t room_id user_id in
       if b then (
-        let%lwt tree = Store.tree store in
+        let%lwt tree = Store.tree t.store in
         let%lwt state_tree =
           Store.Tree.get_tree tree (Store.Key.v ["rooms"; room_id; "state"])
         in
@@ -640,7 +640,7 @@ struct
         in
         let message_content = Request.get_event message in
         let event_content = Events.Event_content.Message message_content in
-        let%lwt old_depth, prev_events = get_room_prev_events room_id in
+        let%lwt old_depth, prev_events = get_room_prev_events t room_id in
         let depth = old_depth + 1 in
         let event =
           Events.Pdu.make
@@ -669,7 +669,7 @@ struct
         let%lwt return =
           Store.set_tree
             ~info:(Helper.info t ~message:"set message")
-            store (Store.Key.v []) tree in
+            t.store (Store.Key.v []) tree in
         match return with
         | Ok () ->
           let%lwt () = notify_room_servers t room_id [event] in
@@ -704,8 +704,8 @@ struct
                     Dream.scope ""
                       [Middleware.Rate_limit.rate_limited]
                       [Dream.post "/login" (login t)];
-                    Dream.get "/directory/room/:alias" resolve_alias;
-                    Dream.scope "" [Middleware.is_logged]
+                    Dream.get "/directory/room/:alias" (resolve_alias t);
+                    Dream.scope "" [Middleware.is_logged t]
                       [
                         Dream.post "/createRoom" (create_room t);
                         Dream.put "/rooms/:room_id/state/:event_type/:state_key"

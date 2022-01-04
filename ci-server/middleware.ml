@@ -50,7 +50,7 @@ struct
   (** Notes:
     - In cruel need of error handling
   *)
-  let is_logged handler request =
+  let is_logged (t: Common_routes.t) handler request =
     let token =
       match Option.bind (Dream.header "Authorization" request) clean_token with
       | None -> Dream.query "access_token" request
@@ -60,7 +60,7 @@ struct
       Dream.json ~status:`Unauthorized
         {|{"errcode": "M_MISSING_TOKEN", "error": "No access token was specified"}|}
     | Some token -> (
-      let%lwt tree = Store.tree store in
+      let%lwt tree = Store.tree t.store in
       (* fetch the token *)
       let%lwt token_tree =
         Store.Tree.find_tree tree @@ Store.Key.v ["tokens"; token] in
@@ -171,13 +171,13 @@ struct
     - Upgrade the key fetching with proper retries and using several notary
       servers.
   *)
-  let is_logged_server t handler request =
+  let is_logged_server (t: Common_routes.t) handler request =
     match Option.bind (Dream.header "Authorization" request) clean_auth with
     | None ->
       Dream.json ~status:`Unauthorized
         {|{"errcode": "M_UNAUTHORIZED", "error": "Missing Authorization header"}|}
     | Some (origin, key_id, signature) -> (
-      let%lwt tree = Store.tree store in
+      let%lwt tree = Store.tree t.store in
       (* fetch the server's key *)
       let%lwt key_tree =
         Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id] in
@@ -197,7 +197,7 @@ struct
             let%lwt return =
               Store.set_tree
                 ~info:(Helper.info t ~message:"add server key")
-                store (Store.Key.v []) tree in
+                t.store (Store.Key.v []) tree in
             match return with
             | Ok () ->
               Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id]

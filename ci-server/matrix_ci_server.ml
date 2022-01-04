@@ -103,14 +103,17 @@ let stack_of_addr addr =
   in
   Stack.connect udp_socket tcp_socket
 
-let main server_name (key_name, key_path) addr () =
+let main server_name (key_name, key_path) addr store_path () =
   let priv_key, pub_key = read_key key_path in
   Lwt_main.run
     (let%lwt stack = stack_of_addr addr in
      let ctx = Mimic.empty in
      let ctx = Mimic.add witness_stack stack ctx in
      let ctx = fill Mimic.(add Paf_cohttp.sleep sleep ctx) in
-     let info = Common_routes.{server_name; key_name; priv_key; pub_key; ctx} in
+     let config = Irmin_git.config store_path in
+     let%lwt repo = Store.Store.Repo.v config in
+     let%lwt store = Store.Store.master repo in
+     let info = Common_routes.{server_name; key_name; priv_key; pub_key; ctx; store} in
      Lwt.join [client_server stack info; federation_server stack info])
 
 let setup level =
@@ -136,8 +139,15 @@ let addr =
   Arg.(
     value
     & opt string "0.0.0.0/0"
-    & info ["addr"] ~docv:"ip address + mask"
+    & info ["addr"] ~docv:"ip_address/mask"
         ~doc:"the ip address and it's mask")
+
+let store_path =
+  Arg.(
+    value
+    & opt string "/tmp/ocaml-matrix"
+    & info ["store_path"] ~docv:"store_path"
+        ~doc:"the path to the irmin git store")
 
 let () =
   let info =
@@ -150,5 +160,6 @@ let () =
            $ server_name
            $ server_key
            $ addr
+           $ store_path
            $ Term.(const setup $ Logs_cli.level ())),
          info )

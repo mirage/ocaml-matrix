@@ -8,8 +8,8 @@ module Make
 struct
   module Dream = Dream__mirage.Mirage.Make (Pclock) (Time) (Stack)
 
-  let is_room_user room_id user_id =
-    let%lwt tree = Store.tree store in
+  let is_room_user (t: Common_routes.t) room_id user_id =
+    let%lwt tree = Store.tree t.store in
     let%lwt event_id =
       Store.Tree.find tree
         (Store.Key.v ["rooms"; room_id; "state"; "m.room.member"; user_id])
@@ -147,7 +147,7 @@ struct
     | Some signatures ->
       let f (key_id, signature) =
         (* check if we have the key, if not, try to fetch it *)
-        let%lwt tree = Store.tree store in
+        let%lwt tree = Store.tree t.store in
         let%lwt key_tree =
           Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id]
         in
@@ -167,7 +167,7 @@ struct
               let%lwt return =
                 Store.set_tree
                   ~info:(info t ~message:"add server key")
-                  store (Store.Key.v []) tree in
+                  t.store (Store.Key.v []) tree in
               match return with
               | Ok () ->
                 Store.Tree.find_tree tree
@@ -192,8 +192,8 @@ struct
       Lwt.return @@ not @@ List.exists (Bool.equal false) checks
 
   (* Use older/replaced events once they are implemented *)
-  let get_room_prev_events room_id =
-    let%lwt tree = Store.tree store in
+  let get_room_prev_events (t: Common_routes.t) room_id =
+    let%lwt tree = Store.tree t.store in
     let%lwt json =
       Store.Tree.get tree @@ Store.Key.v ["rooms"; room_id; "head"] in
     let events_id =
@@ -207,8 +207,8 @@ struct
         Lwt.return (max d (Pdu.get_depth event), ("$" ^ event_id) :: ids))
       (0, []) events_id
 
-  let fetch_joined_servers room_id =
-    let%lwt tree = Store.tree store in
+  let fetch_joined_servers (t: Common_routes.t) room_id =
+    let%lwt tree = Store.tree t.store in
     let%lwt members =
       Store.Tree.list tree
       @@ Store.Key.v ["rooms"; room_id; "state"; "m.room.member"] in
@@ -239,8 +239,8 @@ struct
        operations. As they are not really allowed to do anything for now however,
        this implemention will suffice.
   *)
-  let is_room_participant server_name room_id =
-    let%lwt joined_servers = fetch_joined_servers room_id in
+  let is_room_participant t server_name room_id =
+    let%lwt joined_servers = fetch_joined_servers t room_id in
     Lwt.return (List.exists (String.equal server_name) joined_servers)
 
   (* Notes:
@@ -249,7 +249,7 @@ struct
   let notify_room_servers (t : Common_routes.t) room_id events =
     (* fetch the servers participating in the room *)
     let open Matrix_stos.Send in
-    let%lwt origins = fetch_joined_servers room_id in
+    let%lwt origins = fetch_joined_servers t room_id in
     let origins =
       List.filter (fun s -> not @@ String.equal t.server_name s) origins in
     let f server_name =

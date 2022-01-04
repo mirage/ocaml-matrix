@@ -153,9 +153,9 @@ struct
     (* Notes:
        - Filter & pagination are ignored for now
     *)
-    let get _t _request =
+    let get (t: Common_routes.t) _request =
       let open Public_rooms.Get_public_rooms in
-      let%lwt tree = Store.tree store in
+      let%lwt tree = Store.tree t.store in
       (* retrieve the list of the rooms *)
       let%lwt rooms = Store.Tree.list tree @@ Store.Key.v ["rooms"] in
       (* filter out the public rooms*)
@@ -277,9 +277,9 @@ struct
     (* Notes:
        - Filter & pagination are ignored for now
     *)
-    let post _t _request =
+    let post (t: Common_routes.t) _request =
       let open Public_rooms.Filter_public_rooms in
-      let%lwt tree = Store.tree store in
+      let%lwt tree = Store.tree t.store in
       (* retrieve the list of the rooms *)
       let%lwt rooms = Store.Tree.list tree @@ Store.Key.v ["rooms"] in
       (* filter out the public rooms*)
@@ -413,7 +413,7 @@ struct
       if List.exists (String.equal room_version) versions then
         (* fetch the auth events *)
         let%lwt state_tree =
-          Store.get_tree store (Store.Key.v ["rooms"; room_id; "state"]) in
+          Store.get_tree t.store (Store.Key.v ["rooms"; room_id; "state"]) in
         let%lwt create_event =
           Store.Tree.get state_tree (Store.Key.v ["m.room.create"]) in
         let%lwt power_level =
@@ -423,7 +423,7 @@ struct
         let event_content =
           Events.Event_content.Member
             (Events.Event_content.Member.make ~membership:Join ()) in
-        let%lwt old_depth, prev_events = get_room_prev_events room_id in
+        let%lwt old_depth, prev_events = get_room_prev_events t room_id in
         let depth = old_depth + 1 in
         let origin =
           match Dream.local Middleware.logged_server request with
@@ -482,7 +482,7 @@ struct
             let state_key =
               Events.Pdu.get_state_key member_event |> Option.get in
             (* Check if the user is not already in the room *)
-            let%lwt presence = Helper.is_room_user room_id state_key in
+            let%lwt presence = Helper.is_room_user t room_id state_key in
             if presence then
               Dream.json ~status:`Bad_Request
                 {|{"errcode": "M_UNKNOWN"; "error": "User is already in the room"}|}
@@ -490,7 +490,7 @@ struct
               let json_event =
                 Json_encoding.construct Events.Pdu.encoding member_event
                 |> Ezjsonm.value_to_string in
-              let%lwt tree = Store.tree store in
+              let%lwt tree = Store.tree t.store in
               let%lwt tree =
                 Store.Tree.add tree
                   (Store.Key.v
@@ -512,11 +512,11 @@ struct
               let%lwt return =
                 Store.set_tree
                   ~info:(Helper.info t ~message:"add joining member")
-                  store (Store.Key.v []) tree in
+                  t.store (Store.Key.v []) tree in
               match return with
               | Ok () ->
                 (* fetch the state of the room *)
-                let%lwt tree = Store.tree store in
+                let%lwt tree = Store.tree t.store in
                 let%lwt state_tree =
                   Store.Tree.get_tree tree
                     (Store.Key.v ["rooms"; room_id; "state"]) in
@@ -554,7 +554,7 @@ struct
     let get_event t request =
       let open Retrieve.Event in
       let event_id = Dream.param "event_id" request in
-      let%lwt tree = Store.tree store in
+      let%lwt tree = Store.tree t.store in
       let event_id = Identifiers.Event_id.of_string_exn event_id in
       let%lwt json = Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
       match json with
@@ -566,7 +566,7 @@ struct
         let room_id = Events.Pdu.get_room_id event in
         let server_name =
           Option.get @@ Dream.local Middleware.logged_server request in
-        let%lwt b = is_room_participant server_name room_id in
+        let%lwt b = is_room_participant t server_name room_id in
         (* check if the server is in the room *)
         if not b then
           Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
@@ -596,7 +596,7 @@ struct
         Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
       in
       let pdus = Request.get_pdus transaction in
-      let%lwt tree = Store.tree store in
+      let%lwt tree = Store.tree t.store in
       let f (tree, results) event =
         let event = compute_hash_and_sign t event in
         let event_id = compute_event_reference_hash event in
@@ -625,7 +625,7 @@ struct
         Fmt.str "add transaction %s from %s" txn_id
           (Request.get_origin transaction) in
       let%lwt return =
-        Store.set_tree ~info:(Helper.info t ~message) store (Store.Key.v [])
+        Store.set_tree ~info:(Helper.info t ~message) t.store (Store.Key.v [])
           tree in
       match return with
       | Ok () ->
@@ -653,12 +653,12 @@ struct
       let _limit = Dream.query "limit" request in
       let server_name =
         Option.get @@ Dream.local Middleware.logged_server request in
-      let%lwt b = is_room_participant server_name room_id in
+      let%lwt b = is_room_participant t server_name room_id in
       (* check if the server is in the room or if no events were asked for *)
       if (not b) || List.length v == 0 then
         Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
       else
-        let%lwt tree = Store.tree store in
+        let%lwt tree = Store.tree t.store in
         let rec f (event_ids, events) event_id =
           let event_id = Identifiers.Event_id.of_string_exn event_id in
           if List.exists (String.equal event_id) event_ids then
@@ -693,12 +693,12 @@ struct
        - Error handling
        - It's way too bad, needs a lot of rework in order to do less operations
     *)
-    let get_missing_event request =
+    let get_missing_event t request =
       let open Get_missing_events in
       let room_id = Dream.param "room_id" request in
       let server_name =
         Option.get @@ Dream.local Middleware.logged_server request in
-      let%lwt b = is_room_participant server_name room_id in
+      let%lwt b = is_room_participant t server_name room_id in
       (* check if the server is in the room *)
       if not b then Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
       else
@@ -714,7 +714,7 @@ struct
         let _min_depth =
           Option.value ~default:0 @@ Request.get_min_depth missing_events in
 
-        let%lwt tree = Store.tree store in
+        let%lwt tree = Store.tree t.store in
         let rec f (event_ids, events) event_id =
           let event_id = Identifiers.Event_id.of_string_exn event_id in
           if List.exists (String.equal event_id) event_ids then
@@ -746,19 +746,19 @@ struct
   end
 
   module Event_auth = struct
-    let get request =
+    let get t request =
       let open Event_auth in
       let room_id = Dream.param "room_id" request in
       let server_name =
         Option.get @@ Dream.local Middleware.logged_server request in
-      let%lwt b = is_room_participant server_name room_id in
+      let%lwt b = is_room_participant t server_name room_id in
       (* check if the server is in the room or if no events were asked for *)
       if not b then Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
       else
         let event_id = Dream.param "event_id" request in
         (* fetch the event *)
         let event_id = Identifiers.Event_id.of_string_exn event_id in
-        let%lwt tree = Store.tree store in
+        let%lwt tree = Store.tree t.store in
         let%lwt json =
           Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
         match json with
@@ -839,7 +839,7 @@ struct
        - Do we want to give the participants to foreign servers ? The spec
          doesnt seem to consider it.
     *)
-    let directory _t request =
+    let directory t request =
       let open Query.Directory in
       let room_alias = Dream.query "room_alias" request in
       match room_alias with
@@ -847,7 +847,7 @@ struct
         Dream.json ~status:`Not_Found
           {|{"errcode": "M_NOT_FOUND", "Room alias not found."}|}
       | Some room_alias -> (
-        let%lwt tree = Store.tree store in
+        let%lwt tree = Store.tree t.store in
         let%lwt room_id =
           Store.Tree.find tree @@ Store.Key.v ["aliases"; room_alias] in
         match room_id with
@@ -855,14 +855,14 @@ struct
           Dream.json ~status:`Not_Found
             {|{"errcode": "M_NOT_FOUND", "Room alias not found."}|}
         | Some room_id ->
-          let%lwt servers = fetch_joined_servers room_id in
+          let%lwt servers = fetch_joined_servers t room_id in
           let response =
             Response.make ~room_id ~servers ()
             |> Json_encoding.construct Response.encoding
             |> Ezjsonm.value_to_string in
           Dream.json response)
 
-    let profile request =
+    let profile t request =
       let open Query.Profile in
       let user_id = Dream.query "user_id" request in
       match user_id with
@@ -870,7 +870,7 @@ struct
         Dream.json ~status:`Not_Found
           {|{"errcode": "M_NOT_FOUND", "User does not exist."}|}
       | Some user_id -> (
-        let%lwt tree = Store.tree store in
+        let%lwt tree = Store.tree t.store in
         let%lwt user_tree =
           Store.Tree.find_tree tree @@ Store.Key.v ["users"; user_id] in
         match user_tree with
@@ -901,10 +901,10 @@ struct
     (* Notes:
        - As we do not have keys for devices nor users, we simply return some
          default informations and empty device list *)
-    let devices request =
+    let devices t request =
       let open User.Devices in
       let user_id = Dream.param "user_id" request in
-      let%lwt tree = Store.tree store in
+      let%lwt tree = Store.tree t.store in
       let%lwt user_tree =
         Store.Tree.find_tree tree @@ Store.Key.v ["users"; user_id] in
       match user_tree with
@@ -987,10 +987,10 @@ struct
                       [
                         Dream.put "/send/:txn_id" (Transaction.send t);
                         Dream.get "/event_auth/:room_id/:event_id"
-                          Event_auth.get;
+                          (Event_auth.get t);
                         Dream.get "/backfill/:room_id" (Backfill.get t);
                         Dream.post "/get_missing_events/:room_id"
-                          Backfill.get_missing_event;
+                          (Backfill.get_missing_event t);
                         Dream.get "/state/:room_id" State.get;
                         Dream.get "/state_ids/:room_id" State.get_ids;
                         Dream.get "/event/:event_id" (Retrieve.get_event t);
@@ -1009,11 +1009,11 @@ struct
                           [
                             Dream.get "/:query_type" Query.query;
                             Dream.get "/directory" (Query.directory t);
-                            Dream.get "/profile" Query.profile;
+                            Dream.get "/profile" (Query.profile t);
                           ];
                         Dream.scope "/user" []
                           [
-                            Dream.get "/devices/:user_id" User.devices;
+                            Dream.get "/devices/:user_id" (User.devices t);
                             Dream.scope "/keys" []
                               [
                                 Dream.post "/claim" User.claim_key;

@@ -1,5 +1,3 @@
-open Lwt.Infix
-
 module Content_string = struct
   include Irmin.Contents.String
 
@@ -16,8 +14,3 @@ module Content_string = struct
 end
 
 module Store = Irmin_unix.Git.FS.KV (Content_string)
-
-let store =
-  Lwt_main.run
-    (let config = Irmin_git.config "/tmp/ocaml-matrix" in
-     Store.Repo.v config >>= Store.master)
