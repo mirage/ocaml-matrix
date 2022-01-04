@@ -115,3 +115,5 @@ let post ctx ~key ~room message =
   Current.component "matrix post"
   |> let> message and> room and> key in
      PC.set ctx {key; room_id= room} message
+
+module Raw = Client
