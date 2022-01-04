@@ -11,6 +11,8 @@ depends: [
   "odoc" {with-doc}
   "matrix-ctos" {= version}
   "matrix-stos" {= version}
+  "dream-mirage"
+  "lwt_ppx"
   "astring"
   "base64"
   "bheap"
@@ -20,12 +22,21 @@ depends: [
   "irmin-fs"
   "irmin-unix"
   "logs"
+  "tcpip" {>= "7.0.0"}
   "mirage-crypto-ec"
   "mirage-time"
+  "mirage-time-unix"
+  "mirage-clock-unix"
+  "mirage-crypto-rng-mirage"
   "mirage-kv"
   "ppxlib"
   "uuidm"
   "x509"
+]
+pin-depends: [
+  ["dream.~dev"         "git+https://github.com/clecat/dream.git"]
+  ["dream-mirage.~dev"  "git+https://github.com/clecat/dream.git"]
+  ["dream-pure.~dev"    "git+https://github.com/clecat/dream.git"]
 ]
 build: [
   ["dune" "subst"] {dev}

@@ -11,6 +11,7 @@ depends: [
   "ezjsonm"
   "fmt"
   "logs"
+  "cmdliner"
   "ppxlib"
 ]
 build: [
