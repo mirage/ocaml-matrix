@@ -32,6 +32,7 @@ depends: [
   "ppxlib"
   "uuidm"
   "x509"
+  "shexp" {with-test}
 ]
 pin-depends: [
   ["dream.~dev"         "git+https://github.com/clecat/dream.git"]
