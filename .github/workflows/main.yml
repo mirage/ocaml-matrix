@@ -25,6 +25,10 @@ jobs:
           - matrix-ci-server-setup
           - matrix-common
           - matrix-current
+        include:
+          - os: ubuntu-latest
+            ocaml-compiler: 4.11.x
+            package: matrix-current
 
     runs-on: ${{ matrix.os }}
 

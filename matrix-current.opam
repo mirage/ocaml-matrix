@@ -6,6 +6,7 @@ authors: ["Gwenaëlle Lecat <charles-edouard@tarides.com>"]
 homepage: "https://github.com/clecat/ocaml-matrix"
 bug-reports: "https://github.com/clecat/ocaml-matrix/issues"
 depends: [
+  "ocaml" {>= "4.11"}
   "dune" {>= "2.8"}
   "odoc" {with-doc}
   "matrix-ctos" {= version}

@@ -99,9 +99,9 @@ module Room = struct
       ?power_level_content_override
       () =
     Current.component "matrix room"
-    |> let> name
-       and> topic
-       and> alias
+    |> let> name = name
+       and> topic = topic
+       and> alias = alias
        and> power_level_content_override =
          Current.option_seq power_level_content_override in
        RC.set ctx alias {name; topic; power_level_content_override}
@@ -113,5 +113,5 @@ type message = Matrix_common.Events.Event_content.Message.t
 
 let post ctx ~key ~room message =
   Current.component "matrix post"
-  |> let> message and> room and> key in
+  |> let> message = message and> room = room and> key = key in
      PC.set ctx {key; room_id= room} message
