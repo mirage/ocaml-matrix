@@ -50,3 +50,5 @@ val post :
 (** [post context ~key ~room message] records that [key] is now set to [message], and
     uses a minimalist matrix client to send [message] to [room] using the user
     given in [context]. *)
+
+module Raw = Client

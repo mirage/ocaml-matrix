@@ -42,7 +42,7 @@ struct
           Store.find t.store (Store.Key.v ["users"; user_id; "password"]) in
         match pwd with
         | None ->
-          Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
+          Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN", "error": "Invalid username or password"}|}
         | Some pwd -> (
           (* Verify the username/password combination *)
           let password = Authentication.Password.V2.get_password auth in
@@ -51,7 +51,7 @@ struct
           let digest = Digestif.BLAKE2B.hmac_string ~key:salt password in
           let pwd = Digestif.BLAKE2B.of_hex pwd in
           if not (Digestif.BLAKE2B.equal digest pwd) then
-            Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
+            Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN", "error": "Invalid username or password"}|}
           else
             let device =
               match Request.get_device_id login with
@@ -608,7 +608,7 @@ struct
                   write_error);
             Dream.json ~status:`Internal_Server_Error
               {|{"errcode": "M_UNKNOWN"}|})
-        else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
+        else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN", "error": "Not a room user"}|}
       | None -> assert false)
 
   (** Notes:
@@ -685,7 +685,7 @@ struct
                 (Irmin.Type.pp Store.write_error_t)
                 write_error);
           Dream.json ~status:`Internal_Server_Error {|{"errcode": "M_UNKNOWN"}|})
-      else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN"}|}
+      else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN", "error": "Not a room user"}|}
     | None -> assert false
   (* Should obviously return a 401 instead: If this case
      was to happen, it would mean that the user of the matrix library has

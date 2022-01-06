@@ -1,8 +1,10 @@
 type t
 
+module Server = Http.Server
+
 val v :
   ?max_connections:int ->
-  server:Http.Server.t ->
+  server:Server.t ->
   device:string option ->
   user:string ->
   pwd:string ->

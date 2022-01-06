@@ -2,6 +2,7 @@ open Lwt
 open Lwt.Syntax
 open Matrix_ctos
 module Room = Matrix_ctos.Room
+module Server = Http.Server
 
 (* When the server returns a 429 Too Many Requests, instead of failing the request
    is re-tried after a delay: either the value as specified by the error message or 1
