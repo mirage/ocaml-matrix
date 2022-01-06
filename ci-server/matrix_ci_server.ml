@@ -113,7 +113,9 @@ let main server_name (key_name, key_path) addr store_path () =
      let config = Irmin_git.config store_path in
      let%lwt repo = Store.Store.Repo.v config in
      let%lwt store = Store.Store.master repo in
-     let info = Common_routes.{server_name; key_name; priv_key; pub_key; ctx; store} in
+     let info =
+       Common_routes.{server_name; key_name; priv_key; pub_key; ctx; store}
+     in
      Lwt.join [client_server stack info; federation_server stack info])
 
 let setup level =
@@ -139,8 +141,7 @@ let addr =
   Arg.(
     value
     & opt string "0.0.0.0/0"
-    & info ["addr"] ~docv:"ip_address/mask"
-        ~doc:"the ip address and it's mask")
+    & info ["addr"] ~docv:"ip_address/mask" ~doc:"the ip address and it's mask")
 
 let store_path =
   Arg.(

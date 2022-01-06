@@ -4,7 +4,11 @@ open Matrix_stos
 open Common_routes
 
 (* Notes:
-   - Server wide, the support for ACLs should be implemented
+   Those notes are server wide:
+   - The support for ACLs should be implemented
+   - The event merging algorithm is simply non existant.
+   - Events stay forever in the database, maybe crunching them after some time
+     could be a good idea ?
 *)
 
 module Make
@@ -153,7 +157,7 @@ struct
     (* Notes:
        - Filter & pagination are ignored for now
     *)
-    let get (t: Common_routes.t) _request =
+    let get (t : Common_routes.t) _request =
       let open Public_rooms.Get_public_rooms in
       let%lwt tree = Store.tree t.store in
       (* retrieve the list of the rooms *)
@@ -277,7 +281,7 @@ struct
     (* Notes:
        - Filter & pagination are ignored for now
     *)
-    let post (t: Common_routes.t) _request =
+    let post (t : Common_routes.t) _request =
       let open Public_rooms.Filter_public_rooms in
       let%lwt tree = Store.tree t.store in
       (* retrieve the list of the rooms *)
@@ -581,11 +585,9 @@ struct
 
   module Transaction = struct
     (* Notes:
-       - Verify if the room asking for the event is entitled to do so
        - Use the transaction ID
-       - Apply the PDUs but ignore the EDUs
-       - Verify the origin server
-       - BROKEN: does not save the new previous event id
+       - Notify the servers for all events at once and after they are saved ?
+       - Properly implement the user rights
     *)
     let send t request =
       let open Send in
@@ -600,25 +602,80 @@ struct
       let f (tree, results) event =
         let event = compute_hash_and_sign t event in
         let event_id = compute_event_reference_hash event in
+        let full_event_id = "$" ^ event_id ^ ":" ^ Events.Pdu.get_origin event in
         let event_type = Events.Pdu.get_event_type event in
         let room_id = Events.Pdu.get_room_id event in
-        (* need error handling *)
-        let state_key = Events.Pdu.get_state_key event |> Option.get in
-        let json_event =
-          Json_encoding.construct Events.Pdu.encoding event
-          |> Ezjsonm.value_to_string in
-        let%lwt tree =
-          Store.Tree.add tree
-            (Store.Key.v ["rooms"; room_id; "state"; event_type; state_key])
-            event_id in
-        let%lwt tree =
-          Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
-        in
-        let full_event_id = "$" ^ event_id ^ ":" ^ Events.Pdu.get_origin event in
-        Lwt.return
-          ( tree,
-            (full_event_id, Response.Pdu_processing_result.make ()) :: results
-          ) in
+        (* Verify if the event really comes from the server *)
+        let origin =
+          Option.get @@ Dream.local Middleware.logged_server request in
+        let%lwt verify = Helper.check_event_signature t origin event in
+        if not verify then
+          Lwt.return
+            ( tree,
+              ( full_event_id,
+                Response.Pdu_processing_result.make
+                  ~error:
+                    "Distant server dit not sign the event or signature was \
+                     forged"
+                  () )
+              :: results )
+        else
+          (* check if the server is in the room *)
+          let%lwt b = is_room_participant t origin room_id in
+          if not b then
+            Lwt.return
+              ( tree,
+                ( full_event_id,
+                  Response.Pdu_processing_result.make
+                    ~error:"You are not allowed to send a message to this room"
+                    () )
+                :: results )
+          else
+            (* check if the user has the rights for this event *)
+            (* right now, we only allow a user to leave *)
+            let allowed =
+              match Events.Pdu.get_event_content event with
+              | Member member -> (
+                match Events.Event_content.Member.get_membership member with
+                | Leave -> true
+                | _ -> false)
+              | _ -> false
+            in
+            let state_key = Events.Pdu.get_state_key event |> Option.get in
+            let sender = Events.Pdu.get_sender event in
+            if not allowed || state_key <> sender then
+              Lwt.return
+                ( tree,
+                  ( full_event_id,
+                    Response.Pdu_processing_result.make
+                      ~error:"You are not allowed to send a message to this room"
+                      () )
+                  :: results )
+            else
+            (* need error handling *)
+            let state_key = Events.Pdu.get_state_key event |> Option.get in
+            let json_event =
+              Json_encoding.construct Events.Pdu.encoding event
+              |> Ezjsonm.value_to_string in
+            let%lwt tree =
+              Store.Tree.add tree
+                (Store.Key.v ["rooms"; room_id; "state"; event_type; state_key])
+                event_id in
+            let%lwt tree =
+              Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+            in
+            (* save the new previous event id*)
+            let json =
+              Json_encoding.(construct (list string) [event_id])
+              |> Ezjsonm.value_to_string in
+            let%lwt tree =
+              Store.Tree.add tree (Store.Key.v ["rooms"; room_id; "head"]) json
+            in
+            let%lwt () = notify_room_servers t room_id [event] in
+            Lwt.return
+              ( tree,
+                (full_event_id, Response.Pdu_processing_result.make ())
+                :: results ) in
       let%lwt tree, results = Lwt_list.fold_left_s f (tree, []) pdus in
       (* saving update tree *)
       let message =

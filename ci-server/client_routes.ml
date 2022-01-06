@@ -42,7 +42,8 @@ struct
           Store.find t.store (Store.Key.v ["users"; user_id; "password"]) in
         match pwd with
         | None ->
-          Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN", "error": "Invalid username or password"}|}
+          Dream.json ~status:`Unauthorized
+            {|{"errcode": "M_FORBIDDEN", "error": "Invalid username or password"}|}
         | Some pwd -> (
           (* Verify the username/password combination *)
           let password = Authentication.Password.V2.get_password auth in
@@ -51,7 +52,8 @@ struct
           let digest = Digestif.BLAKE2B.hmac_string ~key:salt password in
           let pwd = Digestif.BLAKE2B.of_hex pwd in
           if not (Digestif.BLAKE2B.equal digest pwd) then
-            Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN", "error": "Invalid username or password"}|}
+            Dream.json ~status:`Unauthorized
+              {|{"errcode": "M_FORBIDDEN", "error": "Invalid username or password"}|}
           else
             let device =
               match Request.get_device_id login with
@@ -574,10 +576,7 @@ struct
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
-          let%lwt tree =
-            Store.Tree.add tree
-              (Store.Key.v store_key)
-              event_id in
+          let%lwt tree = Store.Tree.add tree (Store.Key.v store_key) event_id in
           let%lwt tree =
             Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
           in
@@ -608,7 +607,9 @@ struct
                   write_error);
             Dream.json ~status:`Internal_Server_Error
               {|{"errcode": "M_UNKNOWN"}|})
-        else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN", "error": "Not a room user"}|}
+        else
+          Dream.json ~status:`Unauthorized
+            {|{"errcode": "M_FORBIDDEN", "error": "Not a room user"}|}
       | None -> assert false)
 
   (** Notes:
@@ -685,7 +686,9 @@ struct
                 (Irmin.Type.pp Store.write_error_t)
                 write_error);
           Dream.json ~status:`Internal_Server_Error {|{"errcode": "M_UNKNOWN"}|})
-      else Dream.json ~status:`Unauthorized {|{"errcode": "M_FORBIDDEN", "error": "Not a room user"}|}
+      else
+        Dream.json ~status:`Unauthorized
+          {|{"errcode": "M_FORBIDDEN", "error": "Not a room user"}|}
     | None -> assert false
   (* Should obviously return a 401 instead: If this case
      was to happen, it would mean that the user of the matrix library has
@@ -705,7 +708,8 @@ struct
                       [Middleware.Rate_limit.rate_limited]
                       [Dream.post "/login" (login t)];
                     Dream.get "/directory/room/:alias" (resolve_alias t);
-                    Dream.scope "" [Middleware.is_logged t]
+                    Dream.scope ""
+                      [Middleware.is_logged t]
                       [
                         Dream.post "/createRoom" (create_room t);
                         Dream.put "/rooms/:room_id/state/:event_type/:state_key"

@@ -5,4 +5,5 @@
 (rule
  (alias bench)
  (deps ./bench.exe %{bin:matrix-ci-server-setup} %{bin:matrix-ci-server-bin})
- (action (run bench)))
+ (action
+  (run bench)))

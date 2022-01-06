@@ -8,7 +8,7 @@ module Make
 struct
   module Dream = Dream__mirage.Mirage.Make (Pclock) (Time) (Stack)
 
-  let is_room_user (t: Common_routes.t) room_id user_id =
+  let is_room_user (t : Common_routes.t) room_id user_id =
     let%lwt tree = Store.tree t.store in
     let%lwt event_id =
       Store.Tree.find tree
@@ -26,6 +26,7 @@ struct
       | Member member -> (
         match Events.Event_content.Member.get_membership member with
         | Join -> Lwt.return true
+        | Leave -> Lwt.return false
         | _ -> assert false)
       | _ -> assert false)
 
@@ -192,7 +193,7 @@ struct
       Lwt.return @@ not @@ List.exists (Bool.equal false) checks
 
   (* Use older/replaced events once they are implemented *)
-  let get_room_prev_events (t: Common_routes.t) room_id =
+  let get_room_prev_events (t : Common_routes.t) room_id =
     let%lwt tree = Store.tree t.store in
     let%lwt json =
       Store.Tree.get tree @@ Store.Key.v ["rooms"; room_id; "head"] in
@@ -207,7 +208,7 @@ struct
         Lwt.return (max d (Pdu.get_depth event), ("$" ^ event_id) :: ids))
       (0, []) events_id
 
-  let fetch_joined_servers (t: Common_routes.t) room_id =
+  let fetch_joined_servers (t : Common_routes.t) room_id =
     let%lwt tree = Store.tree t.store in
     let%lwt members =
       Store.Tree.list tree

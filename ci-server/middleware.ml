@@ -50,7 +50,7 @@ struct
   (** Notes:
     - In cruel need of error handling
   *)
-  let is_logged (t: Common_routes.t) handler request =
+  let is_logged (t : Common_routes.t) handler request =
     let token =
       match Option.bind (Dream.header "Authorization" request) clean_token with
       | None -> Dream.query "access_token" request
@@ -171,7 +171,7 @@ struct
     - Upgrade the key fetching with proper retries and using several notary
       servers.
   *)
-  let is_logged_server (t: Common_routes.t) handler request =
+  let is_logged_server (t : Common_routes.t) handler request =
     match Option.bind (Dream.header "Authorization" request) clean_auth with
     | None ->
       Dream.json ~status:`Unauthorized
