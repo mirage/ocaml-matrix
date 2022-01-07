@@ -99,9 +99,9 @@ module Room = struct
       ?power_level_content_override
       () =
     Current.component "matrix room"
-    |> let> name
-       and> topic
-       and> alias
+    |> let> name = name
+       and> topic = topic
+       and> alias = alias
        and> power_level_content_override =
          Current.option_seq power_level_content_override in
        RC.set ctx alias {name; topic; power_level_content_override}
