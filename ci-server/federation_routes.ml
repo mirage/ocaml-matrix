@@ -639,43 +639,46 @@ struct
                 match Events.Event_content.Member.get_membership member with
                 | Leave -> true
                 | _ -> false)
-              | _ -> false
-            in
+              | _ -> false in
             let state_key = Events.Pdu.get_state_key event |> Option.get in
             let sender = Events.Pdu.get_sender event in
-            if not allowed || state_key <> sender then
+            if (not allowed) || state_key <> sender then
               Lwt.return
                 ( tree,
                   ( full_event_id,
                     Response.Pdu_processing_result.make
-                      ~error:"You are not allowed to send a message to this room"
-                      () )
+                      ~error:
+                        "You are not allowed to send a message to this room" ()
+                  )
                   :: results )
             else
-            (* need error handling *)
-            let state_key = Events.Pdu.get_state_key event |> Option.get in
-            let json_event =
-              Json_encoding.construct Events.Pdu.encoding event
-              |> Ezjsonm.value_to_string in
-            let%lwt tree =
-              Store.Tree.add tree
-                (Store.Key.v ["rooms"; room_id; "state"; event_type; state_key])
-                event_id in
-            let%lwt tree =
-              Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
-            in
-            (* save the new previous event id*)
-            let json =
-              Json_encoding.(construct (list string) [event_id])
-              |> Ezjsonm.value_to_string in
-            let%lwt tree =
-              Store.Tree.add tree (Store.Key.v ["rooms"; room_id; "head"]) json
-            in
-            let%lwt () = notify_room_servers t room_id [event] in
-            Lwt.return
-              ( tree,
-                (full_event_id, Response.Pdu_processing_result.make ())
-                :: results ) in
+              (* need error handling *)
+              let state_key = Events.Pdu.get_state_key event |> Option.get in
+              let json_event =
+                Json_encoding.construct Events.Pdu.encoding event
+                |> Ezjsonm.value_to_string in
+              let%lwt tree =
+                Store.Tree.add tree
+                  (Store.Key.v
+                     ["rooms"; room_id; "state"; event_type; state_key])
+                  event_id in
+              let%lwt tree =
+                Store.Tree.add tree
+                  (Store.Key.v ["events"; event_id])
+                  json_event in
+              (* save the new previous event id*)
+              let json =
+                Json_encoding.(construct (list string) [event_id])
+                |> Ezjsonm.value_to_string in
+              let%lwt tree =
+                Store.Tree.add tree
+                  (Store.Key.v ["rooms"; room_id; "head"])
+                  json in
+              let%lwt () = notify_room_servers t room_id [event] in
+              Lwt.return
+                ( tree,
+                  (full_event_id, Response.Pdu_processing_result.make ())
+                  :: results ) in
       let%lwt tree, results = Lwt_list.fold_left_s f (tree, []) pdus in
       (* saving update tree *)
       let message =
