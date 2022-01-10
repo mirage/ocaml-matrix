@@ -113,7 +113,9 @@ type message = Matrix_common.Events.Event_content.Message.t
 
 let post ctx ~key ~room message =
   Current.component "matrix post"
-  |> let> message and> room and> key in
+  |> let> message = message
+     and> room = room
+     and> key = key in
      PC.set ctx {key; room_id= room} message
 
 module Raw = Client
