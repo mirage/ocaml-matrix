@@ -101,7 +101,14 @@ let stack_of_addr addr =
   in
   Stack.connect udp_socket tcp_socket
 
-let main server_name (key_name, key_path) addr client_port federation_port store_path () =
+let main
+    server_name
+    (key_name, key_path)
+    addr
+    client_port
+    federation_port
+    store_path
+    () =
   let priv_key, pub_key = read_key key_path in
   Lwt_main.run
     (let%lwt stack = stack_of_addr addr in
@@ -114,7 +121,11 @@ let main server_name (key_name, key_path) addr client_port federation_port store
      let info =
        Common_routes.{server_name; key_name; priv_key; pub_key; ctx; store}
      in
-     Lwt.join [client_server client_port stack info; federation_server federation_port stack info])
+     Lwt.join
+       [
+         client_server client_port stack info;
+         federation_server federation_port stack info;
+       ])
 
 let setup level =
   let style_renderer = `Ansi_tty in
@@ -145,13 +156,15 @@ let client_port =
   Arg.(
     value
     & opt int 8008
-    & info ["client_port"] ~docv:"client_port" ~doc:"the port of the client API, default to 8008")
+    & info ["client_port"] ~docv:"client_port"
+        ~doc:"the port of the client API, default to 8008")
 
 let federation_port =
   Arg.(
     value
     & opt int 8448
-    & info ["federation_port"] ~docv:"federation_port" ~doc:"the port of the federation API, default to 8448")
+    & info ["federation_port"] ~docv:"federation_port"
+        ~doc:"the port of the federation API, default to 8448")
 
 let store_path =
   Arg.(
