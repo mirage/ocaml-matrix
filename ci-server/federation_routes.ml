@@ -907,6 +907,7 @@ struct
         Dream.json ~status:`Not_Found
           {|{"errcode": "M_NOT_FOUND", "Room alias not found."}|}
       | Some room_alias -> (
+        let room_alias, _ = Identifiers.Room_alias.of_string_exn room_alias in
         let%lwt tree = Store.tree t.store in
         let%lwt room_id =
           Store.Tree.find tree @@ Store.Key.v ["aliases"; room_alias] in
