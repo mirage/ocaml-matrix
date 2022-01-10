@@ -98,10 +98,40 @@ struct
     let current_time = Unix.gettimeofday () in
     Lwt.return (expires_at > current_time)
 
-  let fetching_key (t : Common_routes.t) server_name key_id =
-    let open Matrix_stos.Key.Direct_query in
+  (* Notes:
+    - Always consider that we have a domain name
+  *)
+  let resolve_server_name (t : Common_routes.t) server_name =
+    let open Matrix_stos.Well_known in
     let uri =
       Uri.make ~scheme:"https" ~port:8448 ~host:server_name
+        ~path:("/.well-known/matrix/server")
+        () in
+    let headers = Cohttp.Header.of_list ["Content-length", "0"] in
+    let%lwt resp, body = Paf_cohttp.get ~headers ~ctx:t.ctx uri in
+    let%lwt body = Cohttp_lwt.Body.to_string body in
+    match Cohttp_lwt.Response.status resp with
+    | `OK ->
+      (let well_known =
+        Json_encoding.destruct Response.encoding (Ezjsonm.value_from_string body)
+      in
+      let server = Response.get_server well_known in
+      match server with
+      | None -> Lwt.return (server_name, 8448)
+      | Some server ->
+        let server_l = String.split_on_char ':' server in
+        if List.length server_l > 1
+        then
+          Lwt.return (List.nth server_l 0, int_of_string @@ List.nth server_l 1)
+        else
+          Lwt.return (server, 8448))
+    | _ -> Lwt.return (server_name, 8448)
+
+  let fetching_key (t : Common_routes.t) server_name key_id =
+    let open Matrix_stos.Key.Direct_query in
+    let%lwt host, port = resolve_server_name t server_name in
+    let uri =
+      Uri.make ~scheme:"https" ~port ~host
         ~path:("/_matrix/key/v2/server/" ^ key_id)
         () in
     let headers = Cohttp.Header.of_list ["Content-length", "0"] in
