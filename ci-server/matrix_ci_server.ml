@@ -5,13 +5,11 @@ module Dream = Dream__mirage.Mirage.Make (Pclock) (Time) (Stack)
 module Client_routes = Client_routes.Make (Pclock) (Time) (Stack)
 module Federation_routes = Federation_routes.Make (Pclock) (Time) (Stack)
 
-let client_server stack info =
-  let port = 8008 in
+let client_server port stack info =
   let router = Dream.logger @@ Client_routes.router info @@ Dream.not_found in
   Dream.http ~port (Stack.tcp stack) router
 
-let federation_server stack info =
-  let port = 8447 in
+let federation_server port stack info =
   let router =
     Dream.logger @@ Federation_routes.router info @@ Dream.not_found in
   Dream.https ~port (Stack.tcp stack) router
@@ -103,7 +101,7 @@ let stack_of_addr addr =
   in
   Stack.connect udp_socket tcp_socket
 
-let main server_name (key_name, key_path) addr store_path () =
+let main server_name (key_name, key_path) addr client_port federation_port store_path () =
   let priv_key, pub_key = read_key key_path in
   Lwt_main.run
     (let%lwt stack = stack_of_addr addr in
@@ -116,7 +114,7 @@ let main server_name (key_name, key_path) addr store_path () =
      let info =
        Common_routes.{server_name; key_name; priv_key; pub_key; ctx; store}
      in
-     Lwt.join [client_server stack info; federation_server stack info])
+     Lwt.join [client_server client_port stack info; federation_server federation_port stack info])
 
 let setup level =
   let style_renderer = `Ansi_tty in
@@ -143,17 +141,29 @@ let addr =
     & opt string "0.0.0.0/0"
     & info ["addr"] ~docv:"ip_address/mask" ~doc:"the ip address and it's mask")
 
+let client_port =
+  Arg.(
+    value
+    & opt int 8008
+    & info ["client_port"] ~docv:"client_port" ~doc:"the port of the client API, default to 8008")
+
+let federation_port =
+  Arg.(
+    value
+    & opt int 8448
+    & info ["federation_port"] ~docv:"federation_port" ~doc:"the port of the federation API, default to 8448")
+
 let store_path =
   Arg.(
     value
     & opt string "/tmp/ocaml-matrix"
     & info ["store_path"] ~docv:"store_path"
-        ~doc:"the path to the irmin git store")
+        ~doc:"the path to the irmin git store, default to `/tmp/ocaml-matrix`")
 
 let () =
   let info =
     let doc = "poc of a matrix server" in
-    Term.info "server" ~version:"%%VERSION%%" ~doc in
+    Term.info "server" ~version:"93224c8" ~doc in
   Term.exit
   @@ Term.eval
        ( Term.(
@@ -161,6 +171,8 @@ let () =
            $ server_name
            $ server_key
            $ addr
+           $ client_port
+           $ federation_port
            $ store_path
            $ Term.(const setup $ Logs_cli.level ())),
          info )
