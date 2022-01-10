@@ -104,7 +104,7 @@ struct
   let resolve_server_name (t : Common_routes.t) server_name =
     let open Matrix_stos.Well_known in
     let uri =
-      Uri.make ~scheme:"https" ~port:8448 ~host:server_name
+      Uri.make ~scheme:"https" ~port:443 ~host:server_name
         ~path:("/.well-known/matrix/server")
         () in
     let headers = Cohttp.Header.of_list ["Content-length", "0"] in
