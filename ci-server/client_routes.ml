@@ -393,9 +393,10 @@ struct
             in
             (* canonical_alias *)
             let event_content =
+              let fully_qualified_alias = Fmt.str "#%s:%s" alias t.server_name in
               Events.Event_content.Canonical_alias
-                (Events.Event_content.Canonical_alias.make ~alias:(Some alias)
-                   ()) in
+                (Events.Event_content.Canonical_alias.make
+                   ~alias:(Some fully_qualified_alias) ()) in
             let event =
               Events.Pdu.make ~auth_events ~event_content ~depth
                 ~origin:t.server_name ~origin_server_ts:(time ())
