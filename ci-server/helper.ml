@@ -291,7 +291,8 @@ struct
       let content = Some body in
       let txn_id = Uuidm.(v `V4 |> to_string) in
       let path = "/_matrix/federation/v1/send/" ^ txn_id in
-      let uri = Uri.make ~scheme:"https" ~port:8448 ~host:server_name ~path () in
+      let%lwt host, port = resolve_server_name t server_name in
+      let uri = Uri.make ~scheme:"https" ~port ~host ~path () in
       let headers = Cohttp.Header.init () in
       let json =
         Matrix_stos.Federation_request.make ~meth:"PUT" ~uri:path ?content
