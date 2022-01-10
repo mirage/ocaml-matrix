@@ -415,3 +415,11 @@ module Version : sig
     val encoding : t encoding
   end
 end
+
+module Well_known : sig
+  module Response :
+    sig
+      type%accessor t = { server : string option; }
+      val encoding : t encoding
+    end
+end

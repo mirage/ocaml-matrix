@@ -1,6 +1,4 @@
 open Json_encoding
-open Matrix_common
-module Query = Empty.Query
 
 module Response = struct
   type t = {server: string option} [@@deriving accessor]
@@ -12,6 +10,4 @@ module Response = struct
       {server} in
     let with_tuple = obj1 (opt "m.server" string) in
     conv to_tuple of_tuple with_tuple
-
-  let pp ppf t = Fmt.(pf ppf "{ server: %a }" Dump.(option string) t.server)
 end

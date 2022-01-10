@@ -11,3 +11,4 @@ module Signatures = Signatures
 module Retrieve = Retrieve
 module User = User
 module Version = Version
+module Well_known = Well_known
