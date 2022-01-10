@@ -21,7 +21,7 @@ depends: [
   "ezjsonm"
   "fmt"
   "irmin-fs"
-  "irmin-unix"
+  "irmin-unix" {= "2.9.0"}
   "logs"
   "tcpip" {>= "7.0.0"}
   "mirage-crypto-ec"
