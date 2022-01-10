@@ -13,6 +13,7 @@ COPY --chown=opam \
 WORKDIR /src
 RUN opam-2.1 install -y --deps-only .
 ADD --chown=opam . .
+RUN opam-2.1 exec -- dune subst
 RUN opam-2.1 exec -- dune build ./_build/install/default/bin/matrix-ci-server-setup ./_build/install/default/bin/matrix-ci-server-bin
 
 
