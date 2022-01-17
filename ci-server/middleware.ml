@@ -7,7 +7,7 @@ module Make
     (Stack : Tcpip.Stack.V4V6) =
 struct
   module Dream = Dream__mirage.Mirage.Make (Pclock) (Time) (Stack)
-  module Paf = Paf_mirage.Make (Time) (Stack)
+  module Paf = Dream_paf_mirage.Make (Time) (Stack)
   module Helper = Helper.Make (Pclock) (Time) (Stack)
 
   let body =

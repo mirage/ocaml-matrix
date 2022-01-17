@@ -166,7 +166,7 @@ let call
       Httpaf.Client_connection.request conn ~error_handler ~response_handler req
     in
     Lwt.async (fun () ->
-        Paf.run ~sleep (module Httpaf_Client_connection) conn flow);
+        Dream_paf.run ~sleep (module Httpaf_Client_connection) conn flow);
     transmit cohttp_body httpaf_body;
     Log.debug (fun m -> m "Body transmitted.");
     Lwt.pick
