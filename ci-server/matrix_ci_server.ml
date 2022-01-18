@@ -4,6 +4,7 @@ module Stack = Tcpip_stack_socket.V4V6
 module Dream = Dream__mirage.Mirage.Make (Pclock) (Time) (Stack)
 module Client_routes = Client_routes.Make (Pclock) (Time) (Stack)
 module Federation_routes = Federation_routes.Make (Pclock) (Time) (Stack)
+module Nss = Ca_certs_nss.Make (Pclock)
 
 let client_server port stack info =
   let router = Dream.logger @@ Client_routes.router info @@ Dream.not_found in
