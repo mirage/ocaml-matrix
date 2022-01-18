@@ -51,7 +51,7 @@ end
 let tls_edn, tls_protocol = Mimic.register ~priority:10 ~name:"tls" (module TLS)
 let witness_stack = Mimic.make ~name:"stack"
 
-let fill ctx =
+let fill ctx federation_port =
   let open Mimic in
   let k0 stack scheme port domain_name =
     match scheme with
@@ -75,7 +75,7 @@ let fill ctx =
     Mimic.fold tls_edn
       Fun.
         [
-          req witness_stack; req Paf_cohttp.scheme; dft Paf_cohttp.port 8448;
+          req witness_stack; req Paf_cohttp.scheme; dft Paf_cohttp.port federation_port;
           req Paf_cohttp.domain_name;
         ]
       ~k:k0 ctx in
@@ -83,7 +83,7 @@ let fill ctx =
     Mimic.fold tls_edn
       Fun.
         [
-          req witness_stack; req Paf_cohttp.scheme; dft Paf_cohttp.port 8448;
+          req witness_stack; req Paf_cohttp.scheme; dft Paf_cohttp.port federation_port;
           req Paf_cohttp.ipaddr;
         ]
       ~k:k1 ctx in
@@ -101,6 +101,11 @@ let stack_of_addr addr =
   in
   Stack.connect udp_socket tcp_socket
 
+let fill_http ctx federation_port stack =
+  let ctx = Mimic.add witness_stack stack ctx in
+  let ctx = fill Mimic.(add Paf_cohttp.sleep sleep ctx) federation_port in
+  ctx
+
 let main
     server_name
     (key_name, key_path)
@@ -113,11 +118,7 @@ let main
   Lwt_main.run
     (let%lwt stack = stack_of_addr addr in
      let ctx = Mimic.empty in
-     let ctx = Mimic.add witness_stack stack ctx in
-     let ctx = fill Mimic.(add Paf_cohttp.sleep sleep ctx) in
-     let config = Irmin_git.config store_path in
-     let%lwt repo = Store.Store.Repo.v config in
-     let%lwt store = Store.Store.master repo in
+     let ctx = fill_http ctx federation_port stack in
      let info =
        Common_routes.{server_name; key_name; priv_key; pub_key; ctx; store}
      in
