@@ -68,7 +68,7 @@ struct
                 (Store.Key.v ["tokens"; token; "device"])
                 device in
             let expires_at =
-              Float.to_string @@ (Unix.gettimeofday () +. 3600.) in
+              Int.to_string (fst (Pclock.now_d_ps ()) * 1000 + 3600) in
             let%lwt tree =
               Store.Tree.add tree
                 (Store.Key.v ["tokens"; token; "expires_at"])

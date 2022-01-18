@@ -44,7 +44,8 @@ struct
     let%lwt expires_at =
       Store.Tree.get token_tree @@ Store.Key.v ["expires_at"] in
     let expires_at = Float.of_string expires_at in
-    let current_time = Unix.gettimeofday () in
+    let current_time =
+      Float.of_int (fst (Pclock.now_d_ps ()) * 1000) in
     Lwt.return (expires_at > current_time)
 
   (** Notes:

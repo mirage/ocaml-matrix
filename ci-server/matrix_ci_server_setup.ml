@@ -107,7 +107,7 @@ module User = struct
         Store.set_tree
           ~info:(fun () ->
             Irmin.Info.v
-              ~date:(Int64.of_float @@ Unix.gettimeofday ())
+              ~date:(Int64.of_int @@ fst (Pclock.now_d_ps ()))
               ~author:"matrix-ci-server-setup" "add user")
           store (Store.Key.v []) tree in
       match return with

@@ -35,7 +35,7 @@ struct
 
   let info (t : Common_routes.t) ?(message = "") () =
     Irmin.Info.v
-      ~date:(Int64.of_float (Unix.gettimeofday ()))
+      ~date:(Int64.of_int @@ fst (Pclock.now_d_ps ()))
       ~author:t.server_name message
 
   let compute_hash_and_sign (t : Common_routes.t) pdu =
@@ -96,7 +96,8 @@ struct
     let%lwt valid_until =
       Store.Tree.get key_tree @@ Store.Key.v ["valid_until"] in
     let expires_at = Float.of_string valid_until in
-    let current_time = Unix.gettimeofday () in
+    let current_time =
+      Float.of_int (fst (Pclock.now_d_ps ()) * 1000 + 3600) in
     Lwt.return (expires_at > current_time)
 
   (* Notes:
