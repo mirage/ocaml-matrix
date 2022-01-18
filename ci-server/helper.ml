@@ -31,12 +31,13 @@ struct
         | _ -> assert false)
       | _ -> assert false)
 
-  let time () = fst (Pclock.now_d_ps ()) * 1000
+  let time () =
+    let d, ps = Pclock.now_d_ps () in
+    let s = Int64.(to_int @@ div ps 1000000000000L) in
+    (d * 86400) + s
 
   let info (t : Common_routes.t) ?(message = "") () =
-    Irmin.Info.v
-      ~date:(Int64.of_int @@ fst (Pclock.now_d_ps ()))
-      ~author:t.server_name message
+    Irmin.Info.v ~date:(Int64.of_int @@ time ()) ~author:t.server_name message
 
   let compute_hash_and_sign (t : Common_routes.t) pdu =
     let open Events in
@@ -96,8 +97,7 @@ struct
     let%lwt valid_until =
       Store.Tree.get key_tree @@ Store.Key.v ["valid_until"] in
     let expires_at = Float.of_string valid_until in
-    let current_time =
-      Float.of_int (fst (Pclock.now_d_ps ()) * 1000 + 3600) in
+    let current_time = Float.of_int ((time () + 3600) * 1000) in
     Lwt.return (expires_at > current_time)
 
   (* Notes:
@@ -297,7 +297,8 @@ struct
       List.filter (fun s -> not @@ String.equal t.server_name s) origins in
     let f server_name =
       let body =
-        Request.make ~origin:server_name ~origin_server_ts:(time ())
+        Request.make ~origin:server_name
+          ~origin_server_ts:(time () * 1000)
           ~pdus:events ()
         |> Json_encoding.construct Request.encoding in
       let content = Some body in

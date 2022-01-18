@@ -94,7 +94,9 @@ let with_host headers uri =
   Dream_httpaf.Headers.add_unless_exists headers "host" hostname
 
 let with_transfer_encoding ~chunked (meth : Cohttp.Code.meth) body headers =
-  match meth, chunked, body, Dream_httpaf.Headers.get headers "content-length" with
+  match
+    meth, chunked, body, Dream_httpaf.Headers.get headers "content-length"
+  with
   | `GET, _, _, _ -> headers
   | _, (None | Some false), _, Some _ -> headers
   | _, Some true, _, (Some _ | None) | _, None, `Stream _, None ->
@@ -141,7 +143,8 @@ let call
     (* TODO *) in
   let headers =
     match headers with
-    | Some headers -> Dream_httpaf.Headers.of_list (Cohttp.Header.to_list headers)
+    | Some headers ->
+      Dream_httpaf.Headers.of_list (Cohttp.Header.to_list headers)
     | None -> Dream_httpaf.Headers.empty in
   let headers = with_host headers uri in
   let headers = with_transfer_encoding ~chunked meth cohttp_body headers in
@@ -163,8 +166,8 @@ let call
     let response_handler = response_handler mvar_res pusher in
     let conn = Dream_httpaf.Client_connection.create ~config in
     let httpaf_body =
-      Dream_httpaf.Client_connection.request conn ~error_handler ~response_handler req
-    in
+      Dream_httpaf.Client_connection.request conn ~error_handler
+        ~response_handler req in
     Lwt.async (fun () ->
         Dream_paf.run ~sleep (module Dream_httpaf_Client_connection) conn flow);
     transmit cohttp_body httpaf_body;
@@ -194,8 +197,8 @@ let call
             :> [ Cohttp.Code.status | Dream_httpaf.Status.t ])
         with
         | #Cohttp.Code.status as status -> status
-        | #Dream_httpaf.Status.t as status -> `Code (Dream_httpaf.Status.to_code status)
-      in
+        | #Dream_httpaf.Status.t as status ->
+          `Code (Dream_httpaf.Status.to_code status) in
       let encoding =
         match meth with
         | #Dream_httpaf.Method.standard as meth -> (
@@ -206,7 +209,8 @@ let call
         | _ -> Cohttp.Transfer.Chunked in
       let headers =
         Cohttp.Header.of_list
-          (Dream_httpaf.Headers.to_list resp.Dream_httpaf.Response.headers) in
+          (Dream_httpaf.Headers.to_list resp.Dream_httpaf.Response.headers)
+      in
       let resp = Cohttp.Response.make ~version ~status ~encoding ~headers () in
       Lwt.return (resp, `Stream stream))
 

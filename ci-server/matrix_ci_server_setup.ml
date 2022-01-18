@@ -16,9 +16,11 @@ module Content_string = struct
 end
 
 module Stack = Tcpip_stack_socket.V4V6
+
 module Git_happy_eyeballs =
   Git_mirage_happy_eyeballs.Make (Mirage_crypto_rng) (Time) (Mclock) (Pclock)
     (Stack)
+
 module Git_tcp = Git_mirage_tcp.Make (Stack.TCP) (Git_happy_eyeballs)
 module Store = Irmin_mirage_git.Mem.KV (Content_string)
 module Sync = Irmin.Sync (Store)
@@ -107,20 +109,17 @@ module User = struct
         Store.set_tree
           ~info:(fun () ->
             Irmin.Info.v
-              ~date:(Int64.of_int @@ fst (Pclock.now_d_ps ()))
+              ~date:(Int64.of_int @@ (fst (Pclock.now_d_ps ()) * 86400))
               ~author:"matrix-ci-server-setup" "add user")
           store (Store.Key.v []) tree in
       match return with
       | Ok () -> (
         let%lwt return = push store remote in
         match return with
-        | Ok _ ->
-          Lwt.return 0
-          | Error write_error ->
-          Logs.err (fun m ->
-            m "Push error: %a" Sync.pp_push_error write_error);
-        Lwt.return 1
-        )
+        | Ok _ -> Lwt.return 0
+        | Error write_error ->
+          Logs.err (fun m -> m "Push error: %a" Sync.pp_push_error write_error);
+          Lwt.return 1)
       | Error write_error ->
         Logs.err (fun m ->
             m "Write error: %a" (Irmin.Type.pp Store.write_error_t) write_error);
@@ -155,8 +154,9 @@ module User = struct
       let doc = "Creates a user." in
       Term.info "user" ~doc in
     let term =
-      Term.(app (const Lwt_main.run) (const f $ store $ user_id $ server_name $ pwd $ setup))
-    in
+      Term.(
+        app (const Lwt_main.run)
+          (const f $ store $ user_id $ server_name $ pwd $ setup)) in
     term, info
 end
 

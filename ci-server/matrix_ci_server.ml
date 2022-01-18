@@ -84,16 +84,16 @@ let fill ctx federation_port =
     Mimic.fold tls_edn
       Fun.
         [
-          req witness_stack; req Paf_cohttp.scheme; dft Paf_cohttp.port federation_port;
-          req Paf_cohttp.domain_name;
+          req witness_stack; req Paf_cohttp.scheme;
+          dft Paf_cohttp.port federation_port; req Paf_cohttp.domain_name;
         ]
       ~k:k0 ctx in
   let ctx =
     Mimic.fold tls_edn
       Fun.
         [
-          req witness_stack; req Paf_cohttp.scheme; dft Paf_cohttp.port federation_port;
-          req Paf_cohttp.ipaddr;
+          req witness_stack; req Paf_cohttp.scheme;
+          dft Paf_cohttp.port federation_port; req Paf_cohttp.ipaddr;
         ]
       ~k:k1 ctx in
   ctx

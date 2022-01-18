@@ -61,7 +61,7 @@ struct
                     Response.Verify_key.make ~key:base64_key () );
                 ]
               ~old_verify_keys:[]
-              ~valid_until_ts:(time () + 3600)
+              ~valid_until_ts:((time () + 3600) * 1000)
               ()
             |> Json_encoding.construct (sign t Response.encoding)
             |> Ezjsonm.value_to_string in
@@ -104,7 +104,7 @@ struct
                           Key.Server_key.Verify_key.make ~key:base64_key () );
                       ]
                     ~old_verify_keys:[]
-                    ~valid_until_ts:(time () + 3600)
+                    ~valid_until_ts:((time () + 3600) * 1000)
                     ();
                 ]
               | Error (`Msg _s) -> [])) in
@@ -140,7 +140,7 @@ struct
                         Key.Server_key.Verify_key.make ~key:base64_key () );
                     ]
                   ~old_verify_keys:[]
-                  ~valid_until_ts:(time () + 3600)
+                  ~valid_until_ts:((time () + 3600) * 1000)
                   ();
               ]
             | Error (`Msg _s) -> []
@@ -162,7 +162,8 @@ struct
       let%lwt tree = Store.tree t.store in
       Store.Tree.clear tree;
       (* retrieve the list of the rooms *)
-      let%lwt rooms = Store.Tree.list ~cache:false tree @@ Store.Key.v ["rooms"] in
+      let%lwt rooms =
+        Store.Tree.list ~cache:false tree @@ Store.Key.v ["rooms"] in
       (* filter out the public rooms*)
       let%lwt public_rooms =
         Lwt_list.map_p
@@ -287,7 +288,8 @@ struct
       let%lwt tree = Store.tree t.store in
       Store.Tree.clear tree;
       (* retrieve the list of the rooms *)
-      let%lwt rooms = Store.Tree.list ~cache:false tree @@ Store.Key.v ["rooms"] in
+      let%lwt rooms =
+        Store.Tree.list ~cache:false tree @@ Store.Key.v ["rooms"] in
       (* filter out the public rooms*)
       let%lwt public_rooms =
         Lwt_list.map_p
@@ -439,7 +441,8 @@ struct
           Events.Pdu.make
             ~auth_events:
               ["$" ^ create_event; "$" ^ power_level; "$" ^ join_rules]
-            ~event_content ~depth ~origin ~origin_server_ts:(time ())
+            ~event_content ~depth ~origin
+            ~origin_server_ts:(time () * 1000)
             ~prev_events ~prev_state:[] ~room_id ~sender:user_id ~signatures:[]
             ~state_key:user_id
             ~event_type:(Events.Event_content.get_type event_content)
@@ -590,7 +593,8 @@ struct
           Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
         else
           let response =
-            Response.make ~origin:t.server_name ~origin_server_ts:(time ())
+            Response.make ~origin:t.server_name
+              ~origin_server_ts:(time () * 1000)
               ~pdus:[event] ()
             |> Json_encoding.construct Response.encoding
             |> Ezjsonm.value_to_string in
@@ -766,7 +770,8 @@ struct
                   prev_event in
         let%lwt _, events = Lwt_list.fold_left_s f ([], []) v in
         let response =
-          Response.make ~origin:t.server_name ~origin_server_ts:(time ())
+          Response.make ~origin:t.server_name
+            ~origin_server_ts:(time () * 1000)
             ~pdus:events ()
           |> Json_encoding.construct Response.encoding
           |> Ezjsonm.value_to_string in

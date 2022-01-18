@@ -44,8 +44,7 @@ struct
     let%lwt expires_at =
       Store.Tree.get token_tree @@ Store.Key.v ["expires_at"] in
     let expires_at = Float.of_string expires_at in
-    let current_time =
-      Float.of_int (fst (Pclock.now_d_ps ()) * 1000) in
+    let current_time = Float.of_int @@ (Helper.time () * 1000) in
     Lwt.return (expires_at > current_time)
 
   (** Notes:
@@ -274,7 +273,7 @@ struct
         match Hashtbl.find_opt table client with
         | Some t -> t
         | None -> 0, Array.make max 0. in
-      let time = fst (Pclock.now_d_ps ()) * 1000 |> Float.of_int in
+      let time = Helper.time () |> Float.of_int in
       let old_time = a.(i) in
       if time > old_time +. delay then (
         a.(i) <- time;

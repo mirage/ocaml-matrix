@@ -1,4 +1,5 @@
 (executable
  (name main)
  (libraries matrix-current)
- (preprocess (pps ppx_deriving_yojson)))
+ (preprocess
+  (pps ppx_deriving_yojson)))

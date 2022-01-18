@@ -67,8 +67,7 @@ struct
               Store.Tree.add tree
                 (Store.Key.v ["tokens"; token; "device"])
                 device in
-            let expires_at =
-              Int.to_string (fst (Pclock.now_d_ps ()) * 1000 + 3600) in
+            let expires_at = Int.to_string (Helper.(time () + 3600) * 1000) in
             let%lwt tree =
               Store.Tree.add tree
                 (Store.Key.v ["tokens"; token; "expires_at"])
@@ -230,7 +229,8 @@ struct
                    ?room_version:(Some "6") ()) in
             let event =
               Events.Pdu.make ~auth_events ~event_content ~depth
-                ~origin:t.server_name ~origin_server_ts:(time ())
+                ~origin:t.server_name
+                ~origin_server_ts:(time () * 1000)
                 ~prev_events:[] ~prev_state:[] ~room_id ~sender:user_id
                 ~signatures:[] ~state_key:""
                 ~event_type:(Events.Event_content.get_type event_content)
@@ -257,7 +257,8 @@ struct
                    ~displayname:(Some user_id) ~membership:Join ()) in
             let event =
               Events.Pdu.make ~auth_events ~event_content ~depth
-                ~origin:t.server_name ~origin_server_ts:(time ())
+                ~origin:t.server_name
+                ~origin_server_ts:(time () * 1000)
                 ~prev_events:[create_hash] ~prev_state:[] ~room_id
                 ~sender:user_id ~signatures:[] ~state_key:user_id
                 ~event_type:(Events.Event_content.get_type event_content)
@@ -307,7 +308,8 @@ struct
             in
             let event =
               Events.Pdu.make ~auth_events ~event_content ~depth
-                ~origin:t.server_name ~origin_server_ts:(time ())
+                ~origin:t.server_name
+                ~origin_server_ts:(time () * 1000)
                 ~prev_events:[member_hash] ~prev_state:[] ~room_id
                 ~sender:user_id ~signatures:[] ~state_key:""
                 ~event_type:(Events.Event_content.get_type event_content)
@@ -334,7 +336,8 @@ struct
             in
             let event =
               Events.Pdu.make ~auth_events ~event_content ~depth
-                ~origin:t.server_name ~origin_server_ts:(time ())
+                ~origin:t.server_name
+                ~origin_server_ts:(time () * 1000)
                 ~prev_events:[power_level_hash] ~prev_state:[] ~room_id
                 ~sender:user_id ~signatures:[] ~state_key:""
                 ~event_type:(Events.Event_content.get_type event_content)
@@ -359,7 +362,8 @@ struct
                    ()) in
             let event =
               Events.Pdu.make ~auth_events ~event_content ~depth
-                ~origin:t.server_name ~origin_server_ts:(time ())
+                ~origin:t.server_name
+                ~origin_server_ts:(time () * 1000)
                 ~prev_events:["$" ^ event_id]
                 ~prev_state:[] ~room_id ~sender:user_id ~signatures:[]
                 ~state_key:""
@@ -389,7 +393,8 @@ struct
                 (Events.Event_content.Name.make ~name ()) in
             let event =
               Events.Pdu.make ~auth_events ~event_content ~depth
-                ~origin:t.server_name ~origin_server_ts:(time ())
+                ~origin:t.server_name
+                ~origin_server_ts:(time () * 1000)
                 ~prev_events:["$" ^ event_id]
                 ~prev_state:[] ~room_id ~sender:user_id ~signatures:[]
                 ~state_key:""
@@ -416,7 +421,8 @@ struct
                    ~alias:(Some fully_qualified_alias) ()) in
             let event =
               Events.Pdu.make ~auth_events ~event_content ~depth
-                ~origin:t.server_name ~origin_server_ts:(time ())
+                ~origin:t.server_name
+                ~origin_server_ts:(time () * 1000)
                 ~prev_events:["$" ^ event_id]
                 ~prev_state:[] ~room_id ~sender:user_id ~signatures:[]
                 ~state_key:""
@@ -594,8 +600,9 @@ struct
             Events.Pdu.make
               ~auth_events:["$" ^ create_event; "$" ^ power_level; "$" ^ member]
               ~event_content ~depth ~origin:t.server_name
-              ~origin_server_ts:(time ()) ~prev_events ~prev_state:[] ~room_id
-              ~sender:user_id ~signatures:[]
+              ~origin_server_ts:(time () * 1000)
+              ~prev_events ~prev_state:[] ~room_id ~sender:user_id
+              ~signatures:[]
               ~event_type:(Events.Event_content.get_type event_content)
               ~state_key () in
           let event = compute_hash_and_sign t event in
@@ -684,8 +691,8 @@ struct
           Events.Pdu.make
             ~auth_events:["$" ^ create_event; "$" ^ power_level; "$" ^ member]
             ~event_content ~depth ~origin:t.server_name
-            ~origin_server_ts:(time ()) ~prev_events ~prev_state:[] ~room_id
-            ~sender:user_id ~signatures:[]
+            ~origin_server_ts:(time () * 1000)
+            ~prev_events ~prev_state:[] ~room_id ~sender:user_id ~signatures:[]
             ~event_type:(Events.Event_content.get_type event_content)
             () in
         let event = compute_hash_and_sign t event in
