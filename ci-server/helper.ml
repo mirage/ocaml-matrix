@@ -10,6 +10,7 @@ struct
 
   let is_room_user (t : Common_routes.t) room_id user_id =
     let%lwt tree = Store.tree t.store in
+    Store.Tree.clear tree;
     let%lwt event_id =
       Store.Tree.find tree
         (Store.Key.v ["rooms"; room_id; "state"; "m.room.member"; user_id])
@@ -30,7 +31,7 @@ struct
         | _ -> assert false)
       | _ -> assert false)
 
-  let time () = Unix.time () |> Float.to_int |> ( * ) 1000
+  let time () = fst (Pclock.now_d_ps ()) * 1000
 
   let info (t : Common_routes.t) ?(message = "") () =
     Irmin.Info.v
@@ -125,7 +126,7 @@ struct
               (List.nth server_l 0, int_of_string @@ List.nth server_l 1)
           else Lwt.return (server, 8448))
       | _ -> Lwt.return (server_name, 8448)
-    with _ -> Lwt.return (server_name, 8448)
+    with Failure _ -> Lwt.return (server_name, 8448)
 
   let fetching_key (t : Common_routes.t) server_name key_id =
     let open Matrix_stos.Key.Direct_query in
@@ -179,6 +180,7 @@ struct
       let f (key_id, signature) =
         (* check if we have the key, if not, try to fetch it *)
         let%lwt tree = Store.tree t.store in
+        Store.Tree.clear tree;
         let%lwt key_tree =
           Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id]
         in
@@ -200,9 +202,16 @@ struct
                   ~info:(info t ~message:"add server key")
                   t.store (Store.Key.v []) tree in
               match return with
-              | Ok () ->
-                Store.Tree.find_tree tree
-                @@ Store.Key.v ["keys"; origin; key_id]
+              | Ok () -> (
+                let%lwt return = push t.store t.remote in
+                match return with
+                | Ok _ ->
+                  Store.Tree.find_tree tree
+                  @@ Store.Key.v ["keys"; origin; key_id]
+                | Error write_error ->
+                  Dream.error (fun m ->
+                      m "Push error: %a" Sync.pp_push_error write_error);
+                  Lwt.return_none)
               | Error write_error ->
                 Dream.error (fun m ->
                     m "Write error: %a"
@@ -225,6 +234,7 @@ struct
   (* Use older/replaced events once they are implemented *)
   let get_room_prev_events (t : Common_routes.t) room_id =
     let%lwt tree = Store.tree t.store in
+    Store.Tree.clear tree;
     let%lwt json =
       Store.Tree.get tree @@ Store.Key.v ["rooms"; room_id; "head"] in
     let events_id =
@@ -240,8 +250,9 @@ struct
 
   let fetch_joined_servers (t : Common_routes.t) room_id =
     let%lwt tree = Store.tree t.store in
+    Store.Tree.clear tree;
     let%lwt members =
-      Store.Tree.list tree
+      Store.Tree.list ~cache:false tree
       @@ Store.Key.v ["rooms"; room_id; "state"; "m.room.member"] in
     let f l (_, member_tree) =
       let%lwt event_id = Store.Tree.get member_tree @@ Store.Key.v [] in
