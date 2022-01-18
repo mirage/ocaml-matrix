@@ -13,6 +13,8 @@ depends: [
   "matrix-ctos" {= version}
   "matrix-stos" {= version}
   "dream-mirage"
+  "fmt"
+  "logs"
   "lwt_ppx"
   "astring"
   "base64"
@@ -20,14 +22,16 @@ depends: [
   "cmdliner"
   "ezjsonm"
   "fmt"
-  "irmin-fs"
-  "irmin-unix"
+  "irmin-mirage-git"
+  "git-mirage"
+  "cohttp-lwt"
   "logs"
   "tcpip" {>= "7.0.0"}
   "mirage-crypto-ec"
   "mirage-time"
   "mirage-time-unix"
   "mirage-clock-unix"
+  "mirage-crypto-rng"
   "mirage-crypto-rng-mirage"
   "mirage-kv"
   "ppxlib"
