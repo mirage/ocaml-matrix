@@ -60,7 +60,7 @@ let fill ctx federation_port =
       match Unix.gethostbyname (Domain_name.to_string domain_name) with
       | {Unix.h_addr_list; _} when Array.length h_addr_list > 0 ->
         let ipaddr = Ipaddr_unix.of_inet_addr h_addr_list.(0) in
-        let authenticator ?ip:_ ~host:_ _ = Ok None in
+        let authenticator = Result.get_ok (Nss.authenticator ()) in
         let cfg = Tls.Config.client ~authenticator () in
         Lwt.return_some (Stack.tcp stack, cfg, Some domain_name, ipaddr, port)
       | _ -> Lwt.return_none) in
@@ -68,7 +68,7 @@ let fill ctx federation_port =
     match scheme with
     | `HTTP -> Lwt.return_none
     | `HTTPS ->
-      let authenticator ?ip:_ ~host:_ _ = Ok None in
+      let authenticator = Result.get_ok (Nss.authenticator ()) in
       let cfg = Tls.Config.client ~authenticator () in
       Lwt.return_some (Stack.tcp stack, cfg, None, ipaddr, port) in
   let ctx =
