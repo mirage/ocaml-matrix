@@ -519,6 +519,7 @@ struct
                   t.store (Store.Key.v []) tree in
               match return with
               | Ok () ->
+                let%lwt () = notify_room_servers t room_id [member_event] in
                 (* fetch the state of the room *)
                 let%lwt tree = Store.tree t.store in
                 let%lwt state_tree =

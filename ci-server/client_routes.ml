@@ -1,7 +1,7 @@
-open Store
 open Matrix_common
 open Matrix_ctos
 open Common_routes
+open Store
 
 module Make
     (Pclock : Mirage_clock.PCLOCK)
@@ -309,7 +309,6 @@ struct
             let%lwt tree =
               Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
             in
-
             (* join_rules *)
             let event_content =
               Events.Event_content.Join_rules
@@ -595,6 +594,7 @@ struct
               t.store (Store.Key.v []) tree in
           match return with
           | Ok () ->
+            let%lwt () = notify_room_servers t room_id [event] in
             let event_id = "$" ^ event_id ^ ":" ^ t.server_name in
             let response =
               Response.make ~event_id ()
