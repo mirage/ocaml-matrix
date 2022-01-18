@@ -20,9 +20,7 @@ jobs:
         package:
           - matrix-stos
           - matrix-ctos
-          - matrix-server
           - matrix-ci-server
-          - matrix-ci-server-setup
           - matrix-common
           - matrix-current
         include:

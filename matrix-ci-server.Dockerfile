@@ -6,8 +6,6 @@ COPY --chown=opam \
 	matrix-common.opam \
 	matrix-ctos.opam \
 	matrix-stos.opam \
-	matrix-server.opam \
-	matrix-ci-server-setup.opam \
 	/src/
 
 WORKDIR /src
