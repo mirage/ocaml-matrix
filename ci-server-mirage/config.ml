@@ -243,6 +243,7 @@ let dream =
         package ~min:"3.7.0" "git-mirage"; package ~min:"7.0.0" "tcpip";
         package "dream-mirage" ~pin:"git+https://github.com/clecat/dream.git";
         package "matrix-ci-server";
+        package "ca-certs-nss"
       ]
     ~keys:
       Key.
