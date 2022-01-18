@@ -61,6 +61,7 @@ struct
               | Some device -> Fmt.str "%s:%s" device user_id in
             let token = Uuidm.(v `V4 |> to_string) in
             let%lwt tree = Store.tree t.store in
+            Store.Tree.clear tree;
             (* add token *)
             let%lwt tree =
               Store.Tree.add tree
@@ -92,12 +93,20 @@ struct
                 ~info:(Helper.info t ~message:"login user")
                 t.store (Store.Key.v []) tree in
             match return with
-            | Ok () ->
-              let response =
-                Response.make ~access_token:token ~device_id:device ()
-                |> Json_encoding.construct Response.encoding
-                |> Ezjsonm.value_to_string in
-              Dream.json response
+            | Ok () -> (
+              let%lwt return = push t.store t.remote in
+              match return with
+              | Ok _ ->
+                let response =
+                  Response.make ~access_token:token ~device_id:device ()
+                  |> Json_encoding.construct Response.encoding
+                  |> Ezjsonm.value_to_string in
+                Dream.json response
+              | Error write_error ->
+                Dream.error (fun m ->
+                    m "Push error: %a" Sync.pp_push_error write_error);
+                Dream.json ~status:`Internal_Server_Error
+                  {|{"errcode": "M_UNKNOWN"}|})
             | Error write_error ->
               Dream.error (fun m ->
                   m "Write error: %a"
@@ -127,6 +136,7 @@ struct
           Store.get t.store (Store.Key.v ["devices"; device; "token"]) in
         (* remove the device data and the associated token *)
         let%lwt tree = Store.tree t.store in
+        Store.Tree.clear tree;
         let%lwt tree =
           Store.Tree.remove tree
             (Store.Key.v ["users"; username; "devices"; device]) in
@@ -138,7 +148,14 @@ struct
             ~info:(Helper.info t ~message:"logout user")
             t.store (Store.Key.v []) tree in
         match return with
-        | Ok () -> Lwt.return_unit
+        | Ok () -> (
+          let%lwt return = push t.store t.remote in
+          match return with
+          | Ok _ -> Lwt.return_unit
+          | Error write_error ->
+            Dream.error (fun m ->
+                m "Push error: %a" Sync.pp_push_error write_error);
+            Lwt.return_unit)
         | Error write_error ->
           Dream.error (fun m ->
               m "Write error: %a"
@@ -200,6 +217,7 @@ struct
           match Dream.local Middleware.logged_user request with
           | Some user_id -> (
             let%lwt tree = Store.tree t.store in
+            Store.Tree.clear tree;
             let room_id =
               "!" ^ Uuidm.(v `V4 |> to_string) ^ ":" ^ t.server_name in
             (* Create the state events of the room *)
@@ -433,12 +451,20 @@ struct
                 ~info:(Helper.info t ~message:"create room")
                 t.store (Store.Key.v []) tree in
             match return with
-            | Ok () ->
-              let response =
-                Response.make ~room_id ()
-                |> Json_encoding.construct Response.encoding
-                |> Ezjsonm.value_to_string in
-              Dream.json response
+            | Ok () -> (
+              let%lwt return = push t.store t.remote in
+              match return with
+              | Ok _ ->
+                let response =
+                  Response.make ~room_id ()
+                  |> Json_encoding.construct Response.encoding
+                  |> Ezjsonm.value_to_string in
+                Dream.json response
+              | Error write_error ->
+                Dream.error (fun m ->
+                    m "Push error: %a" Sync.pp_push_error write_error);
+                Dream.json ~status:`Internal_Server_Error
+                  {|{"errcode": "M_UNKNOWN"}|})
             | Error write_error ->
               Dream.error (fun m ->
                   m "Write error: %a"
@@ -550,6 +576,7 @@ struct
               state_key, ["rooms"; room_id; "state"; event_type; state_key]
             else "", ["rooms"; room_id; "state"; event_type] in
           let%lwt tree = Store.tree t.store in
+          Store.Tree.clear tree;
           let%lwt state_tree =
             Store.Tree.get_tree tree (Store.Key.v ["rooms"; room_id; "state"])
           in
@@ -593,14 +620,22 @@ struct
               ~info:(Helper.info t ~message:"set state")
               t.store (Store.Key.v []) tree in
           match return with
-          | Ok () ->
-            let%lwt () = notify_room_servers t room_id [event] in
-            let event_id = "$" ^ event_id ^ ":" ^ t.server_name in
-            let response =
-              Response.make ~event_id ()
-              |> Json_encoding.construct Response.encoding
-              |> Ezjsonm.value_to_string in
-            Dream.json response
+          | Ok () -> (
+            let%lwt return = push t.store t.remote in
+            match return with
+            | Ok _ ->
+              let%lwt () = notify_room_servers t room_id [event] in
+              let event_id = "$" ^ event_id ^ ":" ^ t.server_name in
+              let response =
+                Response.make ~event_id ()
+                |> Json_encoding.construct Response.encoding
+                |> Ezjsonm.value_to_string in
+              Dream.json response
+            | Error write_error ->
+              Dream.error (fun m ->
+                  m "Push error: %a" Sync.pp_push_error write_error);
+              Dream.json ~status:`Internal_Server_Error
+                {|{"errcode": "M_UNKNOWN"}|})
           | Error write_error ->
             Dream.error (fun m ->
                 m "Write error: %a"
@@ -630,6 +665,7 @@ struct
       let%lwt b = Helper.is_room_user t room_id user_id in
       if b then (
         let%lwt tree = Store.tree t.store in
+        Store.Tree.clear tree;
         let%lwt state_tree =
           Store.Tree.get_tree tree (Store.Key.v ["rooms"; room_id; "state"])
         in
@@ -673,14 +709,22 @@ struct
             ~info:(Helper.info t ~message:"set message")
             t.store (Store.Key.v []) tree in
         match return with
-        | Ok () ->
-          let%lwt () = notify_room_servers t room_id [event] in
-          let event_id = "$" ^ event_id ^ ":" ^ t.server_name in
-          let response =
-            Response.make ~event_id ()
-            |> Json_encoding.construct Response.encoding
-            |> Ezjsonm.value_to_string in
-          Dream.json response
+        | Ok () -> (
+          let%lwt return = push t.store t.remote in
+          match return with
+          | Ok _ ->
+            let%lwt () = notify_room_servers t room_id [event] in
+            let event_id = "$" ^ event_id ^ ":" ^ t.server_name in
+            let response =
+              Response.make ~event_id ()
+              |> Json_encoding.construct Response.encoding
+              |> Ezjsonm.value_to_string in
+            Dream.json response
+          | Error write_error ->
+            Dream.error (fun m ->
+                m "Push error: %a" Sync.pp_push_error write_error);
+            Dream.json ~status:`Internal_Server_Error
+              {|{"errcode": "M_UNKNOWN"}|})
         | Error write_error ->
           Dream.error (fun m ->
               m "Write error: %a"

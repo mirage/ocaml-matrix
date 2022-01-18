@@ -61,6 +61,7 @@ struct
         {|{"errcode": "M_MISSING_TOKEN", "error": "No access token was specified"}|}
     | Some token -> (
       let%lwt tree = Store.tree t.store in
+      Store.Tree.clear tree;
       (* fetch the token *)
       let%lwt token_tree =
         Store.Tree.find_tree tree @@ Store.Key.v ["tokens"; token] in
@@ -178,6 +179,7 @@ struct
         {|{"errcode": "M_UNAUTHORIZED", "error": "Missing Authorization header"}|}
     | Some (origin, key_id, signature) -> (
       let%lwt tree = Store.tree t.store in
+      Store.Tree.clear tree;
       (* fetch the server's key *)
       let%lwt key_tree =
         Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id] in
@@ -199,8 +201,16 @@ struct
                 ~info:(Helper.info t ~message:"add server key")
                 t.store (Store.Key.v []) tree in
             match return with
-            | Ok () ->
-              Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id]
+            | Ok () -> (
+              let%lwt return = push t.store t.remote in
+              match return with
+              | Ok _ ->
+                Store.Tree.find_tree tree
+                @@ Store.Key.v ["keys"; origin; key_id]
+              | Error write_error ->
+                Dream.error (fun m ->
+                    m "Push error: %a" Sync.pp_push_error write_error);
+                Lwt.return_none)
             | Error write_error ->
               Dream.error (fun m ->
                   m "Write error: %a"
@@ -263,7 +273,7 @@ struct
         match Hashtbl.find_opt table client with
         | Some t -> t
         | None -> 0, Array.make max 0. in
-      let time = Unix.time () *. 1000. in
+      let time = fst (Pclock.now_d_ps ()) * 1000 |> Float.of_int in
       let old_time = a.(i) in
       if time > old_time +. delay then (
         a.(i) <- time;
