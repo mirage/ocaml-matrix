@@ -59,12 +59,9 @@ struct
 
   let with_resolv ctx =
     let k dns domain_name =
-      if Domain_name.to_string domain_name = "my.domain.name" then
-        Lwt.return_some (Ipaddr.V4 Ipaddr.V4.localhost)
-      else
-        Dns.gethostbyname dns domain_name >>= function
-        | Ok ipv4 -> Lwt.return_some (Ipaddr.V4 ipv4)
-        | _ -> Lwt.return_none in
+      Dns.gethostbyname dns domain_name >>= function
+      | Ok ipv4 -> Lwt.return_some (Ipaddr.V4 ipv4)
+      | _ -> Lwt.return_none in
     Mimic.(fold Client.ipaddr Fun.[req dns; req Client.domain_name] ~k ctx)
 
   let http_ctx stack port dns =
