@@ -119,6 +119,9 @@ let main
     (let%lwt stack = stack_of_addr addr in
      let ctx = Mimic.empty in
      let ctx = fill_http ctx federation_port stack in
+     let config = Irmin_git.config store_path in
+     let%lwt repo = Store.Store.Repo.v config in
+     let%lwt store = Store.Store.master repo in
      let info =
        Common_routes.{server_name; key_name; priv_key; pub_key; ctx; store}
      in
