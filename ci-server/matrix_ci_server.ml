@@ -1,7 +1,16 @@
 open Cmdliner
 open Matrix_ci_server
+
+let () = Mirage_crypto_rng_unix.initialize ()
+
 module Stack = Tcpip_stack_socket.V4V6
 module Dream = Dream__mirage.Mirage.Make (Pclock) (Time) (Stack)
+
+module Git_happy_eyeballs =
+  Git_mirage_happy_eyeballs.Make (Mirage_crypto_rng) (Time) (Mclock) (Pclock)
+    (Stack)
+
+module Git_tcp = Git_mirage_tcp.Make (Stack.TCP) (Git_happy_eyeballs)
 module Client_routes = Client_routes.Make (Pclock) (Time) (Stack)
 module Federation_routes = Federation_routes.Make (Pclock) (Time) (Stack)
 
@@ -106,25 +115,32 @@ let fill_http ctx federation_port stack =
   let ctx = fill Mimic.(add Paf_cohttp.sleep sleep ctx) federation_port in
   ctx
 
+let fill_git ctx stack =
+  let ctx = ctx in
+  let happy_eyeballs = Happy_eyeballs.create 1000000L in
+  let%lwt happy_ctx = Git_happy_eyeballs.connect ~happy_eyeballs stack in
+  let ctx = Mimic.merge ctx happy_ctx in
+  Git_tcp.connect ctx
+
 let main
     server_name
     (key_name, key_path)
     addr
     client_port
     federation_port
-    store_path
+    remote_store
     () =
   let priv_key, pub_key = read_key key_path in
   Lwt_main.run
     (let%lwt stack = stack_of_addr addr in
      let ctx = Mimic.empty in
      let ctx = fill_http ctx federation_port stack in
-     let config = Irmin_git.config store_path in
-     let%lwt repo = Store.Store.Repo.v config in
-     let%lwt store = Store.Store.master repo in
+     let%lwt ctx = fill_git ctx stack in
+     let%lwt store, remote = Store.connect ctx remote_store in
+     let%lwt () = Store.pull store remote in
      let info =
-       Common_routes.{server_name; key_name; priv_key; pub_key; ctx; store}
-     in
+       Common_routes.
+         {server_name; key_name; priv_key; pub_key; ctx; store; remote} in
      Lwt.join
        [
          client_server client_port stack info;
@@ -173,9 +189,11 @@ let federation_port =
 let store_path =
   Arg.(
     value
-    & opt string "/tmp/ocaml-matrix"
-    & info ["store_path"] ~docv:"store_path"
-        ~doc:"the path to the irmin git store, default to `/tmp/ocaml-matrix`")
+    & opt string "git://127.0.0.1/ocaml-matrix-store"
+    & info ["remote_store"] ~docv:"remote_store"
+        ~doc:
+          "remote git repository, default to \
+           `git://127.0.0.1/ocaml-matrix-store`")
 
 let () =
   let info =

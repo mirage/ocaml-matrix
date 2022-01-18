@@ -15,7 +15,8 @@
   dream-mirage
   matrix-ctos
   matrix-stos
-  irmin-unix
+  cohttp-lwt
+  irmin-mirage-git
   uuidm
   mirage-time
   tcpip)
@@ -33,7 +34,12 @@
   mirage-clock-unix
   mirage-time-unix
   tcpip.stack-socket
-  mirage-crypto-rng-mirage)
+  mirage-crypto-rng.unix
+  mirage-crypto-rng-mirage
+  git-mirage.happy-eyeballs
+  git-mirage.tcp
+  fmt.tty
+  logs.fmt)
  (preprocess
   (pps lwt_ppx)))
 
@@ -43,6 +49,17 @@
  (public_name matrix-ci-server-setup)
  (package matrix-ci-server)
  (modules matrix_ci_server_setup)
- (libraries irmin-unix cmdliner)
+ (libraries
+  mirage-clock-unix
+  mirage-time-unix
+  tcpip.stack-socket
+  mirage-crypto-rng.unix
+  mirage-crypto-rng-mirage
+  irmin-mirage-git
+  git-mirage.happy-eyeballs
+  git-mirage.tcp
+  fmt.tty
+  logs.fmt
+  logs.cli)
  (preprocess
   (pps lwt_ppx)))
