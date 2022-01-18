@@ -33,6 +33,7 @@
   mirage-clock-unix
   mirage-time-unix
   tcpip.stack-socket
+  ca-certs-nss
   mirage-crypto-rng-mirage)
  (preprocess
   (pps lwt_ppx)))

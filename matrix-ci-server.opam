@@ -30,6 +30,7 @@ depends: [
   "mirage-clock-unix"
   "mirage-crypto-rng-mirage"
   "mirage-kv"
+  "ca-certs-nss"
   "ppxlib"
   "uuidm"
   "x509"
