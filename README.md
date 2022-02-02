@@ -1,8 +1,7 @@
 # Ocaml matrix
 
-This project's goal is to have a server for the protocole matrix.
-Be aware that it is a huge WIP and none of it should be considered definitive
-nor finished
+This project's goal is to have a server for the protocole matrix. Please, be
+aware that it is a WIP
 
 It is separated in several parts:
 - json_encoding is a library used for the encoding of the endpoints in ocaml
@@ -29,13 +28,33 @@ commit was pushed with a message before disconnecting itself.
 
 ## CI server
 The ci-server folder contains another implementation of the protocol, this time
-of a minimalist server. Keep in mind that the server is heavy WIP, however the
-bases of the project should be established.
+of a minimalist server. Keep in mind that the server is a WIP, however it
+already supports the basics of a real server:
 
-This server is not ment to be used by regular users, only the CI client should
-be used as it disables most of the endpoints and really regulates the
+- For the client API, the various behaviors are supported:
+  * login/logout
+  * fetching of the available public rooms
+  * room creation
+  * reception of new state events and messages
+All of the other endpoints are mostly disabled because the server was firstly
+designed to be used by the CI client which does not need any other endpoints.
+
+Indeed this server is not ment to be used by regular users, only the CI client
+should be used as it disables most of the endpoints and really regulates the
 autorizations of the users inside it's rooms. Foreign users should use the
 federation in order to get an access to the rooms of this server.
+
+- On the federation side, we implemented:
+  * server key related endpoints such as fetching the public key of the server
+  for authentication purposes.
+  * fetching of the available public rooms
+  * joining and leaving public rooms
+  * backfilling of room's history
+  * authentication of requests from foreign servers
+  * updates to the foreign servers when updates are made to rooms
+Those endpoints and mechanisms are enough to get a functionnal server trough the
+federation. Some endpoints have been "softly" disabled (we answer with regular
+errors) as some of them would always be forbidden anyway to any federation users.
 
 ### Server setup
 
