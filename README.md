@@ -36,6 +36,7 @@ already supports the basics of a real server:
   * fetching of the available public rooms
   * room creation
   * reception of new state events and messages
+
 All of the other endpoints are mostly disabled because the server was firstly
 designed to be used by the CI client which does not need any other endpoints.
 
@@ -52,6 +53,7 @@ federation in order to get an access to the rooms of this server.
   * backfilling of room's history
   * authentication of requests from foreign servers
   * updates to the foreign servers when updates are made to rooms
+
 Those endpoints and mechanisms are enough to get a functionnal server trough the
 federation. Some endpoints have been "softly" disabled (we answer with regular
 errors) as some of them would always be forbidden anyway to any federation users.
