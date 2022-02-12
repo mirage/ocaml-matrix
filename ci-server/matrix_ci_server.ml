@@ -181,9 +181,9 @@ let store_path =
 let () =
   let info =
     let doc = "poc of a matrix server" in
-    Term.info "server" ~version:"%%VERSION%%" ~doc in
-  Term.exit
-  @@ Term.eval
+    Cmd.info "server" ~version:"%%VERSION%%" ~doc in
+  exit
+  @@ Cmd.eval
        ( Term.(
            const main
            $ server_name

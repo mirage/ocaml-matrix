@@ -48,11 +48,8 @@ let main {user; password; server} room message =
   Client.post ~job ~room_id client message
 
 let run a b c =
-  match Lwt_main.run (main a b c) with
-  | Ok () -> Ok ()
-  | Error msg ->
-    Printf.printf "Failure was encountered:\n%s\n" msg;
-    Error 1
+  let r = Lwt_main.run (main a b c) in
+  Result.map_error (fun msg -> Printf.sprintf "Failure was encountered:\n%s\n" msg) r
 
 open Cmdliner
 
@@ -79,5 +76,5 @@ let message =
   @@ Arg.(opt (some string)) None
   @@ Arg.info ~doc:"message" ~docv:"MESSAGE" ["message"]
 
-let main = Term.(const run $ remote $ room $ message), Term.info "matrix-client"
-let () = Term.(exit @@ eval main)
+let main = Cmd.v Cmd.(info "matrix-client") Term.(const run $ remote $ room $ message)
+let () = exit @@ Cmd.eval_result main

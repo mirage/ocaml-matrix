@@ -10,12 +10,6 @@ let setup =
   let open Term in
   const setup $ Logs_cli.level ()
 
-let root_cmd =
-  let open Term in
-  let info = info "server_utility" in
-  let term = ret (const (fun () -> `Help (`Pager, None)) $ setup) in
-  term, info
-
 module User = struct
   let f store user_id password () =
     let config = Irmin_git.config store in
@@ -76,13 +70,13 @@ module User = struct
   let cmd =
     let info =
       let doc = "Creates a user." in
-      Term.info "user" ~doc in
+      Cmd.info "user" ~doc in
     let term =
       Term.(app (const Lwt_main.run) (const f $ store $ user_id $ pwd $ setup))
     in
-    term, info
+    Cmd.v info term
 end
 
 let () =
-  let open Term in
-  exit_status @@ eval_choice root_cmd [User.cmd]
+  let info = Cmd.info "server_utility" in
+  exit @@ Cmd.eval (Cmd.group info [User.cmd])

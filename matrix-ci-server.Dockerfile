@@ -1,6 +1,6 @@
 FROM ocaml/opam:debian-11 AS build
 RUN sudo apt-get update && sudo apt-get install libev-dev m4 pkg-config git -y --no-install-recommends
-RUN cd ~/opam-repository && git pull origin master && git reset --hard 3aeec9a7dbcf8b310f27ff8b337ae612e3b0147b && opam update
+RUN cd ~/opam-repository && git pull origin master && git reset --hard 458eb1ee7aae757459b6e91aa22c15b145638f0d && opam update
 COPY --chown=opam \
 	matrix-ci-server.opam \
 	matrix-common.opam \
