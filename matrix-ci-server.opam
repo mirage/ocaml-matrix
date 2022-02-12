@@ -37,9 +37,9 @@ depends: [
   "shexp" {with-test}
 ]
 pin-depends: [
-  ["dream.~dev"         "git+https://github.com/clecat/dream.git"]
-  ["dream-mirage.~dev"  "git+https://github.com/clecat/dream.git"]
-  ["dream-pure.~dev"    "git+https://github.com/clecat/dream.git"]
+  ["dream.~dev"         "git+https://github.com/clecat/dream.git#d04b1a620e6d169fb133f6057a59190c7430bfcc"]
+  ["dream-mirage.~dev"  "git+https://github.com/clecat/dream.git#d04b1a620e6d169fb133f6057a59190c7430bfcc"]
+  ["dream-pure.~dev"    "git+https://github.com/clecat/dream.git#d04b1a620e6d169fb133f6057a59190c7430bfcc"]
 ]
 build: [
   ["dune" "subst"] {dev}
