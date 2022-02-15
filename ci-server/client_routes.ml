@@ -39,7 +39,7 @@ struct
             (Identifier.User.get_user user)
             t.server_name in
         let%lwt pwd =
-          Store.find t.store (Store.Key.v ["users"; user_id; "password"]) in
+          Store.find t.store ["users"; user_id; "password"] in
         match pwd with
         | None ->
           Dream.json ~status:`Unauthorized
@@ -48,7 +48,7 @@ struct
           (* Verify the username/password combination *)
           let password = Authentication.Password.V2.get_password auth in
           let%lwt salt =
-            Store.get t.store (Store.Key.v ["users"; user_id; "salt"]) in
+            Store.get t.store ["users"; user_id; "salt"] in
           let digest = Digestif.BLAKE2B.hmac_string ~key:salt password in
           let pwd = Digestif.BLAKE2B.of_hex pwd in
           if not (Digestif.BLAKE2B.equal digest pwd) then
@@ -64,33 +64,33 @@ struct
             (* add token *)
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v ["tokens"; token; "device"])
+                ["tokens"; token; "device"]
                 device in
             let expires_at =
               Float.to_string @@ (Unix.gettimeofday () +. 3600.) in
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v ["tokens"; token; "expires_at"])
+                ["tokens"; token; "expires_at"]
                 expires_at in
             (* add device *)
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v ["devices"; device; "user_id"])
+                ["devices"; device; "user_id"]
                 user_id in
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v ["devices"; device; "token"])
+                ["devices"; device; "token"]
                 token in
             (* update user *)
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v ["users"; user_id; "devices"; device])
+                ["users"; user_id; "devices"; device]
                 device in
             (* saving new tree *)
             let%lwt return =
               Store.set_tree
                 ~info:(Helper.info t ~message:"login user")
-                t.store (Store.Key.v []) tree in
+                t.store [] tree in
             match return with
             | Ok () ->
               let response =
@@ -124,19 +124,19 @@ struct
       with
       | Some username, Some device -> (
         let%lwt token =
-          Store.get t.store (Store.Key.v ["devices"; device; "token"]) in
+          Store.get t.store ["devices"; device; "token"] in
         (* remove the device data and the associated token *)
         let%lwt tree = Store.tree t.store in
         let%lwt tree =
           Store.Tree.remove tree
-            (Store.Key.v ["users"; username; "devices"; device]) in
+            ["users"; username; "devices"; device] in
         let%lwt tree =
-          Store.Tree.remove tree (Store.Key.v ["devices"; device]) in
-        let%lwt tree = Store.Tree.remove tree (Store.Key.v ["tokens"; token]) in
+          Store.Tree.remove tree ["devices"; device] in
+        let%lwt tree = Store.Tree.remove tree ["tokens"; token] in
         let%lwt return =
           Store.set_tree
             ~info:(Helper.info t ~message:"logout user")
-            t.store (Store.Key.v []) tree in
+            t.store [] tree in
         match return with
         | Ok () -> Lwt.return_unit
         | Error write_error ->
@@ -162,7 +162,7 @@ struct
     let open Room.Resolve_alias in
     let alias = Dream.param "alias" request in
     let room_alias, _ = Identifiers.Room_alias.of_string_exn alias in
-    let%lwt room_id = Store.find t.store (Store.Key.v ["aliases"; room_alias]) in
+    let%lwt room_id = Store.find t.store ["aliases"; room_alias] in
     match room_id with
     | None ->
       Dream.json ~status:`Not_Found
@@ -191,7 +191,7 @@ struct
         Dream.json ~status:`Bad_Request
           {|{"errcode": "M_INVALID_ROOM_STATE"; "error": "Room alias is mandatory for a public room"}|}
       | Some alias -> (
-        let%lwt s_alias = Store.find t.store (Store.Key.v ["aliases"; alias]) in
+        let%lwt s_alias = Store.find t.store ["aliases"; alias] in
         match s_alias with
         | Some _ ->
           Dream.json ~status:`Bad_Request
@@ -227,10 +227,10 @@ struct
               |> Ezjsonm.value_to_string in
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v ["rooms"; room_id; "state"; "m.room.create"])
+                ["rooms"; room_id; "state"; "m.room.create"]
                 event_id in
             let%lwt tree =
-              Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+              Store.Tree.add tree ["events"; event_id] json_event
             in
             (* member *)
             let event_content =
@@ -254,11 +254,10 @@ struct
               |> Ezjsonm.value_to_string in
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v
-                   ["rooms"; room_id; "state"; "m.room.member"; user_id])
+                ["rooms"; room_id; "state"; "m.room.member"; user_id]
                 event_id in
             let%lwt tree =
-              Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+              Store.Tree.add tree ["events"; event_id] json_event
             in
             (* power_level *)
             let event_content =
@@ -304,10 +303,10 @@ struct
               |> Ezjsonm.value_to_string in
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v ["rooms"; room_id; "state"; "m.room.power_levels"])
+                ["rooms"; room_id; "state"; "m.room.power_levels"]
                 event_id in
             let%lwt tree =
-              Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+              Store.Tree.add tree ["events"; event_id] json_event
             in
             (* join_rules *)
             let event_content =
@@ -329,10 +328,10 @@ struct
               |> Ezjsonm.value_to_string in
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v ["rooms"; room_id; "state"; "m.room.join_rules"])
+                ["rooms"; room_id; "state"; "m.room.join_rules"]
                 event_id in
             let%lwt tree =
-              Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+              Store.Tree.add tree ["events"; event_id] json_event
             in
             (* history_visibility *)
             let event_content =
@@ -355,11 +354,10 @@ struct
               |> Ezjsonm.value_to_string in
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v
-                   ["rooms"; room_id; "state"; "m.room.history_visibility"])
+                ["rooms"; room_id; "state"; "m.room.history_visibility"]
                 event_id in
             let%lwt tree =
-              Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+              Store.Tree.add tree ["events"; event_id] json_event
             in
             (* name *)
             let name =
@@ -385,10 +383,10 @@ struct
               |> Ezjsonm.value_to_string in
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v ["rooms"; room_id; "state"; "m.room.name"])
+                ["rooms"; room_id; "state"; "m.room.name"]
                 event_id in
             let%lwt tree =
-              Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+              Store.Tree.add tree ["events"; event_id] json_event
             in
             (* canonical_alias *)
             let event_content =
@@ -411,27 +409,26 @@ struct
               |> Ezjsonm.value_to_string in
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v
-                   ["rooms"; room_id; "state"; "m.room.canonical_alias"])
+                ["rooms"; room_id; "state"; "m.room.canonical_alias"]
                 event_id in
             let%lwt tree =
-              Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+              Store.Tree.add tree ["events"; event_id] json_event
             in
             (* Save the most recent event id *)
             let json =
               Json_encoding.(construct (list string) [event_id])
               |> Ezjsonm.value_to_string in
             let%lwt tree =
-              Store.Tree.add tree (Store.Key.v ["rooms"; room_id; "head"]) json
+              Store.Tree.add tree ["rooms"; room_id; "head"] json
             in
             (* Saving the alias in the aliases folder *)
             let%lwt tree =
-              Store.Tree.add tree (Store.Key.v ["aliases"; alias]) room_id in
+              Store.Tree.add tree ["aliases"; alias] room_id in
             (* saving update tree *)
             let%lwt return =
               Store.set_tree
                 ~info:(Helper.info t ~message:"create room")
-                t.store (Store.Key.v []) tree in
+                t.store [] tree in
             match return with
             | Ok () ->
               let response =
@@ -551,15 +548,15 @@ struct
             else "", ["rooms"; room_id; "state"; event_type] in
           let%lwt tree = Store.tree t.store in
           let%lwt state_tree =
-            Store.Tree.get_tree tree (Store.Key.v ["rooms"; room_id; "state"])
+            Store.Tree.get_tree tree ["rooms"; room_id; "state"]
           in
           let%lwt create_event =
-            Store.Tree.get state_tree (Store.Key.v ["m.room.create"]) in
+            Store.Tree.get state_tree ["m.room.create"] in
           let%lwt power_level =
-            Store.Tree.get state_tree (Store.Key.v ["m.room.power_levels"])
+            Store.Tree.get state_tree ["m.room.power_levels"]
           in
           let%lwt member =
-            Store.Tree.get state_tree (Store.Key.v ["m.room.member"; user_id])
+            Store.Tree.get state_tree ["m.room.member"; user_id]
           in
           let%lwt old_depth, prev_events = get_room_prev_events t room_id in
           let depth = old_depth + 1 in
@@ -576,22 +573,22 @@ struct
           let json_event =
             Json_encoding.construct Events.Pdu.encoding event
             |> Ezjsonm.value_to_string in
-          let%lwt tree = Store.Tree.add tree (Store.Key.v store_key) event_id in
+          let%lwt tree = Store.Tree.add tree store_key event_id in
           let%lwt tree =
-            Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+            Store.Tree.add tree ["events"; event_id] json_event
           in
           (* save the new head of the events *)
           let json =
             Json_encoding.(construct (list string) [event_id])
             |> Ezjsonm.value_to_string in
           let%lwt tree =
-            Store.Tree.add tree (Store.Key.v ["rooms"; room_id; "head"]) json
+            Store.Tree.add tree ["rooms"; room_id; "head"] json
           in
           (* saving update tree *)
           let%lwt return =
             Store.set_tree
               ~info:(Helper.info t ~message:"set state")
-              t.store (Store.Key.v []) tree in
+              t.store [] tree in
           match return with
           | Ok () ->
             let%lwt () = notify_room_servers t room_id [event] in
@@ -631,14 +628,14 @@ struct
       if b then (
         let%lwt tree = Store.tree t.store in
         let%lwt state_tree =
-          Store.Tree.get_tree tree (Store.Key.v ["rooms"; room_id; "state"])
+          Store.Tree.get_tree tree ["rooms"; room_id; "state"]
         in
         let%lwt create_event =
-          Store.Tree.get state_tree (Store.Key.v ["m.room.create"]) in
+          Store.Tree.get state_tree ["m.room.create"] in
         let%lwt power_level =
-          Store.Tree.get state_tree (Store.Key.v ["m.room.power_levels"]) in
+          Store.Tree.get state_tree ["m.room.power_levels"] in
         let%lwt member =
-          Store.Tree.get state_tree (Store.Key.v ["m.room.member"; user_id])
+          Store.Tree.get state_tree ["m.room.member"; user_id]
         in
         let message_content = Request.get_event message in
         let event_content = Events.Event_content.Message message_content in
@@ -658,20 +655,20 @@ struct
           Json_encoding.construct Events.Pdu.encoding event
           |> Ezjsonm.value_to_string in
         let%lwt tree =
-          Store.Tree.add tree (Store.Key.v ["events"; event_id]) json_event
+          Store.Tree.add tree ["events"; event_id] json_event
         in
         (* save the new head of the events *)
         let json =
           Json_encoding.(construct (list string) [event_id])
           |> Ezjsonm.value_to_string in
         let%lwt tree =
-          Store.Tree.add tree (Store.Key.v ["rooms"; room_id; "head"]) json
+          Store.Tree.add tree ["rooms"; room_id; "head"] json
         in
         (* saving update tree *)
         let%lwt return =
           Store.set_tree
             ~info:(Helper.info t ~message:"set message")
-            t.store (Store.Key.v []) tree in
+            t.store [] tree in
         match return with
         | Ok () ->
           let%lwt () = notify_room_servers t room_id [event] in

@@ -12,13 +12,13 @@ struct
     let%lwt tree = Store.tree t.store in
     let%lwt event_id =
       Store.Tree.find tree
-        (Store.Key.v ["rooms"; room_id; "state"; "m.room.member"; user_id])
+        ["rooms"; room_id; "state"; "m.room.member"; user_id]
     in
     match event_id with
     | None -> Lwt.return false
     | Some event_id -> (
       let%lwt state_event =
-        Store.Tree.get tree (Store.Key.v ["events"; event_id]) in
+        Store.Tree.get tree ["events"; event_id] in
       let state_event =
         Json_encoding.destruct Events.State_event.encoding
           (Ezjsonm.value_from_string state_event) in
@@ -33,9 +33,9 @@ struct
   let time () = Unix.time () |> Float.to_int |> ( * ) 1000
 
   let info (t : Common_routes.t) ?(message = "") () =
-    Irmin.Info.v
-      ~date:(Int64.of_float (Unix.gettimeofday ()))
-      ~author:t.server_name message
+    Store.Info.v
+      ~author:t.server_name ~message:message
+      @@ Int64.of_float (Unix.gettimeofday ())
 
   let compute_hash_and_sign (t : Common_routes.t) pdu =
     let open Events in
@@ -93,7 +93,7 @@ struct
 
   let is_valid_key key_tree =
     let%lwt valid_until =
-      Store.Tree.get key_tree @@ Store.Key.v ["valid_until"] in
+      Store.Tree.get key_tree ["valid_until"] in
     let expires_at = Float.of_string valid_until in
     let current_time = Unix.gettimeofday () in
     Lwt.return (expires_at > current_time)
@@ -180,7 +180,7 @@ struct
         (* check if we have the key, if not, try to fetch it *)
         let%lwt tree = Store.tree t.store in
         let%lwt key_tree =
-          Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id]
+          Store.Tree.find_tree tree ["keys"; origin; key_id]
         in
         let%lwt key_tree =
           if key_tree = None then
@@ -189,20 +189,20 @@ struct
             | Some (key_s, valid_until) -> (
               let%lwt tree =
                 Store.Tree.add tree
-                  (Store.Key.v ["keys"; origin; key_id; "key"])
+                  ["keys"; origin; key_id; "key"]
                   key_s in
               let%lwt tree =
                 Store.Tree.add tree
-                  (Store.Key.v ["keys"; origin; key_id; "valid_until"])
+                  ["keys"; origin; key_id; "valid_until"]
                   (Int.to_string valid_until) in
               let%lwt return =
                 Store.set_tree
                   ~info:(info t ~message:"add server key")
-                  t.store (Store.Key.v []) tree in
+                  t.store [] tree in
               match return with
               | Ok () ->
                 Store.Tree.find_tree tree
-                @@ Store.Key.v ["keys"; origin; key_id]
+                ["keys"; origin; key_id]
               | Error write_error ->
                 Dream.error (fun m ->
                     m "Write error: %a"
@@ -217,7 +217,7 @@ struct
           let%lwt is_valid = is_valid_key key_tree in
           if not is_valid then Lwt.return_false
           else
-            let%lwt key = Store.Tree.get key_tree (Store.Key.v ["key"]) in
+            let%lwt key = Store.Tree.get key_tree ["key"] in
             is_valid_event_signature signature event key in
       let%lwt checks = Lwt_list.map_p f signatures in
       Lwt.return @@ not @@ List.exists (Bool.equal false) checks
@@ -226,13 +226,13 @@ struct
   let get_room_prev_events (t : Common_routes.t) room_id =
     let%lwt tree = Store.tree t.store in
     let%lwt json =
-      Store.Tree.get tree @@ Store.Key.v ["rooms"; room_id; "head"] in
+      Store.Tree.get tree ["rooms"; room_id; "head"] in
     let events_id =
       Ezjsonm.from_string json |> Json_encoding.(destruct (list string)) in
     let open Events in
     Lwt_list.fold_left_s
       (fun (d, ids) event_id ->
-        let%lwt json = Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+        let%lwt json = Store.Tree.get tree ["events"; event_id] in
         let event =
           Ezjsonm.from_string json |> Json_encoding.destruct Pdu.encoding in
         Lwt.return (max d (Pdu.get_depth event), ("$" ^ event_id) :: ids))
@@ -242,10 +242,10 @@ struct
     let%lwt tree = Store.tree t.store in
     let%lwt members =
       Store.Tree.list tree
-      @@ Store.Key.v ["rooms"; room_id; "state"; "m.room.member"] in
+      ["rooms"; room_id; "state"; "m.room.member"] in
     let f l (_, member_tree) =
-      let%lwt event_id = Store.Tree.get member_tree @@ Store.Key.v [] in
-      let%lwt json = Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+      let%lwt event_id = Store.Tree.get member_tree [] in
+      let%lwt json = Store.Tree.get tree ["events"; event_id] in
       let event =
         Json_encoding.destruct Events.State_event.encoding
           (Ezjsonm.value_from_string json) in

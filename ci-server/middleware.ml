@@ -42,7 +42,7 @@ struct
 
   let is_valid_token token_tree =
     let%lwt expires_at =
-      Store.Tree.get token_tree @@ Store.Key.v ["expires_at"] in
+      Store.Tree.get token_tree ["expires_at"] in
     let expires_at = Float.of_string expires_at in
     let current_time = Unix.gettimeofday () in
     Lwt.return (expires_at > current_time)
@@ -63,7 +63,7 @@ struct
       let%lwt tree = Store.tree t.store in
       (* fetch the token *)
       let%lwt token_tree =
-        Store.Tree.find_tree tree @@ Store.Key.v ["tokens"; token] in
+        Store.Tree.find_tree tree ["tokens"; token] in
       match token_tree with
       | None -> unkown_token
       | Some token_tree -> (
@@ -71,30 +71,30 @@ struct
         if not is_valid then unkown_token
         else
           (* fetch the device *)
-          let%lwt device = Store.Tree.get token_tree @@ Store.Key.v ["device"] in
+          let%lwt device = Store.Tree.get token_tree ["device"] in
           let%lwt device_tree =
-            Store.Tree.find_tree tree (Store.Key.v ["devices"; device]) in
+            Store.Tree.find_tree tree ["devices"; device] in
           match device_tree with
           | None -> unkown_token
           | Some device_tree -> (
             (* fetch the user *)
             let%lwt user_id =
-              Store.Tree.get device_tree @@ Store.Key.v ["user_id"] in
+              Store.Tree.get device_tree ["user_id"] in
             let%lwt user_tree =
-              Store.Tree.find_tree tree (Store.Key.v ["users"; user_id]) in
+              Store.Tree.find_tree tree ["users"; user_id] in
             match user_tree with
             | None -> unkown_token
             | Some user_tree -> (
               (* verify the device is still listed in the user's devices *)
               let%lwt user_device =
-                Store.Tree.find_tree user_tree (Store.Key.v ["devices"; device])
+                Store.Tree.find_tree user_tree ["devices"; device]
               in
               match user_device with
               | None -> unkown_token
               | Some _ ->
                 (* verify the token is still the actual device token *)
                 let%lwt device_token =
-                  Store.Tree.get device_tree (Store.Key.v ["token"]) in
+                  Store.Tree.get device_tree ["token"] in
                 if device_token <> token then unkown_token
                 else
                   handler
@@ -180,7 +180,7 @@ struct
       let%lwt tree = Store.tree t.store in
       (* fetch the server's key *)
       let%lwt key_tree =
-        Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id] in
+        Store.Tree.find_tree tree ["keys"; origin; key_id] in
       let%lwt key_tree =
         if key_tree = None then
           let%lwt key_s = Helper.fetching_key t origin key_id in
@@ -188,19 +188,19 @@ struct
           | Some (key_s, valid_until) -> (
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v ["keys"; origin; key_id; "key"])
+                ["keys"; origin; key_id; "key"]
                 key_s in
             let%lwt tree =
               Store.Tree.add tree
-                (Store.Key.v ["keys"; origin; key_id; "valid_until"])
+                ["keys"; origin; key_id; "valid_until"]
                 (Int.to_string valid_until) in
             let%lwt return =
               Store.set_tree
                 ~info:(Helper.info t ~message:"add server key")
-                t.store (Store.Key.v []) tree in
+                t.store [] tree in
             match return with
             | Ok () ->
-              Store.Tree.find_tree tree @@ Store.Key.v ["keys"; origin; key_id]
+              Store.Tree.find_tree tree ["keys"; origin; key_id]
             | Error write_error ->
               Dream.error (fun m ->
                   m "Write error: %a"
@@ -215,7 +215,7 @@ struct
         let%lwt is_valid = Helper.is_valid_key key_tree in
         if not is_valid then unkown_key key_id
         else
-          let%lwt key = Store.Tree.get key_tree (Store.Key.v ["key"]) in
+          let%lwt key = Store.Tree.get key_tree ["key"] in
           let%lwt request, is_valid =
             is_valid_signature origin t.server_name signature key request in
           if not is_valid then unkown_key key_id

@@ -20,9 +20,9 @@ module User = struct
   let f store user_id password () =
     let config = Irmin_git.config store in
     let%lwt repo = Store.Repo.v config in
-    let%lwt store = Store.master repo in
+    let%lwt store = Store.main repo in
     (* Verify if the user already exists *)
-    let%lwt s_user = Store.find_tree store (Store.Key.v ["users"; user_id]) in
+    let%lwt s_user = Store.find_tree store ["users"; user_id] in
     match s_user with
     | Some _ ->
       Logs.err (fun m -> m "user id %s already exists" user_id);
@@ -34,20 +34,20 @@ module User = struct
       let hashed = Digestif.BLAKE2B.to_hex digest in
       let%lwt tree = Store.tree store in
       let%lwt tree =
-        Store.Tree.add tree (Store.Key.v ["users"; user_id; "username"]) user_id
+        Store.Tree.add tree ["users"; user_id; "username"] user_id
       in
       let%lwt tree =
-        Store.Tree.add tree (Store.Key.v ["users"; user_id; "salt"]) salt in
+        Store.Tree.add tree ["users"; user_id; "salt"] salt in
       let%lwt tree =
-        Store.Tree.add tree (Store.Key.v ["users"; user_id; "password"]) hashed
+        Store.Tree.add tree ["users"; user_id; "password"] hashed
       in
       let%lwt return =
         Store.set_tree
           ~info:(fun () ->
-            Irmin.Info.v
-              ~date:(Int64.of_float @@ Unix.gettimeofday ())
-              ~author:"matrix-ci-server-setup" "add user")
-          store (Store.Key.v []) tree in
+            Store.Info.v
+            ~author:"matrix-ci-server-setup" ~message:"add user"
+            @@ Int64.of_float (Unix.gettimeofday ()))
+          store [] tree in
       match return with
       | Ok () -> Lwt.return 0
       | Error write_error ->
