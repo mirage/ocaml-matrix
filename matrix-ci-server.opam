@@ -37,9 +37,9 @@ depends: [
   "shexp" {with-test}
 ]
 pin-depends: [
-  ["dream.~dev"         "git+https://github.com/clecat/dream.git#d04b1a620e6d169fb133f6057a59190c7430bfcc"]
-  ["dream-mirage.~dev"  "git+https://github.com/clecat/dream.git#d04b1a620e6d169fb133f6057a59190c7430bfcc"]
-  ["dream-pure.~dev"    "git+https://github.com/clecat/dream.git#d04b1a620e6d169fb133f6057a59190c7430bfcc"]
+  ["dream.~dev"         "git+https://github.com/clecat/dream.git#e60190b8a8ba22c6696b8919b20c0395608ea5b6"]
+  ["dream-mirage.~dev"  "git+https://github.com/clecat/dream.git#e60190b8a8ba22c6696b8919b20c0395608ea5b6"]
+  ["dream-pure.~dev"    "git+https://github.com/clecat/dream.git#e60190b8a8ba22c6696b8919b20c0395608ea5b6"]
   # cmdliner.1.1.0
   ["index.1.6.0"        "git+https://github.com/MisterDA/index.git#1b767f89a41716703a8a067c8470c494332f8fd4"]
   ["git-unix.3.8.0"     "git+https://github.com/MisterDA/ocaml-git.git#d52aa79f782d3654e3661778811888554d99e337"]
