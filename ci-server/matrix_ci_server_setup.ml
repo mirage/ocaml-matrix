@@ -34,18 +34,13 @@ module User = struct
       let hashed = Digestif.BLAKE2B.to_hex digest in
       let%lwt tree = Store.tree store in
       let%lwt tree =
-        Store.Tree.add tree ["users"; user_id; "username"] user_id
-      in
-      let%lwt tree =
-        Store.Tree.add tree ["users"; user_id; "salt"] salt in
-      let%lwt tree =
-        Store.Tree.add tree ["users"; user_id; "password"] hashed
-      in
+        Store.Tree.add tree ["users"; user_id; "username"] user_id in
+      let%lwt tree = Store.Tree.add tree ["users"; user_id; "salt"] salt in
+      let%lwt tree = Store.Tree.add tree ["users"; user_id; "password"] hashed in
       let%lwt return =
         Store.set_tree
           ~info:(fun () ->
-            Store.Info.v
-            ~author:"matrix-ci-server-setup" ~message:"add user"
+            Store.Info.v ~author:"matrix-ci-server-setup" ~message:"add user"
             @@ Int64.of_float (Unix.gettimeofday ()))
           store [] tree in
       match return with

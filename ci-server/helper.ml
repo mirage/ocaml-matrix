@@ -11,14 +11,12 @@ struct
   let is_room_user (t : Common_routes.t) room_id user_id =
     let%lwt tree = Store.tree t.store in
     let%lwt event_id =
-      Store.Tree.find tree
-        ["rooms"; room_id; "state"; "m.room.member"; user_id]
+      Store.Tree.find tree ["rooms"; room_id; "state"; "m.room.member"; user_id]
     in
     match event_id with
     | None -> Lwt.return false
     | Some event_id -> (
-      let%lwt state_event =
-        Store.Tree.get tree ["events"; event_id] in
+      let%lwt state_event = Store.Tree.get tree ["events"; event_id] in
       let state_event =
         Json_encoding.destruct Events.State_event.encoding
           (Ezjsonm.value_from_string state_event) in
@@ -33,9 +31,8 @@ struct
   let time () = Unix.time () |> Float.to_int |> ( * ) 1000
 
   let info (t : Common_routes.t) ?(message = "") () =
-    Store.Info.v
-      ~author:t.server_name ~message:message
-      @@ Int64.of_float (Unix.gettimeofday ())
+    Store.Info.v ~author:t.server_name ~message
+    @@ Int64.of_float (Unix.gettimeofday ())
 
   let compute_hash_and_sign (t : Common_routes.t) pdu =
     let open Events in
@@ -92,8 +89,7 @@ struct
     sha256
 
   let is_valid_key key_tree =
-    let%lwt valid_until =
-      Store.Tree.get key_tree ["valid_until"] in
+    let%lwt valid_until = Store.Tree.get key_tree ["valid_until"] in
     let expires_at = Float.of_string valid_until in
     let current_time = Unix.gettimeofday () in
     Lwt.return (expires_at > current_time)
@@ -179,18 +175,14 @@ struct
       let f (key_id, signature) =
         (* check if we have the key, if not, try to fetch it *)
         let%lwt tree = Store.tree t.store in
-        let%lwt key_tree =
-          Store.Tree.find_tree tree ["keys"; origin; key_id]
-        in
+        let%lwt key_tree = Store.Tree.find_tree tree ["keys"; origin; key_id] in
         let%lwt key_tree =
           if key_tree = None then
             let%lwt key_s = fetching_key t origin key_id in
             match key_s with
             | Some (key_s, valid_until) -> (
               let%lwt tree =
-                Store.Tree.add tree
-                  ["keys"; origin; key_id; "key"]
-                  key_s in
+                Store.Tree.add tree ["keys"; origin; key_id; "key"] key_s in
               let%lwt tree =
                 Store.Tree.add tree
                   ["keys"; origin; key_id; "valid_until"]
@@ -200,9 +192,7 @@ struct
                   ~info:(info t ~message:"add server key")
                   t.store [] tree in
               match return with
-              | Ok () ->
-                Store.Tree.find_tree tree
-                ["keys"; origin; key_id]
+              | Ok () -> Store.Tree.find_tree tree ["keys"; origin; key_id]
               | Error write_error ->
                 Dream.error (fun m ->
                     m "Write error: %a"
@@ -225,8 +215,7 @@ struct
   (* Use older/replaced events once they are implemented *)
   let get_room_prev_events (t : Common_routes.t) room_id =
     let%lwt tree = Store.tree t.store in
-    let%lwt json =
-      Store.Tree.get tree ["rooms"; room_id; "head"] in
+    let%lwt json = Store.Tree.get tree ["rooms"; room_id; "head"] in
     let events_id =
       Ezjsonm.from_string json |> Json_encoding.(destruct (list string)) in
     let open Events in
@@ -241,8 +230,7 @@ struct
   let fetch_joined_servers (t : Common_routes.t) room_id =
     let%lwt tree = Store.tree t.store in
     let%lwt members =
-      Store.Tree.list tree
-      ["rooms"; room_id; "state"; "m.room.member"] in
+      Store.Tree.list tree ["rooms"; room_id; "state"; "m.room.member"] in
     let f l (_, member_tree) =
       let%lwt event_id = Store.Tree.get member_tree [] in
       let%lwt json = Store.Tree.get tree ["events"; event_id] in
