@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master, mirage ]
+    branches: [ main, mirage ]
   pull_request:
-    branches: [ master, mirage ]
+    branches: [ main, mirage ]
 
   workflow_dispatch:
 
@@ -23,10 +23,6 @@ jobs:
           - matrix-ci-server
           - matrix-common
           - matrix-current
-        include:
-          - os: ubuntu-latest
-            ocaml-compiler: 4.11.x
-            package: matrix-current
 
     runs-on: ${{ matrix.os }}
 
