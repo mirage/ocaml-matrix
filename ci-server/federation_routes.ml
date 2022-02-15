@@ -161,7 +161,7 @@ struct
       let open Public_rooms.Get_public_rooms in
       let%lwt tree = Store.tree t.store in
       (* retrieve the list of the rooms *)
-      let%lwt rooms = Store.Tree.list tree @@ Store.Key.v ["rooms"] in
+      let%lwt rooms = Store.Tree.list tree ["rooms"] in
       (* filter out the public rooms*)
       let%lwt public_rooms =
         Lwt_list.map_p
@@ -169,13 +169,11 @@ struct
             (* retrieve the room's canonical_alias if any *)
             let%lwt canonical_alias =
               let%lwt event_id =
-                Store.Tree.find room_tree
-                @@ Store.Key.v ["state"; "m.room.join_rules"] in
+                Store.Tree.find room_tree ["state"; "m.room.join_rules"] in
               match event_id with
               | None -> Lwt.return_none
               | Some event_id -> (
-                let%lwt json =
-                  Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+                let%lwt json = Store.Tree.get tree ["events"; event_id] in
                 let event =
                   Json_encoding.destruct Events.State_event.encoding
                     (Ezjsonm.value_from_string json) in
@@ -189,13 +187,11 @@ struct
             (* retrieve the room's name if any *)
             let%lwt name =
               let%lwt event_id =
-                Store.Tree.find room_tree
-                @@ Store.Key.v ["state"; "m.room.name"] in
+                Store.Tree.find room_tree ["state"; "m.room.name"] in
               match event_id with
               | None -> Lwt.return_none
               | Some event_id -> (
-                let%lwt json =
-                  Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+                let%lwt json = Store.Tree.get tree ["events"; event_id] in
                 let event =
                   Json_encoding.destruct Events.State_event.encoding
                     (Ezjsonm.value_from_string json) in
@@ -206,13 +202,10 @@ struct
             (* retrieve the room's members number *)
             let%lwt num_joined_members =
               let%lwt members =
-                Store.Tree.list room_tree
-                @@ Store.Key.v ["state"; "m.room.member"] in
+                Store.Tree.list room_tree ["state"; "m.room.member"] in
               let f n (_, member_tree) =
-                let%lwt event_id =
-                  Store.Tree.get member_tree @@ Store.Key.v [] in
-                let%lwt json =
-                  Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+                let%lwt event_id = Store.Tree.get member_tree [] in
+                let%lwt json = Store.Tree.get tree ["events"; event_id] in
                 let event =
                   Json_encoding.destruct Events.State_event.encoding
                     (Ezjsonm.value_from_string json) in
@@ -228,13 +221,11 @@ struct
             (* retrieve the room's topic if any *)
             let%lwt topic =
               let%lwt event_id =
-                Store.Tree.find room_tree
-                @@ Store.Key.v ["state"; "m.room.topic"] in
+                Store.Tree.find room_tree ["state"; "m.room.topic"] in
               match event_id with
               | None -> Lwt.return_none
               | Some event_id -> (
-                let%lwt json =
-                  Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+                let%lwt json = Store.Tree.get tree ["events"; event_id] in
                 let event =
                   Json_encoding.destruct Events.State_event.encoding
                     (Ezjsonm.value_from_string json) in
@@ -245,13 +236,11 @@ struct
             (* retrieve the room's topic if any *)
             let%lwt avatar_url =
               let%lwt event_id =
-                Store.Tree.find room_tree
-                @@ Store.Key.v ["state"; "m.room.avatar"] in
+                Store.Tree.find room_tree ["state"; "m.room.avatar"] in
               match event_id with
               | None -> Lwt.return_none
               | Some event_id -> (
-                let%lwt json =
-                  Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+                let%lwt json = Store.Tree.get tree ["events"; event_id] in
                 let event =
                   Json_encoding.destruct Events.State_event.encoding
                     (Ezjsonm.value_from_string json) in
@@ -285,7 +274,7 @@ struct
       let open Public_rooms.Filter_public_rooms in
       let%lwt tree = Store.tree t.store in
       (* retrieve the list of the rooms *)
-      let%lwt rooms = Store.Tree.list tree @@ Store.Key.v ["rooms"] in
+      let%lwt rooms = Store.Tree.list tree ["rooms"] in
       (* filter out the public rooms*)
       let%lwt public_rooms =
         Lwt_list.map_p
@@ -293,13 +282,11 @@ struct
             (* retrieve the room's canonical_alias if any *)
             let%lwt canonical_alias =
               let%lwt event_id =
-                Store.Tree.find room_tree
-                @@ Store.Key.v ["state"; "m.room.join_rules"] in
+                Store.Tree.find room_tree ["state"; "m.room.join_rules"] in
               match event_id with
               | None -> Lwt.return_none
               | Some event_id -> (
-                let%lwt json =
-                  Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+                let%lwt json = Store.Tree.get tree ["events"; event_id] in
                 let event =
                   Json_encoding.destruct Events.State_event.encoding
                     (Ezjsonm.value_from_string json) in
@@ -313,13 +300,11 @@ struct
             (* retrieve the room's name if any *)
             let%lwt name =
               let%lwt event_id =
-                Store.Tree.find room_tree
-                @@ Store.Key.v ["state"; "m.room.name"] in
+                Store.Tree.find room_tree ["state"; "m.room.name"] in
               match event_id with
               | None -> Lwt.return_none
               | Some event_id -> (
-                let%lwt json =
-                  Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+                let%lwt json = Store.Tree.get tree ["events"; event_id] in
                 let event =
                   Json_encoding.destruct Events.State_event.encoding
                     (Ezjsonm.value_from_string json) in
@@ -330,13 +315,10 @@ struct
             (* retrieve the room's members number *)
             let%lwt num_joined_members =
               let%lwt members =
-                Store.Tree.list room_tree
-                @@ Store.Key.v ["state"; "m.room.member"] in
+                Store.Tree.list room_tree ["state"; "m.room.member"] in
               let f n (_, member_tree) =
-                let%lwt event_id =
-                  Store.Tree.get member_tree @@ Store.Key.v [] in
-                let%lwt json =
-                  Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+                let%lwt event_id = Store.Tree.get member_tree [] in
+                let%lwt json = Store.Tree.get tree ["events"; event_id] in
                 let event =
                   Json_encoding.destruct Events.State_event.encoding
                     (Ezjsonm.value_from_string json) in
@@ -352,13 +334,11 @@ struct
             (* retrieve the room's topic if any *)
             let%lwt topic =
               let%lwt event_id =
-                Store.Tree.find room_tree
-                @@ Store.Key.v ["state"; "m.room.topic"] in
+                Store.Tree.find room_tree ["state"; "m.room.topic"] in
               match event_id with
               | None -> Lwt.return_none
               | Some event_id -> (
-                let%lwt json =
-                  Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+                let%lwt json = Store.Tree.get tree ["events"; event_id] in
                 let event =
                   Json_encoding.destruct Events.State_event.encoding
                     (Ezjsonm.value_from_string json) in
@@ -369,13 +349,11 @@ struct
             (* retrieve the room's topic if any *)
             let%lwt avatar_url =
               let%lwt event_id =
-                Store.Tree.find room_tree
-                @@ Store.Key.v ["state"; "m.room.avatar"] in
+                Store.Tree.find room_tree ["state"; "m.room.avatar"] in
               match event_id with
               | None -> Lwt.return_none
               | Some event_id -> (
-                let%lwt json =
-                  Store.Tree.get tree @@ Store.Key.v ["events"; event_id] in
+                let%lwt json = Store.Tree.get tree ["events"; event_id] in
                 let event =
                   Json_encoding.destruct Events.State_event.encoding
                     (Ezjsonm.value_from_string json) in
@@ -417,13 +395,11 @@ struct
       if List.exists (String.equal room_version) versions then
         (* fetch the auth events *)
         let%lwt state_tree =
-          Store.get_tree t.store (Store.Key.v ["rooms"; room_id; "state"]) in
-        let%lwt create_event =
-          Store.Tree.get state_tree (Store.Key.v ["m.room.create"]) in
+          Store.get_tree t.store ["rooms"; room_id; "state"] in
+        let%lwt create_event = Store.Tree.get state_tree ["m.room.create"] in
         let%lwt power_level =
-          Store.Tree.get state_tree (Store.Key.v ["m.room.power_levels"]) in
-        let%lwt join_rules =
-          Store.Tree.get state_tree (Store.Key.v ["m.room.join_rules"]) in
+          Store.Tree.get state_tree ["m.room.power_levels"] in
+        let%lwt join_rules = Store.Tree.get state_tree ["m.room.join_rules"] in
         let event_content =
           Events.Event_content.Member
             (Events.Event_content.Member.make ~membership:Join ()) in
@@ -497,41 +473,33 @@ struct
               let%lwt tree = Store.tree t.store in
               let%lwt tree =
                 Store.Tree.add tree
-                  (Store.Key.v
-                     ["rooms"; room_id; "state"; "m.room.member"; state_key])
+                  ["rooms"; room_id; "state"; "m.room.member"; state_key]
                   event_id in
               let%lwt tree =
-                Store.Tree.add tree
-                  (Store.Key.v ["events"; event_id])
-                  json_event in
+                Store.Tree.add tree ["events"; event_id] json_event in
               (* save the new previous event id*)
               let json =
                 Json_encoding.(construct (list string) [event_id])
                 |> Ezjsonm.value_to_string in
               let%lwt tree =
-                Store.Tree.add tree
-                  (Store.Key.v ["rooms"; room_id; "head"])
-                  json in
+                Store.Tree.add tree ["rooms"; room_id; "head"] json in
               (* saving update tree *)
               let%lwt return =
                 Store.set_tree
                   ~info:(Helper.info t ~message:"add joining member")
-                  t.store (Store.Key.v []) tree in
+                  t.store [] tree in
               match return with
               | Ok () ->
                 let%lwt () = notify_room_servers t room_id [member_event] in
                 (* fetch the state of the room *)
                 let%lwt tree = Store.tree t.store in
                 let%lwt state_tree =
-                  Store.Tree.get_tree tree
-                    (Store.Key.v ["rooms"; room_id; "state"]) in
+                  Store.Tree.get_tree tree ["rooms"; room_id; "state"] in
                 let%lwt state =
                   Store.Tree.fold
                     ~contents:(fun _ event_id events ->
                       let open Events in
-                      let%lwt json =
-                        Store.Tree.get tree @@ Store.Key.v ["events"; event_id]
-                      in
+                      let%lwt json = Store.Tree.get tree ["events"; event_id] in
                       let event =
                         Ezjsonm.from_string json
                         |> Json_encoding.destruct Pdu.encoding in
@@ -561,7 +529,7 @@ struct
       let event_id = Dream.param "event_id" request in
       let%lwt tree = Store.tree t.store in
       let event_id = Identifiers.Event_id.of_string_exn event_id in
-      let%lwt json = Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
+      let%lwt json = Store.Tree.find tree ["events"; event_id] in
       match json with
       | None -> Dream.json ~status:`Forbidden {|{"errcode": "M_UNKNOWN"}|}
       | Some json ->
@@ -660,21 +628,16 @@ struct
                 |> Ezjsonm.value_to_string in
               let%lwt tree =
                 Store.Tree.add tree
-                  (Store.Key.v
-                     ["rooms"; room_id; "state"; event_type; state_key])
+                  ["rooms"; room_id; "state"; event_type; state_key]
                   event_id in
               let%lwt tree =
-                Store.Tree.add tree
-                  (Store.Key.v ["events"; event_id])
-                  json_event in
+                Store.Tree.add tree ["events"; event_id] json_event in
               (* save the new previous event id*)
               let json =
                 Json_encoding.(construct (list string) [event_id])
                 |> Ezjsonm.value_to_string in
               let%lwt tree =
-                Store.Tree.add tree
-                  (Store.Key.v ["rooms"; room_id; "head"])
-                  json in
+                Store.Tree.add tree ["rooms"; room_id; "head"] json in
               let%lwt () = notify_room_servers t room_id [event] in
               Lwt.return
                 ( tree,
@@ -686,8 +649,7 @@ struct
         Fmt.str "add transaction %s from %s" txn_id
           (Request.get_origin transaction) in
       let%lwt return =
-        Store.set_tree ~info:(Helper.info t ~message) t.store (Store.Key.v [])
-          tree in
+        Store.set_tree ~info:(Helper.info t ~message) t.store [] tree in
       match return with
       | Ok () ->
         let response =
@@ -725,8 +687,7 @@ struct
           if List.exists (String.equal event_id) event_ids then
             Lwt.return (event_ids, events)
           else
-            let%lwt json =
-              Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
+            let%lwt json = Store.Tree.find tree ["events"; event_id] in
             match json with
             | None -> Lwt.return (event_ids, events)
             | Some json ->
@@ -781,8 +742,7 @@ struct
           if List.exists (String.equal event_id) event_ids then
             Lwt.return (event_ids, events)
           else
-            let%lwt json =
-              Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
+            let%lwt json = Store.Tree.find tree ["events"; event_id] in
             match json with
             | None -> Lwt.return (event_ids, events)
             | Some json ->
@@ -820,8 +780,7 @@ struct
         (* fetch the event *)
         let event_id = Identifiers.Event_id.of_string_exn event_id in
         let%lwt tree = Store.tree t.store in
-        let%lwt json =
-          Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
+        let%lwt json = Store.Tree.find tree ["events"; event_id] in
         match json with
         | None -> Dream.json ~status:`Forbidden {|{"errcode": "M_FORBIDDEN"}|}
         | Some json ->
@@ -835,8 +794,7 @@ struct
             let auth_events = Events.Pdu.get_auth_events event in
             let f l event_id =
               let event_id = Identifiers.Event_id.of_string_exn event_id in
-              let%lwt json =
-                Store.Tree.find tree @@ Store.Key.v ["events"; event_id] in
+              let%lwt json = Store.Tree.find tree ["events"; event_id] in
               match json with
               | None -> Lwt.return l
               | Some json ->
@@ -910,8 +868,7 @@ struct
       | Some room_alias -> (
         let room_alias, _ = Identifiers.Room_alias.of_string_exn room_alias in
         let%lwt tree = Store.tree t.store in
-        let%lwt room_id =
-          Store.Tree.find tree @@ Store.Key.v ["aliases"; room_alias] in
+        let%lwt room_id = Store.Tree.find tree ["aliases"; room_alias] in
         match room_id with
         | None ->
           Dream.json ~status:`Not_Found
@@ -933,8 +890,7 @@ struct
           {|{"errcode": "M_NOT_FOUND", "User does not exist."}|}
       | Some user_id -> (
         let%lwt tree = Store.tree t.store in
-        let%lwt user_tree =
-          Store.Tree.find_tree tree @@ Store.Key.v ["users"; user_id] in
+        let%lwt user_tree = Store.Tree.find_tree tree ["users"; user_id] in
         match user_tree with
         | None ->
           Dream.json ~status:`Not_Found
@@ -945,8 +901,7 @@ struct
             match field with
             | Some "avatar_url" -> Lwt.return (None, None)
             | _ ->
-              let%lwt displayname =
-                Store.Tree.get user_tree @@ Store.Key.v ["username"] in
+              let%lwt displayname = Store.Tree.get user_tree ["username"] in
               Lwt.return (None, Some displayname) in
           let response =
             Response.make ?avatar_url ?displayname ()
@@ -967,8 +922,7 @@ struct
       let open User.Devices in
       let user_id = Dream.param "user_id" request in
       let%lwt tree = Store.tree t.store in
-      let%lwt user_tree =
-        Store.Tree.find_tree tree @@ Store.Key.v ["users"; user_id] in
+      let%lwt user_tree = Store.Tree.find_tree tree ["users"; user_id] in
       match user_tree with
       | None ->
         Dream.json ~status:`Not_Found
