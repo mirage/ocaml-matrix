@@ -58,6 +58,25 @@ Those endpoints and mechanisms are enough to get a functionnal server trough the
 federation. Some endpoints have been "softly" disabled (we answer with regular
 errors) as some of them would always be forbidden anyway to any federation users.
 
+## Quick Start
+
+`ocaml-matrix` is not released yet, but you can set it up using the following commands:
+
+```bash
+# Install OPAM if not available already
+$ sh <(curl -sL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)
+$ opam init
+# Install DUNE if not available either
+$ opam install dune.2.8.0
+# Clone ocaml-matrix and install it's dependencies
+$ git clone https://github.com/mirage/ocaml-matrix.git
+$ cd ocaml-matrix
+$ opam install . -y --deps-only
+```
+
+You can install the libraries themselves using `opam install . -y` directly
+without the `--deps-only` flag.
+
 ### Server setup
 
 Before running the server, you will need an ed25519 key. You can generate such a
@@ -70,6 +89,17 @@ Simply replace:
 You will also need a store for your server database. Simply create a folder
 where you want the store to be, run `git init` and create a commit. It is now
 ready.
+
+If you want to feed a user to the store however, which would be used by a client,
+you will have to run the `matrix-ci-server-setup` command:
+```dune exec -- matrix-ci-server-setup user [store_path] [username] [password]```
+
+Simply replace:
+  - *store_path* with the path to your server store. This path is by default set
+    to `/tmp/ocaml-matrix`
+  - *username* with the name of your user.
+  - *password* with the user password, it will be hashed and salted using the
+    `blake2b` hash function.
 
 ### Launching the server
 
