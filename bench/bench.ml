@@ -14,7 +14,7 @@ let setup_server () =
   |> map ~f:ignore
   >> mkdir "/tmp/ocaml-matrix/"
   >> chdir "/tmp/ocaml-matrix"
-       (run "git" ["init"; "--initial-branch=master"]
+       (run "git" ["init"; "--initial-branch=main"]
        >> run "touch" ["init"]
        >> run "git" ["add"; "init"]
        >> run "git" ["commit"; "-m"; "init"]
