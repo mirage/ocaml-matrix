@@ -184,7 +184,8 @@ let () =
     Cmd.info "server" ~version:"%%VERSION%%" ~doc in
   exit
   @@ Cmd.eval
-       ( Term.(
+      (Cmd.v info
+        Term.(
            const main
            $ server_name
            $ server_key
@@ -192,5 +193,4 @@ let () =
            $ client_port
            $ federation_port
            $ store_path
-           $ Term.(const setup $ Logs_cli.level ())),
-         info )
+           $ Term.(const setup $ Logs_cli.level ())))

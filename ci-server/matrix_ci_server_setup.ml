@@ -74,4 +74,4 @@ end
 
 let () =
   let info = Cmd.info "server_utility" in
-  exit @@ Cmd.eval (Cmd.group info [User.cmd])
+  exit @@ Cmd.eval' (Cmd.group info [User.cmd])
