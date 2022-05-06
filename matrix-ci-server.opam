@@ -40,19 +40,6 @@ pin-depends: [
   ["dream.~dev"         "git+https://github.com/clecat/dream.git#e60190b8a8ba22c6696b8919b20c0395608ea5b6"]
   ["dream-mirage.~dev"  "git+https://github.com/clecat/dream.git#e60190b8a8ba22c6696b8919b20c0395608ea5b6"]
   ["dream-pure.~dev"    "git+https://github.com/clecat/dream.git#e60190b8a8ba22c6696b8919b20c0395608ea5b6"]
-  # cmdliner.1.1.0
-  ["index.1.6.0"        "git+https://github.com/MisterDA/index.git#1b767f89a41716703a8a067c8470c494332f8fd4"]
-  ["git-unix.3.8.0"     "git+https://github.com/MisterDA/ocaml-git.git#d52aa79f782d3654e3661778811888554d99e337"]
-  ["hxd.0.3.1"          "git+https://github.com/dinosaure/hxd.git#4d3c4b35d74cbd9782d12a8d13a7d047db17e182"]
-  ["irmin.3.0.0"        "git+https://github.com/MisterDA/irmin.git#ba5265d13514b26bcf2baf45906dafbe3aed8512"]
-  ["irmin-fs.3.0.0"     "git+https://github.com/MisterDA/irmin.git#ba5265d13514b26bcf2baf45906dafbe3aed8512"]
-  ["irmin-git.3.0.0"    "git+https://github.com/MisterDA/irmin.git#ba5265d13514b26bcf2baf45906dafbe3aed8512"]
-  ["irmin-graphql.3.0.0" "git+https://github.com/MisterDA/irmin.git#ba5265d13514b26bcf2baf45906dafbe3aed8512"]
-  ["irmin-http.3.0.0"   "git+https://github.com/MisterDA/irmin.git#ba5265d13514b26bcf2baf45906dafbe3aed8512"]
-  ["irmin-pack.3.0.0"   "git+https://github.com/MisterDA/irmin.git#ba5265d13514b26bcf2baf45906dafbe3aed8512"]
-  ["irmin-tezos.3.0.0"  "git+https://github.com/MisterDA/irmin.git#ba5265d13514b26bcf2baf45906dafbe3aed8512"]
-  ["irmin-unix.3.0.0"   "git+https://github.com/MisterDA/irmin.git#ba5265d13514b26bcf2baf45906dafbe3aed8512"]
-  ["ppx_irmin.3.0.0"    "git+https://github.com/MisterDA/irmin.git#ba5265d13514b26bcf2baf45906dafbe3aed8512"]
 ]
 build: [
   ["dune" "subst"] {dev}
