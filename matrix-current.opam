@@ -20,6 +20,7 @@ depends: [
   "lwt"
   "ppxlib"
   "uuidm"
+  "ppx_deriving_yojson"
 ]
 build: [
   ["dune" "subst"] {dev}
