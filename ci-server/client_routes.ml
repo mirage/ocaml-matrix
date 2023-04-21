@@ -109,8 +109,8 @@ struct
     let open Logout.Logout in
     let%lwt () =
       match
-        ( Dream.local Middleware.logged_user request,
-          Dream.local Middleware.logged_device request )
+        ( Dream.field request Middleware.logged_user,
+          Dream.field request Middleware.logged_device )
       with
       | Some username, Some device -> (
         let%lwt token = Store.get t.store ["devices"; device; "token"] in
@@ -147,7 +147,7 @@ struct
     *)
   let resolve_alias t request =
     let open Room.Resolve_alias in
-    let alias = Dream.param "alias" request in
+    let alias = Dream.param request "alias" in
     let room_alias, _ = Identifiers.Room_alias.of_string_exn alias in
     let%lwt room_id = Store.find t.store ["aliases"; room_alias] in
     match room_id with
@@ -184,7 +184,7 @@ struct
           Dream.json ~status:`Bad_Request
             {|{"errcode": "M_ROOM_IN_USE"; "error": "Room alias already in use"}|}
         | None -> (
-          match Dream.local Middleware.logged_user request with
+          match Dream.field request Middleware.logged_user with
           | Some user_id -> (
             let%lwt tree = Store.tree t.store in
             let room_id =
@@ -427,8 +427,8 @@ struct
     let open Room_event.Put.State_event in
     let%lwt request, body = Middleware.body request in
     let%lwt body = body in
-    let room_id = Dream.param "room_id" request in
-    let event_type = Dream.param "event_type" request in
+    let room_id = Dream.param request "room_id" in
+    let event_type = Dream.param request "event_type" in
     let json = Ezjsonm.value_from_string body in
     let open Events.Event_content in
     let state =
@@ -507,13 +507,13 @@ struct
     match state with
     | Error _ -> Dream.json ~status:`Bad_Request {|{"errcode": "M_UNKNOWN"}|}
     | Ok event_content -> (
-      match Dream.local Middleware.logged_user request with
+      match Dream.field request Middleware.logged_user with
       | Some user_id ->
         let%lwt b = Helper.is_room_user t room_id user_id in
         if b then (
           let state_key, store_key =
             if with_state_key then
-              let state_key = Dream.param "state_key" request in
+              let state_key = Dream.param request "state_key" in
               state_key, ["rooms"; room_id; "state"; event_type; state_key]
             else "", ["rooms"; room_id; "state"; event_type] in
           let%lwt tree = Store.tree t.store in
@@ -583,9 +583,9 @@ struct
     let message =
       Json_encoding.destruct Request.encoding (Ezjsonm.value_from_string body)
     in
-    match Dream.local Middleware.logged_user request with
+    match Dream.field request Middleware.logged_user with
     | Some user_id ->
-      let room_id = Dream.param "room_id" request in
+      let room_id = Dream.param request "room_id" in
       let%lwt b = Helper.is_room_user t room_id user_id in
       if b then (
         let%lwt tree = Store.tree t.store in

@@ -7,27 +7,28 @@ module Make
     (Stack : Tcpip.Stack.V4V6) =
 struct
   module Dream = Dream__mirage.Mirage.Make (Pclock) (Time) (Stack)
-  module Paf = Dream_paf_mirage.Make (Time) (Stack)
+  module Paf = Dream_paf_mirage.Paf_mirage.Make (Stack.TCP)
   module Helper = Helper.Make (Pclock) (Time) (Stack)
 
   let body =
-    Dream.new_local ~name:"body" ~show_value:(fun _ -> "body promise") ()
+    Dream.new_field ~name:"body" ~show_value:(fun _ -> "body promise") ()
 
   (* FIX ME: This is recreated each time we do a make, I need to find a way to
      avoid that. Creating a small module used as a functor everywhere should be
      the solution *)
-  let body request =
-    match Dream.local body request with
+  let body (request : Dream.client Dream.message) =
+    match Dream.field request body  with
     | Some body -> Lwt.return (request, body)
-    | None ->
+    | None -> (
       let body' = Dream.body request in
-      Lwt.return (Dream.with_local body body' request, body')
+      Dream.set_field request body body';
+      Lwt.return (request, body'))
 
   let logged_user =
-    Dream.new_local ~name:"logged_user" ~show_value:(fun s -> s) ()
+    Dream.new_field ~name:"logged_user" ~show_value:(fun s -> s) ()
 
   let logged_device =
-    Dream.new_local ~name:"logged_device" ~show_value:(fun s -> s) ()
+    Dream.new_field ~name:"logged_device" ~show_value:(fun s -> s) ()
 
   let clean_token token =
     if Astring.String.is_prefix ~affix:"Bearer " token then
@@ -51,8 +52,8 @@ struct
   *)
   let is_logged (t : Common_routes.t) handler request =
     let token =
-      match Option.bind (Dream.header "Authorization" request) clean_token with
-      | None -> Dream.query "access_token" request
+      match Option.bind (Dream.header request "Authorization") clean_token with
+      | None -> Dream.query request "access_token"
       | token -> token in
     match token with
     | None ->
@@ -89,13 +90,14 @@ struct
                 (* verify the token is still the actual device token *)
                 let%lwt device_token = Store.Tree.get device_tree ["token"] in
                 if device_token <> token then unkown_token
-                else
-                  handler
-                    (Dream.with_local logged_device device
-                       (Dream.with_local logged_user user_id request))))))
+                else begin
+                    Dream.set_field request logged_device device;
+                    Dream.set_field request logged_user user_id;
+                    handler request
+                  end))))
 
   let logged_server =
-    Dream.new_local ~name:"logged_server" ~show_value:(fun s -> s) ()
+    Dream.new_field ~name:"logged_server" ~show_value:(fun s -> s) ()
 
   let clean_auth auth =
     if Astring.String.is_prefix ~affix:"X-Matrix " auth then
@@ -165,7 +167,7 @@ struct
       servers.
   *)
   let is_logged_server (t : Common_routes.t) handler request =
-    match Option.bind (Dream.header "Authorization" request) clean_auth with
+    match Option.bind (Dream.header request "Authorization") clean_auth with
     | None ->
       Dream.json ~status:`Unauthorized
         {|{"errcode": "M_UNAUTHORIZED", "error": "Missing Authorization header"}|}
@@ -208,7 +210,11 @@ struct
           let%lwt request, is_valid =
             is_valid_signature origin t.server_name signature key request in
           if not is_valid then unkown_key key_id
-          else handler (Dream.with_local logged_server origin request))
+          else (
+            Dream.set_field request logged_server origin;
+            handler request
+          )
+    )
 
   module Rate_limit = struct
     let rate_limit_table = Hashtbl.create ~random:true 10

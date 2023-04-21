@@ -13,4 +13,4 @@ module Content_string = struct
     Irmin.Merge.v dt f
 end
 
-module Store = Irmin_unix.Git.FS.KV (Content_string)
+module Store = Irmin_git_unix.FS.KV (Content_string)

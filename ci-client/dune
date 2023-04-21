@@ -2,6 +2,8 @@
  (name matrix_current)
  (public_name matrix-current)
  (modules matrix_current post client http room)
+ (flags
+  (:standard -w -69))
  (libraries
   matrix-ctos
   fmt.tty

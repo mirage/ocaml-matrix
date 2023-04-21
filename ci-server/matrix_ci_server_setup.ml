@@ -1,5 +1,6 @@
 open Cmdliner
-module Store = Irmin_unix.Git.FS.KV (Irmin.Contents.String)
+
+module Store = Irmin_git_unix.FS.KV (Irmin.Contents.String)
 
 let setup =
   let setup level =
@@ -22,7 +23,7 @@ module User = struct
       Logs.err (fun m -> m "user id %s already exists" user_id);
       Lwt.return 1
     | None -> (
-      Mirage_crypto_rng_lwt.initialize ();
+      Mirage_crypto_rng_lwt.initialize (module Mirage_crypto_rng.Fortuna);
       let salt = Cstruct.to_string @@ Mirage_crypto_rng.generate 32 in
       let digest = Digestif.BLAKE2B.hmac_string ~key:salt password in
       let hashed = Digestif.BLAKE2B.to_hex digest in
