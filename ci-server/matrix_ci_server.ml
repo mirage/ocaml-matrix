@@ -1,5 +1,6 @@
 open Cmdliner
 open Matrix_ci_server
+
 module Stack = Tcpip_stack_socket.V4V6
 module Dream = Dream__mirage.Mirage.Make (Pclock) (Time) (Stack)
 module Client_routes = Client_routes.Make (Pclock) (Time) (Stack)
@@ -7,12 +8,12 @@ module Federation_routes = Federation_routes.Make (Pclock) (Time) (Stack)
 module Nss = Ca_certs_nss.Make (Pclock)
 
 let client_server port stack info =
-  let router = Dream.logger @@ Client_routes.router info @@ Dream.not_found in
+  let router = Dream.logger @@ Client_routes.router info in
   Dream.http ~port (Stack.tcp stack) router
 
 let federation_server port stack info =
   let router =
-    Dream.logger @@ Federation_routes.router info @@ Dream.not_found in
+    Dream.logger @@ Federation_routes.router info in
   Dream.https ~port (Stack.tcp stack) router
 
 (* Rework the function for something cleaner (especially the rais part) *)
@@ -49,7 +50,7 @@ module TLS = struct
     client_of_flow tls ?host flow >>= fun flow -> Lwt.return flow
 end
 
-let tls_edn, tls_protocol = Mimic.register ~priority:10 ~name:"tls" (module TLS)
+let tls_edn, _tls_protocol = Mimic.register ~priority:10 ~name:"tls" (module TLS)
 let witness_stack = Mimic.make ~name:"stack"
 
 let fill ctx federation_port =

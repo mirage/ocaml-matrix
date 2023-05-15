@@ -5,9 +5,6 @@ let userid = Fmt.str "@%s:%s" user host
 
 open Shexp_process.Infix
 
-let ( let* ) = ( >>= )
-let ( let+ ) = ( >>| )
-
 let setup_server () =
   let open Shexp_process in
   run_exit_code "rm" ["-rf"; "/tmp/ocaml-matrix/"]

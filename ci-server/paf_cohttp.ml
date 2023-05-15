@@ -20,8 +20,8 @@ let response_handler mvar pusher resp body =
   let rec on_read buf ~off ~len =
     let str = Bigstringaf.substring buf ~off ~len in
     pusher (Some str);
-    Dream_httpaf.Body.Reader.schedule_read ~on_eof ~on_read body in
-  Dream_httpaf.Body.Reader.schedule_read ~on_eof ~on_read body;
+    Dream_httpaf_.Body.Reader.schedule_read ~on_eof ~on_read body in
+  Dream_httpaf_.Body.Reader.schedule_read ~on_eof ~on_read body;
   Lwt.async @@ fun () -> Lwt_mvar.put mvar resp
 
 let rec unroll body stream =
@@ -29,26 +29,26 @@ let rec unroll body stream =
   Lwt_stream.get stream >>= function
   | Some str ->
     Log.debug (fun m -> m "Transmit to HTTP/AF: %S." str);
-    Dream_httpaf.Body.Writer.write_string body str;
+    Dream_httpaf_.Body.Writer.write_string body str;
     unroll body stream
   | None ->
     Log.debug (fun m -> m "Close the HTTP/AF writer.");
-    Dream_httpaf.Body.Writer.close body;
+    Dream_httpaf_.Body.Writer.close body;
     Lwt.return_unit
 
 let transmit cohttp_body httpaf_body =
   match cohttp_body with
-  | `Empty -> Dream_httpaf.Body.Writer.close httpaf_body
+  | `Empty -> Dream_httpaf_.Body.Writer.close httpaf_body
   | `String str ->
-    Dream_httpaf.Body.Writer.write_string httpaf_body str;
-    Dream_httpaf.Body.Writer.close httpaf_body
+     Dream_httpaf_.Body.Writer.write_string httpaf_body str;
+     Dream_httpaf_.Body.Writer.close httpaf_body
   | `Strings sstr ->
-    List.iter (Dream_httpaf.Body.Writer.write_string httpaf_body) sstr;
-    Dream_httpaf.Body.Writer.close httpaf_body
+     List.iter (Dream_httpaf_.Body.Writer.write_string httpaf_body) sstr;
+     Dream_httpaf_.Body.Writer.close httpaf_body
   | `Stream stream -> Lwt.async @@ fun () -> unroll httpaf_body stream
 
 exception Internal_server_error
-exception Invalid_response_body_length of Dream_httpaf.Response.t
+exception Invalid_response_body_length of Dream_httpaf_.Response.t
 exception Malformed_response of string
 
 let with_uri uri ctx =
@@ -91,31 +91,31 @@ let with_host headers uri =
     match Uri.port uri with
     | Some port -> Fmt.str "%s:%d" hostname port
     | None -> hostname in
-  Dream_httpaf.Headers.add_unless_exists headers "host" hostname
+  Dream_httpaf_.Headers.add_unless_exists headers "host" hostname
 
 let with_transfer_encoding ~chunked (meth : Cohttp.Code.meth) body headers =
   match
-    meth, chunked, body, Dream_httpaf.Headers.get headers "content-length"
+    meth, chunked, body, Dream_httpaf_.Headers.get headers "content-length"
   with
   | `GET, _, _, _ -> headers
   | _, (None | Some false), _, Some _ -> headers
   | _, Some true, _, (Some _ | None) | _, None, `Stream _, None ->
     (* XXX(dinosaure): I'm not sure that the [Some _] was right. *)
-    Dream_httpaf.Headers.add_unless_exists headers "transfer-encoding" "chunked"
+    Dream_httpaf_.Headers.add_unless_exists headers "transfer-encoding" "chunked"
   | _, (None | Some false), `Empty, None ->
-    Dream_httpaf.Headers.add_unless_exists headers "content-length" "0"
+     Dream_httpaf_.Headers.add_unless_exists headers "content-length" "0"
   | _, (None | Some false), `String str, None ->
-    Dream_httpaf.Headers.add_unless_exists headers "content-length"
+     Dream_httpaf_.Headers.add_unless_exists headers "content-length"
       (string_of_int (String.length str))
   | _, (None | Some false), `Strings sstr, None ->
     let len = List.fold_right (( + ) <.> String.length) sstr 0 in
-    Dream_httpaf.Headers.add_unless_exists headers "content-length"
+    Dream_httpaf_.Headers.add_unless_exists headers "content-length"
       (string_of_int len)
   | _, Some false, `Stream _, None ->
     invalid_arg "Impossible to transfer a stream with a content-length value"
 
 module Dream_httpaf_Client_connection = struct
-  include Dream_httpaf.Client_connection
+  include Dream_httpaf_.Client_connection
 
   let yield_reader _ = assert false
 
@@ -135,25 +135,20 @@ let call
   let config =
     match Mimic.get httpaf_config ctx with
     | Some config -> config
-    | None -> Dream_httpaf.Config.default in
-  let sleep =
-    match Mimic.get sleep ctx with
-    | Some sleep -> sleep
-    | None -> fun _ -> Lwt.return_unit
-    (* TODO *) in
+    | None -> Dream_httpaf_.Config.default in
   let headers =
     match headers with
     | Some headers ->
-      Dream_httpaf.Headers.of_list (Cohttp.Header.to_list headers)
-    | None -> Dream_httpaf.Headers.empty in
+      Dream_httpaf_.Headers.of_list (Cohttp.Header.to_list headers)
+    | None -> Dream_httpaf_.Headers.empty in
   let headers = with_host headers uri in
   let headers = with_transfer_encoding ~chunked meth cohttp_body headers in
   let meth =
     match meth with
-    | #Dream_httpaf.Method.t as meth -> meth
+    | #Dream_httpaf_.Method.t as meth -> meth
     | #Cohttp.Code.meth as meth -> `Other (Cohttp.Code.string_of_method meth)
   in
-  let req = Dream_httpaf.Request.create ~headers meth (Uri.path_and_query uri) in
+  let req = Dream_httpaf_.Request.create ~headers meth (Uri.path_and_query uri) in
   let stream, pusher = Lwt_stream.create () in
   let mvar_res = Lwt_mvar.create_empty () in
   let mvar_err = Lwt_mvar.create_empty () in
@@ -164,12 +159,12 @@ let call
   | Ok flow -> (
     let error_handler = error_handler mvar_err in
     let response_handler = response_handler mvar_res pusher in
-    let conn = Dream_httpaf.Client_connection.create ~config in
+    let conn = Dream_httpaf_.Client_connection.create ~config () in
     let httpaf_body =
-      Dream_httpaf.Client_connection.request conn ~error_handler
+      Dream_httpaf_.Client_connection.request conn ~error_handler
         ~response_handler req in
     Lwt.async (fun () ->
-        Dream_paf.run ~sleep (module Dream_httpaf_Client_connection) conn flow);
+        Dream_paf.Paf.run (module Dream_httpaf_Client_connection) conn flow);
     transmit cohttp_body httpaf_body;
     Log.debug (fun m -> m "Body transmitted.");
     Lwt.pick
@@ -187,29 +182,29 @@ let call
     | `Response resp ->
       Log.debug (fun m -> m "Response received.");
       let version =
-        match resp.Dream_httpaf.Response.version with
-        | {Dream_httpaf.Version.major= 1; minor= 0} -> `HTTP_1_0
+        match resp.Dream_httpaf_.Response.version with
+        | {Dream_httpaf_.Version.major= 1; minor= 0} -> `HTTP_1_0
         | {major= 1; minor= 1} -> `HTTP_1_1
         | {major; minor} -> `Other (Fmt.str "%d.%d" major minor) in
       let status =
         match
-          (resp.Dream_httpaf.Response.status
-            :> [ Cohttp.Code.status | Dream_httpaf.Status.t ])
+          (resp.Dream_httpaf_.Response.status
+            :> [ Cohttp.Code.status | Dream_httpaf_.Status.t ])
         with
         | #Cohttp.Code.status as status -> status
-        | #Dream_httpaf.Status.t as status ->
-          `Code (Dream_httpaf.Status.to_code status) in
+        | #Dream_httpaf_.Status.t as status ->
+          `Code (Dream_httpaf_.Status.to_code status) in
       let encoding =
         match meth with
-        | #Dream_httpaf.Method.standard as meth -> (
-          match Dream_httpaf.Response.body_length ~request_method:meth resp with
+        | #Dream_httpaf_.Method.standard as meth -> (
+          match Dream_httpaf_.Response.body_length ~request_method:meth resp with
           | `Chunked | `Close_delimited -> Cohttp.Transfer.Chunked
           | `Error _err -> raise Internal_server_error
           | `Fixed length -> Cohttp.Transfer.Fixed length)
         | _ -> Cohttp.Transfer.Chunked in
       let headers =
         Cohttp.Header.of_list
-          (Dream_httpaf.Headers.to_list resp.Dream_httpaf.Response.headers)
+          (Dream_httpaf_.Headers.to_list resp.Dream_httpaf_.Response.headers)
       in
       let resp = Cohttp.Response.make ~version ~status ~encoding ~headers () in
       Lwt.return (resp, `Stream stream))
