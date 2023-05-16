@@ -23,7 +23,7 @@
    base64
    bheap
    (cmdliner (>= 1.1.0))
-    ezjsonm
+   (ezjsonm (>= 1.3))
     fmt
     (irmin-fs (>= 3.0))
     (irmin-git (>= 3.6))
@@ -48,7 +48,7 @@
  (tags ("org:mirage"))
  (depends
   (ocaml (>= 4.11))
-   ezjsonm
+  (ezjsonm (>= 1.3))
    fmt
    logs
    (cmdliner (>= 1.1.0))
@@ -62,7 +62,7 @@
  (depends
   (ocaml (>= 4.11))
   (matrix-common (= :version))
-   ezjsonm
+  (ezjsonm (>= 1.3))
    fmt
    logs
   (ppxlib (>= 0.16.0))))
@@ -75,7 +75,7 @@
  (depends
   (ocaml (>= 4.11))
   (matrix-common (= :version))
-   ezjsonm
+  (ezjsonm (>= 1.3))
    fmt
    logs
    mirage-crypto-ec
@@ -94,7 +94,7 @@
    cohttp
    cohttp-lwt
    cohttp-lwt-unix
-   ezjsonm
+  (ezjsonm (>= 1.3))
    fmt
    logs
    (lwt (>= 5.6.1))
