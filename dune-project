@@ -19,7 +19,8 @@
   (matrix-stos (= :version))
    dream-mirage
    (lwt_ppx (>= 2.1.0))
-   astring
+    astring
+  (angstrom (>= 0.15.0))
    base64
    bheap
    (cmdliner (>= 1.1.0))
