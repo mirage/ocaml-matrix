@@ -31,6 +31,7 @@
     logs
     (tcpip (>= 7.0.0))
     mirage-crypto-ec
+    mirage-crypto-rng-lwt
     mirage-time
     mirage-time-unix
     mirage-clock-unix
@@ -96,6 +97,7 @@
    cohttp-lwt
    cohttp-lwt-unix
   (ezjsonm (>= 1.3))
+   cmdliner
    fmt
    logs
    (lwt (>= 5.6.1))
