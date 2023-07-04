@@ -15,6 +15,7 @@
   dream-mirage
   matrix-ctos
   matrix-stos
+  angstrom
   irmin-git.unix
   fmt
   logs

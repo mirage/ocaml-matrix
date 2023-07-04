@@ -19,17 +19,19 @@
   (matrix-stos (= :version))
    dream-mirage
    (lwt_ppx (>= 2.1.0))
-   astring
+    astring
+  (angstrom (>= 0.15.0))
    base64
    bheap
    (cmdliner (>= 1.1.0))
-    ezjsonm
+   (ezjsonm (>= 1.3))
     fmt
     (irmin-fs (>= 3.0))
     (irmin-git (>= 3.6))
     logs
     (tcpip (>= 7.0.0))
     mirage-crypto-ec
+    mirage-crypto-rng-lwt
     mirage-time
     mirage-time-unix
     mirage-clock-unix
@@ -48,7 +50,7 @@
  (tags ("org:mirage"))
  (depends
   (ocaml (>= 4.11))
-   ezjsonm
+  (ezjsonm (>= 1.3))
    fmt
    logs
    (cmdliner (>= 1.1.0))
@@ -62,7 +64,7 @@
  (depends
   (ocaml (>= 4.11))
   (matrix-common (= :version))
-   ezjsonm
+  (ezjsonm (>= 1.3))
    fmt
    logs
   (ppxlib (>= 0.16.0))))
@@ -75,7 +77,7 @@
  (depends
   (ocaml (>= 4.11))
   (matrix-common (= :version))
-   ezjsonm
+  (ezjsonm (>= 1.3))
    fmt
    logs
    mirage-crypto-ec
@@ -94,7 +96,8 @@
    cohttp
    cohttp-lwt
    cohttp-lwt-unix
-   ezjsonm
+  (ezjsonm (>= 1.3))
+   cmdliner
    fmt
    logs
    (lwt (>= 5.6.1))
