@@ -149,6 +149,6 @@ let encoding =
   let with_tuple =
     obj3
       (req "join" (assoc Joined_room.encoding))
-      (req "invite" (assoc Invited_room.encoding))
-      (req "leave" (assoc Left_room.encoding)) in
+      (dft "invite" (assoc Invited_room.encoding) [])
+      (dft "leave" (assoc Left_room.encoding) []) in
   conv to_tuple of_tuple with_tuple
