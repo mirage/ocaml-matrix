@@ -1786,7 +1786,7 @@ module State_event = struct
       let room_event, state_key = v in
       {room_event; state_key} in
     let with_tuple =
-      merge_objs Room_event.encoding (obj1 (req "state_key" string)) in
+      merge_objs Room_event.encoding (obj1 (dft "state_key" string "")) in
     conv to_tuple of_tuple with_tuple
 
   let get_event t = Room_event.get_event t.room_event
